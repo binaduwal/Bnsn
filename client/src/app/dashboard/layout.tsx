@@ -6,7 +6,7 @@ function layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex  flex-col w-full items-start   ">
       <Header />
-      <div className=" flex items-start max-w-7xl mx-auto pt-5 w-full gap-3 mt-24 ">
+      <div className=" flex items-start  mx-auto pt-5 w-full gap-3 mt-24 ">
         <div className="sticky left-0 top-24 bottom-0 h-[calc(100vh-130px)] w-[300px]">
           <Sidebar />
         </div>

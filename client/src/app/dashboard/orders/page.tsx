@@ -3,7 +3,7 @@ import React from 'react';
 const OrganizationSubscriptions: React.FC = () => {
   return (
     <div className="rounded-lg bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-10/12 mx-auto">
         {/* Organization Subscriptions Section */}
         <div className="mb-8">
           <h1 className="text-2xl font-semibold text-gray-900 mb-6">Organization Subscriptions</h1>
