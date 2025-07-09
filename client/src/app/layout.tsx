@@ -27,7 +27,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} relative antialiased`}
       >
-        <div className="bg-[url('/future.jpg')] bg-center bg-fixed bg-cover bg-no-repeat blur-sm brightness-[0.85] -z-10 absolute inset-0 top-0 left-0 right-0 bottom-0" />
+        <div className="bg-center bg-fixed bg-cover bg-no-repeat blur-sm brightness-[0.85] -z-10 absolute inset-0 top-0 left-0 right-0 bottom-0" />
 
         {children}
       </body>
