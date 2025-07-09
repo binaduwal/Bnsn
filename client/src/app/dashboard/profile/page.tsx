@@ -18,7 +18,7 @@ const AccountSettings: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="h-[calc(100vh-130px)] overflow-y-auto rounded-lg bg-gray-50 p-6">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">

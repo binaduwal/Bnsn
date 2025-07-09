@@ -1,4 +1,6 @@
 import {
+  CircleUser,
+  LogOut,
   LucideBook,
   LucideFileText,
   LucideFolder,
@@ -6,6 +8,7 @@ import {
   LucidePuzzle,
   LucideWand2,
 } from "lucide-react";
+import Link from "next/link";
 import React from "react";
 
 function Sidebar() {
@@ -42,10 +45,27 @@ function Sidebar() {
       ],
     },
   ];
+  const bottomNavLinks = [
+    {
+      label: "Profile",
+      href: "/dashboard/profile",
+      icon: <CircleUser size={20} />,
+    },
+    {
+      label: "Orders",
+      href: "/dashboard/orders",
+      icon: <LucideFileText size={20} />,
+    },
+    {
+      label: "Logout",
+      // href: "/dashboard/projects",
+      icon: <LogOut size={20} />,
+    },
+  ];
 
   return (
-    <div className="w-[300px] h-full bg-white p-4 rounded-lg">
-      <nav className="flex flex-col gap-2">
+    <div className="w-[300px] h-full flex flex-col justify-between bg-white p-4 rounded-lg">
+      <nav className="flex flex-col  gap-2">
         {navLinks.map((item, idx) =>
           item.children ? (
             <div key={item.label}>
@@ -55,14 +75,14 @@ function Sidebar() {
               </div>
               <div className="ml-6 flex flex-col gap-1">
                 {item.children.map((child) => (
-                  <a
+                  <Link
                     key={child.label}
                     href={child.href}
                     className="flex items-center gap-2 p-2 rounded hover:bg-gray-200"
                   >
                     {child.icon}
                     {child.label}
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>
@@ -77,6 +97,18 @@ function Sidebar() {
             </a>
           )
         )}
+      </nav>
+      <nav className="flex flex-col  gap-2">
+        {bottomNavLinks.map((item, idx) => (
+          <Link
+            key={item.label}
+            href={item.href || "#"}
+            className="flex items-center gap-2 p-2 rounded hover:bg-gray-200"
+          >
+            {item.icon}
+            {item.label}
+          </Link>
+        ))}
       </nav>
     </div>
   );

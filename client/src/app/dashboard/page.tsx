@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
   const adds = [
     {
       title: "project",
-      href: "/dashboard/project",
+      href: "/dashboard/projects/new",
     },
 
     {
