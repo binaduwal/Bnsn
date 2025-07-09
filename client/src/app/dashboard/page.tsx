@@ -181,6 +181,10 @@ const Dashboard: React.FC = () => {
                 <FileText size={20} />
                 <span>New Blueprint</span>
               </Link>
+               <Link role="button" href={'/dashboard/cloner'} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center space-x-2 transition-colors font-medium">
+                <Copy size={20} />
+                <span>New Clone</span>
+              </Link>
             </div>
           </div>
 
