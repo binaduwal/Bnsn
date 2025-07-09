@@ -1,0 +1,117 @@
+'use client';
+import React, { useState } from 'react';
+import { ChevronDown, Wand2 } from 'lucide-react';
+
+const CreateBlueprint: React.FC = () => {
+  const [blueprintName, setBlueprintName] = useState<string>('');
+  const [feedBnsn, setFeedBnsn] = useState<string>('');
+  const [selectedOfferType, setSelectedOfferType] = useState<string>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+
+  const wordCount = feedBnsn.trim().split(/\s+/).filter(word => word.length > 0).length;
+
+  const offerTypes = [
+    'Product Launch',
+    'Service Offering',
+    'Course/Training',
+    'Consultation',
+    'Software/App',
+    'E-book/Digital Product',
+    'Physical Product',
+    'Subscription Service'
+  ];
+
+  const handleOfferTypeSelect = (offerType: string) => {
+    setSelectedOfferType(offerType);
+    setIsDropdownOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-700 flex items-center gap-2">
+            Create your blueprint
+            <span className="text-gray-400">?</span>
+          </h1>
+        </div>
+
+        {/* Blueprint Name */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Blueprint Name
+          </label>
+          <input
+            type="text"
+            value={blueprintName}
+            onChange={(e) => setBlueprintName(e.target.value)}
+            placeholder="What do you want to name this blueprint?"
+            className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Feed BNSN */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Feed BNSN
+          </label>
+          <div className="relative">
+            <textarea
+              value={feedBnsn}
+              onChange={(e) => setFeedBnsn(e.target.value)}
+              placeholder="Tell BNSN about your project. You can provide up to 10,000 words, or if you're feeling lazy, just 30 will do. It's best to include details such as what you're selling and who you'd like to sell it to. You can include details about yourself as well. If you have bonuses, testimonials, and offer details, feed them to BNSN right here."
+              className="w-full h-64 px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              maxLength={10000}
+            />
+            <div className="absolute bottom-3 right-3 text-sm text-gray-500">
+              Words: {feedBnsn.trim() === '' ? 0 : wordCount}
+            </div>
+          </div>
+        </div>
+
+        {/* Offer Type */}
+        <div className="mb-8">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Offer Type
+          </label>
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full px-4 py-3 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
+            >
+              <span className={selectedOfferType ? 'text-gray-900' : 'text-gray-500'}>
+                {selectedOfferType || 'Select your offer type...'}
+              </span>
+              <ChevronDown className="h-5 w-5 text-gray-400" />
+            </button>
+            
+            {isDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                {offerTypes.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => handleOfferTypeSelect(option)}
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:outline-none focus:bg-gray-50"
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Create Magically Button */}
+        <div className="text-center">
+          <button className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium inline-flex items-center gap-2">
+            <Wand2 className="h-5 w-5" />
+            Create Magically
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CreateBlueprint;

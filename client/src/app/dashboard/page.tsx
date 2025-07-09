@@ -1,5 +1,6 @@
 import React from "react";
-import { Search, MoreHorizontal, Copy, Edit, Trash2 } from "lucide-react";
+import { Search, MoreHorizontal, Copy, Edit, Trash2, Plus } from "lucide-react";
+import Link from "next/link";
 
 interface Project {
   id: string;
@@ -76,6 +77,21 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
+  const adds = [
+    {
+      title: "project",
+      href: "/dashboard/project",
+    },
+
+    {
+      title: "blueprint",
+      href: "/dashboard/blueprint/new",
+    },
+    {
+      title: "clone",
+      href: "/dashboard/cloner",
+    },
+  ];
   return (
     <div className=" max-h-max overflow-y-auto rounded-lg bg-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -84,7 +100,18 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900 mb-8">
             Welcome, Kane!
           </h1>
-
+          <div className=" max-w-2xl mx-auto my-5 flex items-center gap-3">
+            {adds.map((type, i) => (
+              <Link
+                role="button"
+                href={type.href}
+                key={i}
+                className=" capitalize flex items-center gap-2 bg-gray-900 text-white px-4 py-2 rounded-lg"
+              >
+                <Plus /> {type.title}
+              </Link>
+            ))}
+          </div>
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto relative">
             <input
