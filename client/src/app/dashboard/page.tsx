@@ -53,13 +53,13 @@ const Dashboard: React.FC = () => {
     switch (status) {
       case 'Active': return 'bg-green-100 text-green-800 border-green-200';
       case 'Draft': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'Archived': return 'bg-gray-100 text-gray-800 border-gray-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'Archived': return 'bg-gray-100 text-gray-800 border-gray-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
   };
 
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-gray-300 p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -104,7 +104,7 @@ const Dashboard: React.FC = () => {
   );
 
   const BlueprintCard: React.FC<{ blueprint: Project }> = ({ blueprint }) => (
-    <div className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-lg border border-gray-300 p-6 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
@@ -225,28 +225,28 @@ const Dashboard: React.FC = () => {
 
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-300">
               <div className="flex items-center space-x-2 mb-2">
                 <Folder className="w-5 h-5 text-blue-600" />
                 <span className="text-sm font-medium text-gray-600">Active Projects</span>
               </div>
               <div className="text-2xl font-semibold text-gray-900">{activeProjects}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-300">
               <div className="flex items-center space-x-2 mb-2">
                 <FileText className="w-5 h-5 text-indigo-600" />
                 <span className="text-sm font-medium text-gray-600">Active Blueprints</span>
               </div>
               <div className="text-2xl font-semibold text-gray-900">{activeBlueprints}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-300">
               <div className="flex items-center space-x-2 mb-2">
                 <Clock className="w-5 h-5 text-yellow-600" />
                 <span className="text-sm font-medium text-gray-600">Draft Projects</span>
               </div>
               <div className="text-2xl font-semibold text-gray-900">{draftProjects}</div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <div className="bg-white p-4 rounded-lg border border-gray-300">
               <div className="flex items-center space-x-2 mb-2">
                 <Star className="w-5 h-5 text-yellow-500" />
                 <span className="text-sm font-medium text-gray-600">Starred Items</span>

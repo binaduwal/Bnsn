@@ -1,77 +1,215 @@
 "use client";
 
-import React from "react";
-import Image from "next/image";
-import LoginForm from "@/components/LoginForm";
+import React, { useState } from "react";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+const LoginForm: React.FC<{ role: string; onResetPasswordClick: () => void }> = ({ role, onResetPasswordClick }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    router.push('/dashboard');
+    // Handle login logic here
+    console.log("Login submitted:", { email, password, rememberMe });
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          Email Address
+        </label>
+        <div className="relative">
+          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Enter your email"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          Password
+        </label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            placeholder="Enter your password"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <input
+            id="remember-me"
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+            Remember me
+          </label>
+        </div>
+        <button
+          type="button"
+          onClick={onResetPasswordClick}
+          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+        >
+          Forgot password?
+        </button>
+      </div>
+
+      <button
+        onClick={handleSubmit}
+        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium flex items-center justify-center space-x-2 transition-colors"
+      >
+        <span>Sign In</span>
+        <ArrowRight size={20} />
+      </button>
+    </div>
+  );
+};
 
 export default function Login() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-5 box-border overflow-hidden">
-      {/* Blurred background */}
-      <div
-        className="absolute inset-0 bg-[url('/future.jpg')] bg-center bg-cover bg-no-repeat blur-lg brightness-[0.85] -z-10"
-        aria-hidden="true"
-      />
-      <div className="grid grid-cols-6 gap-16 max-w-5xl bg-white rounded-2xl overflow-hidden mx-auto text-gray-800 p-10 ">
-        {/* Left Container - Login Form */}
-        <div className="lg:col-span-3 col-span-6 rounded-l-2xl justify-center items-center  backdrop-blur-sm">
-          <div className="w-full space-y-5">
-            <div className="text-center space-y-1.5">
-              <h1 className="text-2xl font-bold text-gray-700">
-                Welcome Back Admin
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Purple gradient pattern overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-600/10 via-transparent to-blue-600/10"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(147,51,234,0.1),transparent_50%)]"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_80%,rgba(79,70,229,0.1),transparent_50%)]"></div>
+      <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-2 gap-4 relative z-10">
+        {/* Left Side - Login Form */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 lg:p-12">
+          <div className="max-w-md mx-auto">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="flex items-center justify-center mb-6">
+                <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <Shield className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <h1 className="text-3xl font-semibold text-gray-900 mb-2">
+                Welcome Back
               </h1>
-              <p className="text-base tracking-wide font-normal text-gray-500">
-                {"Let's get started by filling out the form below."}
+              <p className="text-gray-600">
+                Sign in to your administrator account
               </p>
             </div>
 
+            {/* Login Form */}
             <LoginForm role="admin" onResetPasswordClick={() => {}} />
 
-            <div className=" text-gray-600 leading-relaxed text-xs">
-              <div className="text-center flex flex-col gap-2">
-                <p className="">
-                  We have sent your login details to the email you registered to
-                  the program with — we recommend checking your spam folder if
-                  you have not seen it yet.
-                </p>
-                <p>
-                  Alternatively, you can use the{" "}
-                  <span className="text-blue-600 font-semibold hover:text-blue-700 transition-colors cursor-pointer">
-                    {" "}
-                    Reset Password
-                  </span>{" "}
-                  option with the same email you registered with.
-                </p>
-                <p>
-                  If it still does not work, then reach out to our support
-                  service at{" "}
-                  <a
-                    href="mailto:support@industryrockstar.ai"
-                    className="text-blue-600 font-semibold hover:text-blue-700 transition-colors"
-                  >
-                    support@industryrockstar.ai
-                  </a>
-                  , and we will generate a new email for you.
-                </p>
+            {/* Support Information */}
+            <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-2">Need help accessing your account?</p>
+                  <div className="space-y-1 text-blue-700">
+                    <p>• Check your email for login details (including spam folder)</p>
+                    <p>• Use the "Forgot password?" option above</p>
+                    <p>• Contact support at{" "}
+                      <a
+                        href="mailto:support@industryrockstar.ai"
+                        className="font-medium hover:underline"
+                      >
+                        support@industryrockstar.ai
+                      </a>
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Container - Image Section */}
-        <div className="lg:col-span-3 col-span-0 lg:block hidden bg-white/20 rounded-xl p-0 overflow-hidden backdrop-blur-sm">
-          <div className="relative w-full h-full flex group">
-            <Image
-              src="/IR-Copilot-Creator.jpg"
-              alt="Admin portal illustration"
-              width={1000}
-              height={800}
-              className="w-full h-full object-cover object-center min-h-full transition-transform duration-500 ease-out"
-              priority
-              quality={90}
-            />
-            {/* Subtle gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+        {/* Right Side - Features/Benefits */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 lg:p-12 hidden lg:block">
+          <div className="h-full flex flex-col justify-center">
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-4">
+                  AI District Copywriting Admin Portal
+                </h2>
+                <p className="text-gray-600 text-lg">
+                  Manage your AI-powered projects and blueprints with enterprise-grade tools.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Project Management</h3>
+                    <p className="text-gray-600">Create, organize, and track your AI projects with powerful management tools.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Blueprint Templates</h3>
+                    <p className="text-gray-600">Access pre-built templates and create custom blueprints for your specific needs.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Analytics & Insights</h3>
+                    <p className="text-gray-600">Monitor performance and gain valuable insights from your AI-powered campaigns.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900 mb-1">Enterprise Security</h3>
+                    <p className="text-gray-600">Your data is protected with enterprise-grade security and compliance measures.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-gray-200">
+                <div className="flex items-center space-x-4 text-sm text-gray-500">
+                  <span>Trusted by 10,000+ businesses</span>
+                  <span>•</span>
+                  <span>99.9% uptime</span>
+                  <span>•</span>
+                  <span>24/7 support</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

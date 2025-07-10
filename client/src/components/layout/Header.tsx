@@ -11,12 +11,13 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-
+  const router = useRouter();
   const toggleProfile = () => {
     setIsProfileOpen(!isProfileOpen);
   };
@@ -26,7 +27,7 @@ function Header() {
       <div className="flex items-center justify-between h-20  mx-auto px-6">
         {/* Logo */}
         <div className="w-40 h-auto relative">
-          <Link href={"/user/userDash"} className="block">
+          <Link href={"/dashboard"} className="block">
             <Image
               src="/District_Logo.png"
               alt="District Logo"
@@ -134,7 +135,7 @@ function Header() {
 
                 {/* Logout */}
                 <div className="border-t border-gray-700/50 pt-2">
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-600/20 transition-colors">
+                  <button className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-600/20 transition-colors" onClick={() => router.push('/login')}>
                     <LogOut className="w-4 h-4" />
                     <span className="text-sm">Sign Out</span>
                   </button>
