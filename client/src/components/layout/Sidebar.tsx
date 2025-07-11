@@ -81,7 +81,7 @@ function Sidebar() {
               key={item.label}
               href={item.href}
               onClick={() => handleLinkClick(item.href)}
-              className={`flex items-center gap-3 p-3 rounded-xl transition-all duration-200 font-medium mb-1 ${
+              className={`flex items-center gap-3 p-3 border border-transparent rounded-xl transition-all duration-200 font-medium mb-1 ${
                 isActive(item.href)
                   ? "bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm border border-purple-200/50"
                   : "text-gray-700 hover:bg-purple-50 hover:text-purple-700"
@@ -95,9 +95,6 @@ function Sidebar() {
                 {item.icon}
               </span>
               <span>{item.label}</span>
-              {isActive(item.href) && (
-                <div className="ml-auto w-2 h-2 bg-purple-500 rounded-full"></div>
-              )}
             </Link>
           ))}
         </div>

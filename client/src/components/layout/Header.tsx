@@ -117,17 +117,24 @@ function Header() {
                 <div className="py-2">
                   <Link
                     role="button"
+                    onClick={toggleProfile}
                     href={"/dashboard/profile"}
                     className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
                   >
                     <User className="w-4 h-4" />
                     <span className="text-sm">Profile Settings</span>
                   </Link>
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-purple-600/20 hover:text-purple-300 transition-colors">
+                  <button
+                    onClick={toggleProfile}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
+                  >
                     <Settings className="w-4 h-4" />
                     <span className="text-sm">Preferences</span>
                   </button>
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-purple-600/20 hover:text-purple-300 transition-colors">
+                  <button
+                    onClick={toggleProfile}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
+                  >
                     <Bell className="w-4 h-4" />
                     <span className="text-sm">Notifications</span>
                   </button>
@@ -135,7 +142,10 @@ function Header() {
 
                 {/* Logout */}
                 <div className="border-t border-gray-700/50 pt-2">
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-600/20 transition-colors" onClick={() => router.push('/login')}>
+                  <button
+                    onClick={toggleProfile}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-600/20 transition-colors"
+                  >
                     <LogOut className="w-4 h-4" />
                     <span className="text-sm">Sign Out</span>
                   </button>
