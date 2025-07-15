@@ -171,6 +171,7 @@ export class DeepSeekService {
     return response.choices[0]?.message?.content || '';
   }
 
+
   async analyzeProject(projectData: any): Promise<string> {
     const systemPrompt = `You are an expert business analyst. Analyze the provided project data and provide insights on:
     1. Project strengths and opportunities
@@ -198,6 +199,296 @@ export class DeepSeekService {
     const response = await this.makeRequest(request);
     return response.choices[0]?.message?.content || '';
   }
+
+  async generateEmail(emailData: any): Promise<string> {
+    const systemPrompt = `You are an expert email copywriter. Create high-converting emails that drive clicks, engagement, and conversions. Use proven psychological techniques, personalization, and strong CTAs for different email types like sales, follow-up, nurture, or broadcast.`;
+
+    const userPrompt = `Generate a professional, engaging email based on the following data:
+
+Email Data: ${JSON.stringify(emailData)}
+
+Include:
+- Subject line
+- Preheader text
+- Email body with a strong CTA
+- Adapt tone and length for the context (e.g., sales vs nurture)
+
+Ensure it's suitable for email marketing best practices.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 1500,
+      temperature: 0.65,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+  async generateBookDraft(bookData: any): Promise<string> {
+    const systemPrompt = `You are a professional book ghostwriter. Based on the provided book data, help structure and write an engaging, coherent book. Focus on clear chapter organization, tone consistency, and value delivery to the reader.`;
+
+    const userPrompt = `Generate a complete book outline and initial content draft:
+
+Book Data: ${JSON.stringify(bookData)}
+
+Provide:
+1. Suggested title and subtitle
+2. Book outline with chapter breakdown
+3. Introduction
+4. Sample content for the first 2 chapters (or more depending on book length)
+
+Ensure the tone fits the intended audience and genre. Word count goal: 5,000–50,000 words.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 3000,
+      temperature: 0.7,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+  async generateAdCopy(adData: any): Promise<string> {
+    const systemPrompt = `You are a world-class ad copywriter and digital marketer. Create high-converting ad copy based on the provided information. Your goal is to maximize engagement and conversion across platforms such as Facebook, Instagram, YouTube, and TikTok. Focus on clear messaging, emotional triggers, and platform-specific tone.`;
+
+    const userPrompt = `Generate compelling ad copy for this campaign:
+
+Ad Data: ${JSON.stringify(adData)}
+
+Provide at least 3 variations tailored for different platforms (Facebook, Instagram, YouTube, TikTok) with strong hooks, CTAs, and engagement-oriented language.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+  async generateSalesPageFunnel(funnelData: any): Promise<string> {
+    const systemPrompt = `You are an expert direct response marketer and funnel builder. Create a complete high-converting sales funnel that includes Facebook/Instagram ads, a persuasive sales page, and a full email sequence.`;
+
+    const userPrompt = `Generate a full sales funnel for this offer:
+
+Funnel Data: ${JSON.stringify(funnelData)}
+
+Provide:
+1. 2-3 Facebook/Instagram ad copies
+2. Long-form sales page content with headline, benefits, testimonials, objections, and CTA
+3. Email sequence (minimum 3 emails): intro, follow-up, urgency/offer reminder
+4. Bonus: upsell ideas or tripwire suggestions
+
+Ensure the funnel flows naturally, addresses objections, and drives conversions.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 3000,
+      temperature: 0.7,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+  async generateLinkedInProfile(profileData: any): Promise<string> {
+    const systemPrompt = `You are a professional LinkedIn strategist and personal brand copywriter. Create a LinkedIn profile that attracts leads, highlights personal achievements, and clearly communicates the user’s business value and offer.`;
+
+    const userPrompt = `Generate a high-converting LinkedIn profile based on the following information:
+
+Profile Data: ${JSON.stringify(profileData)}
+
+Include:
+1. Headline
+2. Summary/About section
+3. Experience highlights
+4. Featured section suggestions
+5. Call-to-action (for DMs or links)
+
+Focus on lead generation and credibility. Use persuasive, concise language that reflects personal and business branding.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 1800,
+      temperature: 0.65,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+  async generateBookSalesFunnel(funnelData: any): Promise<string> {
+    const systemPrompt = `You are a marketing funnel strategist and expert copywriter for self-publishers. Create a complete book sales funnel that includes a compelling back cover, persuasive sales letters, platform-specific ad copy, and other relevant assets to sell the book effectively.`;
+
+    const userPrompt = `Generate a book sales funnel based on this data:
+
+Book Funnel Data: ${JSON.stringify(funnelData)}
+
+Deliverables:
+1. Back cover copy
+2. Short and long-form sales letters
+3. Ad variations for Facebook, Instagram, and Google
+4. Call-to-action suggestions
+5. Optional: bonus ideas and lead magnets
+
+Tailor everything for book buyers and self-publishing platforms.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 2500,
+      temperature: 0.7,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+
+  async generateOrderBumpCopy(bumpData: any): Promise<string> {
+    const systemPrompt = `You are an expert in conversion-focused copywriting. Craft persuasive, benefit-driven order bump copy that adds irresistible value during the checkout process. Model your language after top-performing checkout pages.`;
+
+    const userPrompt = `Create order bump copy based on the following product/offer details:
+
+Order Bump Data: ${JSON.stringify(bumpData)}
+
+Requirements:
+1. Compelling one-liner headline
+2. 2–3 short bullet benefits or outcome-driven points
+3. A CTA that encourages impulse buy
+
+Tone: persuasive, benefit-focused, and concise. Ideal for checkout upsells.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 1000,
+      temperature: 0.65,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+
+  async generatePressRelease(releaseData: any): Promise<string> {
+    const systemPrompt = `You are a professional PR writer. Create press releases that follow journalistic standards, build authority, and drive media interest.`;
+
+    const userPrompt = `Write a professional press release using the following information:
+
+Press Release Data: ${JSON.stringify(releaseData)}
+
+Include:
+1. Headline and subheadline
+2. Opening paragraph with key announcement
+3. Supporting details and quotes
+4. Boilerplate about the company
+5. Contact information
+
+Tone: credible, objective, newsworthy — suitable for media outlets.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 2000,
+      temperature: 0.6,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+  async generateThankYouPageCopy(thankYouData: any): Promise<string> {
+    const systemPrompt = `You are an expert in customer retention and post-purchase copywriting. Write thank you page content that builds loyalty, encourages repeat business, and increases customer lifetime value.`;
+
+    const userPrompt = `Create a high-converting thank you page copy based on this context:
+
+Thank You Page Data: ${JSON.stringify(thankYouData)}
+
+Include:
+1. Thank you message
+2. Confirmation or next steps
+3. Upsell or cross-sell suggestion
+4. Optional: share prompt, discount offer, or referral CTA
+
+Tone: warm, grateful, and conversion-aware. Keep user engaged post-purchase.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 1500,
+      temperature: 0.65,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+  async generateWebsitePageCopy(pageData: any): Promise<string> {
+    const systemPrompt = `You are a professional website copywriter. Craft persuasive and clear website content that communicates the offer, highlights features and benefits, and builds trust. Focus on conversion.`;
+
+    const userPrompt = `Generate website page copy based on the following data:
+
+Website Page Data: ${JSON.stringify(pageData)}
+
+Output:
+1. Hero section: headline, subheadline, CTA
+2. Features and benefits section
+3. Social proof or testimonials
+4. Trust-building content (FAQs, credentials, etc.)
+
+Make it engaging, scannable, and persuasive for online visitors.`;
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      max_tokens: 2500,
+      temperature: 0.7,
+    };
+
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
+
+
 }
 
 export const deepSeekService = new DeepSeekService();

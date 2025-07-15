@@ -9,13 +9,14 @@ import { CategoryValue } from "../models/CategoryValue";
 
 export const createBlueprint = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
+
     if (!req.user) {
       return next(createError("User not found in request", 401));
     }
 
     const { title, description, offerType } = req.body;
-
     const blueprint = new Blueprint({ title, description, offerType });
+
     await blueprint.save();
 
     const usedCategoryIds: mongoose.Schema.Types.ObjectId[] = [];

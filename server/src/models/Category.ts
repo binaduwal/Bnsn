@@ -9,6 +9,14 @@ const FieldSchema = new mongoose.Schema({
     default: "text",
   },
 });
+
+const SettingSchema = new mongoose.Schema({
+  focus: String,
+  tone: String,
+  quantity: String,
+  contentLenght: Number
+});
+
 export interface ICategory extends Document {
   title: string;
   description: string;
@@ -16,6 +24,14 @@ export interface ICategory extends Document {
     fieldName: string;
     fieldType: string;
   }[];
+  settings: {
+    focus: string;
+    tone: string;
+    quantity: string;
+    contentLenght: number;
+  }
+  type: "blueprint" | "project";
+  parentId?: mongoose.Schema.Types.ObjectId;
 }
 
 const CategorySchema: Schema = new Schema<ICategory>(
@@ -26,10 +42,21 @@ const CategorySchema: Schema = new Schema<ICategory>(
       trim: true,
       maxlength: 100,
     },
+    type: {
+      type: String,
+      enum: ["blueprint", "project"],
+      default: null,
+    },
+    parentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      default: null,
+    },
     description: {
       type: String,
     },
     fields: [FieldSchema],
+    settings: SettingSchema
   },
   {
     timestamps: true,

@@ -8,21 +8,13 @@ export interface IProjectSettings {
 
 export interface IProject extends Document {
   name: string;
-  type: 'project' | 'blueprint';
+  description: string;
   status: 'Active' | 'Draft' | 'Archived';
   isStarred: boolean;
   userId: mongoose.Types.ObjectId;
   blueprintId?: mongoose.Types.ObjectId;
-  settings?: IProjectSettings;
-  createdAt: Date;
-  updatedAt: Date;
+  categoryValues?: [mongoose.Types.ObjectId];
 }
-
-const ProjectSettingsSchema: Schema = new Schema({
-  focus: { type: String, default: '' },
-  tone: { type: String, default: 'professional' },
-  quantity: { type: String, default: 'medium' }
-}, { _id: false });
 
 const ProjectSchema: Schema = new Schema({
   name: {
@@ -31,10 +23,10 @@ const ProjectSchema: Schema = new Schema({
     trim: true,
     maxlength: 200
   },
-  type: {
+
+  description: {
     type: String,
-    enum: ['project', 'blueprint'],
-    default: 'project'
+
   },
   status: {
     type: String,
@@ -54,9 +46,9 @@ const ProjectSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Blueprint'
   },
-  settings: {
-    type: ProjectSettingsSchema,
-    default: () => ({})
+  categoryValues: {
+    type: [Schema.Types.ObjectId],
+    ref: 'CategoryValue'
   }
 }, {
   timestamps: true

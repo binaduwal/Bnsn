@@ -36,7 +36,6 @@ const updateProfileSchema = Joi.object({
 router.post('/login', validateBody(loginSchema), async (req, res, next) => {
   try {
     const { email, password, role } = req.body;
-
     const user = await User.findOne({ email }).lean();
     if (!user) {
       return next(createError('Invalid credentials', 401));
@@ -44,6 +43,7 @@ router.post('/login', validateBody(loginSchema), async (req, res, next) => {
 
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
+
       return next(createError('Invalid credentials', 401));
     }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuthStore } from "@/store/authStore";
 import {
   ChevronDown,
   Search,
@@ -17,11 +18,16 @@ import React, { useState } from "react";
 function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { logout } = useAuthStore();
   const router = useRouter();
   const toggleProfile = () => {
     setIsProfileOpen(!isProfileOpen);
   };
 
+  const logoutFn = () => {
+    logout();
+    router.push("/login");
+  };
   return (
     <div className="fixed top-0 left-0 right-0 z-50 transition-all duration-300 bg-gray-900/95 backdrop-blur-md border-b border-gray-700/50 shadow-lg">
       <div className="flex items-center justify-between h-20  mx-auto px-6">
@@ -143,7 +149,7 @@ function Header() {
                 {/* Logout */}
                 <div className="border-t border-gray-700/50 pt-2">
                   <button
-                    onClick={toggleProfile}
+                    onClick={logoutFn}
                     className="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-600/20 transition-colors"
                   >
                     <LogOut className="w-4 h-4" />
@@ -159,7 +165,7 @@ function Header() {
       {/* Click outside to close dropdown */}
       {isProfileOpen && (
         <div
-          className="fixed inset-0 z-40"
+          className="fixed h-screen w-screen inset-0 z-40"
           onClick={() => setIsProfileOpen(false)}
         />
       )}

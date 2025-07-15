@@ -1,32 +1,70 @@
 "use client";
-
 import React, { useState } from "react";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import {
+  Eye,
+  EyeOff,
+  Mail,
+  Lock,
+  ArrowRight,
+  Shield,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-const LoginForm: React.FC<{ role: string; onResetPasswordClick: () => void }> = ({ role, onResetPasswordClick }) => {
+import { loginApi } from "@/services/authApi";
+import toast from "react-hot-toast";
+import { useAuthStore } from "@/store/authStore";
+const LoginForm: React.FC<{
+  role: string;
+  onResetPasswordClick: () => void;
+}> = ({ role, onResetPasswordClick }) => {
+  const { setAuth } = useAuthStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/dashboard');
-    // Handle login logic here
-    console.log("Login submitted:", { email, password, rememberMe });
+    try {
+      setLoading(true);
+      // Handle login logic here "kyraq@mailinator.com" "1234567890@Mm"
+
+      const res = await loginApi({ email, password });
+      console.log("Login submitted:", res);
+      setAuth(res.user, res.token);
+      router.push("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="email"
+          className="block text-sm font-medium text-gray-700"
+        >
           Email Address
         </label>
         <div className="relative">
-          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Mail
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
           <input
             id="email"
             type="email"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSubmit(e);
+              }
+            }}
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -36,13 +74,24 @@ const LoginForm: React.FC<{ role: string; onResetPasswordClick: () => void }> = 
       </div>
 
       <div className="space-y-2">
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+        <label
+          htmlFor="password"
+          className="block text-sm font-medium text-gray-700"
+        >
           Password
         </label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Lock
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
           <input
             id="password"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleSubmit(e);
+              }
+            }}
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -68,7 +117,10 @@ const LoginForm: React.FC<{ role: string; onResetPasswordClick: () => void }> = 
             onChange={(e) => setRememberMe(e.target.checked)}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
           />
-          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+          <label
+            htmlFor="remember-me"
+            className="ml-2 block text-sm text-gray-700"
+          >
             Remember me
           </label>
         </div>
@@ -83,10 +135,17 @@ const LoginForm: React.FC<{ role: string; onResetPasswordClick: () => void }> = 
 
       <button
         onClick={handleSubmit}
+        disabled={loading}
         className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium flex items-center justify-center space-x-2 transition-colors"
       >
-        <span>Sign In</span>
-        <ArrowRight size={20} />
+        {loading ? (
+          <Loader className=" size-6 animate-spin" />
+        ) : (
+          <>
+            <span>Sign In</span>
+            <ArrowRight size={20} />
+          </>
+        )}
       </button>
     </div>
   );
@@ -126,11 +185,17 @@ export default function Login() {
               <div className="flex items-start space-x-3">
                 <CheckCircle className="w-5 h-5 text-blue-600 mt-0.5" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-2">Need help accessing your account?</p>
+                  <p className="font-medium mb-2">
+                    Need help accessing your account?
+                  </p>
                   <div className="space-y-1 text-blue-700">
-                    <p>• Check your email for login details (including spam folder)</p>
+                    <p>
+                      • Check your email for login details (including spam
+                      folder)
+                    </p>
                     <p>• Use the "Forgot password?" option above</p>
-                    <p>• Contact support at{" "}
+                    <p>
+                      • Contact support at{" "}
                       <a
                         href="mailto:support@industryrockstar.ai"
                         className="font-medium hover:underline"
@@ -154,7 +219,8 @@ export default function Login() {
                   AI District Copywriting Admin Portal
                 </h2>
                 <p className="text-gray-600 text-lg">
-                  Manage your AI-powered projects and blueprints with enterprise-grade tools.
+                  Manage your AI-powered projects and blueprints with
+                  enterprise-grade tools.
                 </p>
               </div>
 
@@ -164,8 +230,13 @@ export default function Login() {
                     <CheckCircle className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Project Management</h3>
-                    <p className="text-gray-600">Create, organize, and track your AI projects with powerful management tools.</p>
+                    <h3 className="font-semibold text-gray-900 mb-1">
+                      Project Management
+                    </h3>
+                    <p className="text-gray-600">
+                      Create, organize, and track your AI projects with powerful
+                      management tools.
+                    </p>
                   </div>
                 </div>
 
@@ -174,8 +245,13 @@ export default function Login() {
                     <CheckCircle className="w-5 h-5 text-indigo-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Blueprint Templates</h3>
-                    <p className="text-gray-600">Access pre-built templates and create custom blueprints for your specific needs.</p>
+                    <h3 className="font-semibold text-gray-900 mb-1">
+                      Blueprint Templates
+                    </h3>
+                    <p className="text-gray-600">
+                      Access pre-built templates and create custom blueprints
+                      for your specific needs.
+                    </p>
                   </div>
                 </div>
 
@@ -184,8 +260,13 @@ export default function Login() {
                     <CheckCircle className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Analytics & Insights</h3>
-                    <p className="text-gray-600">Monitor performance and gain valuable insights from your AI-powered campaigns.</p>
+                    <h3 className="font-semibold text-gray-900 mb-1">
+                      Analytics & Insights
+                    </h3>
+                    <p className="text-gray-600">
+                      Monitor performance and gain valuable insights from your
+                      AI-powered campaigns.
+                    </p>
                   </div>
                 </div>
 
@@ -194,8 +275,13 @@ export default function Login() {
                     <CheckCircle className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">Enterprise Security</h3>
-                    <p className="text-gray-600">Your data is protected with enterprise-grade security and compliance measures.</p>
+                    <h3 className="font-semibold text-gray-900 mb-1">
+                      Enterprise Security
+                    </h3>
+                    <p className="text-gray-600">
+                      Your data is protected with enterprise-grade security and
+                      compliance measures.
+                    </p>
                   </div>
                 </div>
               </div>
