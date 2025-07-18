@@ -34,7 +34,7 @@ const LoginForm: React.FC<{
 
       const res = await loginApi({ email, password });
       console.log("Login submitted:", res);
-      setAuth(res.user, res.token);
+      setAuth(res.data.user, res.data.token);
       router.push("/dashboard");
     } catch (error: any) {
       toast.error(error.message);

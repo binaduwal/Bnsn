@@ -1,62 +1,111 @@
-'use client';
-import React, { useState } from 'react';
-import { ChevronDown, ArrowLeft, ArrowRight, HelpCircle, CheckCircle, AlertCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+"use client";
+import React, { useEffect, useState } from "react";
+import {
+  ChevronDown,
+  ArrowLeft,
+  ArrowRight,
+  HelpCircle,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { getAllBlueprintApi } from "@/services/blueprintApi";
+import useCategory from "@/hooks/useCategory";
+import { createProjectApi } from "@/services/projectApi";
 
 const CreateProject: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
-  const [projectTitle, setProjectTitle] = useState('');
-  const [selectedMode, setSelectedMode] = useState<'create' | 'select'>('create');
-  const [selectedBlueprint, setSelectedBlueprint] = useState('');
-  const [projectDetails, setProjectDetails] = useState('');
-  const [offerType, setOfferType] = useState('');
+  const [projectTitle, setProjectTitle] = useState("");
+  const [selectedMode, setSelectedMode] = useState<"create" | "select">(
+    "create"
+  );
+  const [selectedCategory, setSelectedCategory] = useState<
+    { id: string; title: string }[]
+  >([]);
+  const [selectedBlueprint, setSelectedBlueprint] = useState<{
+    id: string;
+    title: string;
+  }>();
+  const [projectDetails, setProjectDetails] = useState("");
+  const [offerType, setOfferType] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isBlueprintDropdownOpen, setIsBlueprintDropdownOpen] = useState(false);
+  const [allBlueprint, setAllBlueprint] = useState<
+    { id: string; label: string }[]
+  >([]);
   const router = useRouter();
   const steps = [
-    { id: 1, title: 'Project Setup', description: 'Basic project information' },
-    { id: 2, title: 'Persuasion Vault', description: 'Content generation' },
-    { id: 3, title: 'Review & Launch', description: 'Final review and launch' }
+    { id: 1, title: "Project Setup", description: "Basic project information" },
+    { id: 2, title: "Persuasion Vault", description: "Content generation" },
+    { id: 3, title: "Review & Launch", description: "Final review and launch" },
   ];
 
-  const blueprints = [
-    'Viral Content Engine for Women\'s Activewear',
-    'AI Agency Accelerator',
-    'Your Best Life',
-    'Dr. Hoyos Medical Office',
-    'Outreach for business owners to sell their company'
-  ];
+  useEffect(() => {
+    fetchBlueprint();
+  }, []);
+
+  const handleCategoryClick = (categoryData: { id: string; title: string }) => {
+    setSelectedCategory((prevSelected) => {
+      if (prevSelected.find((dta) => dta.id == categoryData.id)) {
+        return prevSelected.filter((item) => item.id !== categoryData.id);
+      } else {
+        return [...prevSelected, categoryData];
+      }
+    });
+  };
 
   const offerTypes = [
-    'Product Launch',
-    'Service Offering',
-    'Course/Training',
-    'Consultation',
-    'Software/App',
-    'E-book/Digital Product',
-    'Physical Product',
-    'Subscription Service',
-    'Event/Webinar',
-    'Coaching Program'
+    "Product Launch",
+    "Service Offering",
+    "Course/Training",
+    "Consultation",
+    "Software/App",
+    "E-book/Digital Product",
+    "Physical Product",
+    "Subscription Service",
+    "Event/Webinar",
+    "Coaching Program",
   ];
 
-  const wordCount = projectDetails.trim().split(/\s+/).filter(word => word.length > 0).length;
+  const wordCount = projectDetails
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
 
   const getWordCountStatus = () => {
-    if (wordCount === 0) return { color: 'text-gray-500', icon: null };
-    if (wordCount < 30) return { color: 'text-yellow-600', icon: <AlertCircle size={16} /> };
-    if (wordCount >= 30 && wordCount <= 10000) return { color: 'text-green-600', icon: <CheckCircle size={16} /> };
-    return { color: 'text-red-600', icon: <AlertCircle size={16} /> };
+    if (wordCount === 0) return { color: "text-gray-500", icon: null };
+    if (wordCount < 30)
+      return { color: "text-yellow-600", icon: <AlertCircle size={16} /> };
+    if (wordCount >= 30 && wordCount <= 10000)
+      return { color: "text-green-600", icon: <CheckCircle size={16} /> };
+    return { color: "text-red-600", icon: <AlertCircle size={16} /> };
   };
 
   const isStep1Valid = () => {
-    if (selectedMode === 'create') {
-      return projectTitle.trim() !== '' && projectDetails.trim() !== '' && offerType !== '' && wordCount >= 30;
+    if (selectedMode === "create") {
+      return (
+        projectTitle.trim() !== "" &&
+        projectDetails.trim() !== "" &&
+        offerType !== "" &&
+        wordCount >= 30
+      );
     } else {
-      return projectTitle.trim() !== '' && selectedBlueprint !== '';
+      return projectTitle.trim() !== "" && selectedBlueprint !== undefined;
     }
   };
 
+  const { category } = useCategory({ level: 0, type: "project" });
+
+  const fetchBlueprint = async () => {
+    try {
+      const res = await getAllBlueprintApi();
+      setAllBlueprint(
+        res.data.map((itm) => ({ id: itm._id, label: itm.title }))
+      );
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
   const wordStatus = getWordCountStatus();
 
   const handleOfferTypeSelect = (type: string) => {
@@ -65,13 +114,37 @@ const CreateProject: React.FC = () => {
   };
 
   const handleBlueprintSelect = (blueprint: string) => {
-    setSelectedBlueprint(blueprint);
-    setIsBlueprintDropdownOpen(false);
+    const selectedBlueprint = allBlueprint.find(
+      (blueprintItem) => blueprintItem.id === blueprint
+    );
+    setSelectedBlueprint({
+      id: selectedBlueprint?.id || "",
+      title: selectedBlueprint?.label || "",
+    });
+  };
+
+  const createProject = async () => {
+    try {
+       console.log("res", );
+      const res = await createProjectApi({
+        blueprintId: selectedBlueprint?.id || "",
+        categoryId: [selectedCategory[0]?.id],
+        description: projectDetails,
+        name: projectTitle,
+      });
+     
+      toast.success("Project created successfully");
+      router.push(`/dashboard/projects/${res.data._id}`);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
   };
 
   const handleContinue = () => {
     if (currentStep < 3 && isStep1Valid()) {
       setCurrentStep(currentStep + 1);
+    } else {
+      createProject();
     }
   };
 
@@ -87,7 +160,10 @@ const CreateProject: React.FC = () => {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-6">
-            <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors" onClick={() => router.back()}>
+            <button
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              onClick={() => router.back()}
+            >
               <ArrowLeft size={20} />
             </button>
             <div>
@@ -95,7 +171,9 @@ const CreateProject: React.FC = () => {
                 <span>Let's start a project!</span>
                 <HelpCircle size={20} className="text-gray-400" />
               </h1>
-              <p className="text-gray-600 mt-1">Create a new project from scratch or using a blueprint</p>
+              <p className="text-gray-600 mt-1">
+                Create a new project from scratch or using a blueprint
+              </p>
             </div>
           </div>
         </div>
@@ -106,28 +184,42 @@ const CreateProject: React.FC = () => {
             {steps.map((step, index) => (
               <React.Fragment key={step.id}>
                 <div className="flex items-center space-x-3">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
-                    step.id === currentStep 
-                      ? 'bg-blue-600 text-white' 
-                      : step.id < currentStep 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-200 text-gray-500'
-                  }`}>
-                    {step.id < currentStep ? <CheckCircle size={16} /> : step.id}
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
+                      step.id === currentStep
+                        ? "bg-blue-600 text-white"
+                        : step.id < currentStep
+                        ? "bg-green-600 text-white"
+                        : "bg-gray-200 text-gray-500"
+                    }`}
+                  >
+                    {step.id < currentStep ? (
+                      <CheckCircle size={16} />
+                    ) : (
+                      step.id
+                    )}
                   </div>
                   <div>
-                    <div className={`text-sm font-medium ${
-                      step.id === currentStep ? 'text-gray-900' : 'text-gray-500'
-                    }`}>
+                    <div
+                      className={`text-sm font-medium ${
+                        step.id === currentStep
+                          ? "text-gray-900"
+                          : "text-gray-500"
+                      }`}
+                    >
                       {step.title}
                     </div>
-                    <div className="text-xs text-gray-500">{step.description}</div>
+                    <div className="text-xs text-gray-500">
+                      {step.description}
+                    </div>
                   </div>
                 </div>
                 {index < steps.length - 1 && (
-                  <div className={`flex-1 h-px ${
-                    step.id < currentStep ? 'bg-green-600' : 'bg-gray-200'
-                  }`}></div>
+                  <div
+                    className={`flex-1 h-px ${
+                      step.id < currentStep ? "bg-green-600" : "bg-gray-200"
+                    }`}
+                  ></div>
                 )}
               </React.Fragment>
             ))}
@@ -152,8 +244,10 @@ const CreateProject: React.FC = () => {
                   placeholder="Enter your project title"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-                {projectTitle.trim() === '' && (
-                  <p className="text-sm text-red-600">Project title is required</p>
+                {projectTitle.trim() === "" && (
+                  <p className="text-sm text-red-600">
+                    Project title is required
+                  </p>
                 )}
               </div>
 
@@ -163,73 +257,74 @@ const CreateProject: React.FC = () => {
                   <span>Blueprint</span>
                   <HelpCircle size={16} className="text-gray-400" />
                 </label>
-                
+
                 {/* Mode Toggle */}
                 <div className="flex items-center space-x-6">
                   <button
-                    onClick={() => setSelectedMode('create')}
+                    onClick={() => setSelectedMode("create")}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                      selectedMode === 'create' 
-                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      selectedMode === "create"
+                        ? "bg-blue-50 border-blue-200 text-blue-700"
+                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      selectedMode === 'create' ? 'border-blue-600' : 'border-gray-300'
-                    }`}>
-                      {selectedMode === 'create' && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        selectedMode === "create"
+                          ? "border-blue-600"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {selectedMode === "create" && (
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      )}
                     </div>
                     <span>Create Blueprint</span>
                   </button>
                   <button
-                    onClick={() => setSelectedMode('select')}
+                    onClick={() => setSelectedMode("select")}
                     className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                      selectedMode === 'select' 
-                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
-                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                      selectedMode === "select"
+                        ? "bg-blue-50 border-blue-200 text-blue-700"
+                        : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                     }`}
                   >
-                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      selectedMode === 'select' ? 'border-blue-600' : 'border-gray-300'
-                    }`}>
-                      {selectedMode === 'select' && <div className="w-2 h-2 bg-blue-600 rounded-full"></div>}
+                    <div
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                        selectedMode === "select"
+                          ? "border-blue-600"
+                          : "border-gray-300"
+                      }`}
+                    >
+                      {selectedMode === "select" && (
+                        <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                      )}
                     </div>
                     <span>Select Blueprint</span>
                   </button>
                 </div>
 
                 {/* Blueprint Dropdown for Select Mode */}
-                {selectedMode === 'select' && (
+                {selectedMode === "select" && (
                   <div className="relative">
-                    <button
-                      onClick={() => setIsBlueprintDropdownOpen(!isBlueprintDropdownOpen)}
-                      className="w-full px-4 py-3 text-left bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
+                    <select
+                      value={selectedBlueprint?.id}
+                      onChange={(e) => handleBlueprintSelect(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none"
                     >
-                      <span className={selectedBlueprint ? 'text-gray-900' : 'text-gray-500'}>
-                        {selectedBlueprint || 'Select blueprint...'}
-                      </span>
-                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isBlueprintDropdownOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    
-                    {isBlueprintDropdownOpen && (
-                      <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {blueprints.map((blueprint) => (
-                          <button
-                            key={blueprint}
-                            onClick={() => handleBlueprintSelect(blueprint)}
-                            className="w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-b-0"
-                          >
-                            {blueprint}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                      <option defaultValue={undefined}>Select Blueprint</option>
+                      {allBlueprint.map((blueprint) => (
+                        <option key={blueprint.id} value={blueprint.id}>
+                          {blueprint.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
               </div>
 
               {/* Project Details - Only show for Create Blueprint mode */}
-              {selectedMode === 'create' && (
+              {selectedMode === "create" && (
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2 text-sm font-medium text-gray-900">
                     <span>Project Details</span>
@@ -259,7 +354,7 @@ const CreateProject: React.FC = () => {
               )}
 
               {/* Offer Type - Only show for Create Blueprint mode */}
-              {selectedMode === 'create' && (
+              {selectedMode === "create" && (
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2 text-sm font-medium text-gray-900">
                     <span>Offer Type</span>
@@ -271,12 +366,20 @@ const CreateProject: React.FC = () => {
                       onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                       className="w-full px-4 py-3 text-left bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex items-center justify-between"
                     >
-                      <span className={offerType ? 'text-gray-900' : 'text-gray-500'}>
-                        {offerType || 'Select offer type...'}
+                      <span
+                        className={
+                          offerType ? "text-gray-900" : "text-gray-500"
+                        }
+                      >
+                        {offerType || "Select offer type..."}
                       </span>
-                      <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`h-5 w-5 text-gray-400 transition-transform ${
+                          isDropdownOpen ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
-                    
+
                     {isDropdownOpen && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                         {offerTypes.map((type) => (
@@ -306,15 +409,70 @@ const CreateProject: React.FC = () => {
           {/* Step 2 & 3 Placeholder */}
           {currentStep === 2 && (
             <div className="p-6 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Persuasion Vault</h2>
-              <p className="text-gray-600">Content generation step - Coming soon</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Persuasion Vault
+              </h2>
+              {category.length === 0 ? (
+                <p className="text-gray-600">
+                  Content generation step - Coming soon
+                </p>
+              ) : (
+                <div className=" grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {category.map((item, index) => (
+                    <div
+                      onClick={() =>
+                        handleCategoryClick({ id: item._id, title: item.title })
+                      }
+                      className={`p-4  cursor-pointer duration-300 border rounded-lg flex flex-col gap-2 ${
+                        selectedCategory.find((data) => data.id === item._id)
+                          ? "border-blue-600 bg-blue-50"
+                          : "hover:bg-gray-200 border-gray-200"
+                      } `}
+                      key={index}
+                    >
+                      <h4 className="text-gray-900 font-semibold text-xl">
+                        {item.title}
+                      </h4>
+                      <p className="text-gray-600 ">{item.description}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {currentStep === 3 && (
             <div className="p-6 text-center">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Review & Launch</h2>
-              <p className="text-gray-600">Final review step - Coming soon</p>
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                Review & Launch
+              </h2>
+              <div className=" flex flex-col max-w-2xl mx-auto gap-3">
+                {/* title and blueprint */}
+                <div className=" flex flex-col border border-gray-100 gap-3 py-4 px-6 rounded-xl shadow-lg bg-white">
+                  <div className=" flex flex-col  items-start gap-1.5">
+                    <h4 className=" text-xl font-semibold">Project Title</h4>
+                    <span className=" text-gray-800">{projectTitle}</span>
+                  </div>
+                  <div className=" flex flex-col  items-start gap-1.5">
+                    <h4 className=" text-xl font-semibold">Blueprint</h4>
+                    <span className=" text-gray-800">
+                      {selectedBlueprint?.title}
+                    </span>
+                  </div>
+                </div>
+
+                {/* category  */}
+                <div className=" flex flex-col border border-gray-100 gap-3 py-4 px-6 rounded-xl shadow-lg bg-white">
+                  <div className=" flex flex-col  items-start gap-1.5">
+                    <h4 className=" text-xl font-semibold">Selected Assets</h4>
+                    <ul className=" ml-6 flex-col flex list-disc ">
+                      {selectedCategory.map((cat, i) => (
+                        <li key={i}>{cat.title.trim()}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -328,7 +486,7 @@ const CreateProject: React.FC = () => {
               <ArrowLeft size={16} />
               <span>Back</span>
             </button>
-            
+
             <button
               onClick={handleContinue}
               disabled={!isStep1Valid()}

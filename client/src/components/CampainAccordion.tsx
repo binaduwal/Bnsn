@@ -1,16 +1,17 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { ChevronDown, Settings, Pencil, Check, X } from "lucide-react"
-import { Campaign } from "@/app/dashboard/projects/[id]/layout"
+import type React from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { ChevronDown, Settings, Pencil, Check, X } from "lucide-react";
+import { Campaign } from "@/app/dashboard/projects/[id]/layout";
+import { Category, SubCategory } from "@/services/projectApi";
 
 interface CampaignAccordionProps {
-  campaigns: Campaign[]
-  selectedCampaign: string | null
-  onCampaignSelect: (campaignTitle: string) => void
-  onCampaignUpdate: (oldTitle: string, newTitle: string) => void
+  campaigns: Category[];
+  selectedCampaign: string | null;
+  onCampaignSelect: (campaignTitle: string) => void;
+  onCampaignUpdate: (oldTitle: string, newTitle: string) => void;
 }
 
 const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
@@ -19,48 +20,48 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
   onCampaignSelect,
   onCampaignUpdate,
 }) => {
-  const router = useRouter()
-  const [editingCampaign, setEditingCampaign] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState("")
+  const router = useRouter();
+  const [editingCampaign, setEditingCampaign] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
 
-  const startEdit = (campaign: Campaign) => {
-    setEditingCampaign(campaign.title)
-    setEditValue(campaign.title)
-  }
+  const startEdit = (campaign: SubCategory) => {
+    setEditingCampaign(campaign.title);
+    setEditValue(campaign.title);
+  };
 
   const cancelEdit = () => {
-    setEditingCampaign(null)
-    setEditValue("")
-  }
+    setEditingCampaign(null);
+    setEditValue("");
+  };
 
   const saveEdit = (oldTitle: string) => {
     if (editValue.trim() && editValue.trim() !== oldTitle) {
-      onCampaignUpdate(oldTitle, editValue.trim())
+      onCampaignUpdate(oldTitle, editValue.trim());
     }
-    setEditingCampaign(null)
-    setEditValue("")
-  }
+    setEditingCampaign(null);
+    setEditValue("");
+  };
 
   const handleSettingsClick = (campaignTitle: string) => {
-    const slug = campaignTitle.toLowerCase().replace(/\s+/g, "-")
-    router.push(`/dashboard/projects/${slug}/settings`)
-  }
+    const slug = campaignTitle.toLowerCase().replace(/\s+/g, "-");
+    router.push(`/dashboard/projects/${slug}/settings`);
+  };
 
   const handleCampaignClick = (campaignSlug: string) => {
-    router.push(`/dashboard/projects/${campaignSlug}`)
-  }
+    router.push(`/dashboard/projects/${campaignSlug}`);
+  };
 
   const handleHeaderClick = (campaignTitle: string) => {
     if (editingCampaign === null) {
-      onCampaignSelect(campaignTitle)
+      onCampaignSelect(campaignTitle);
     }
-  }
+  };
 
   return (
-    <div className="space-y-3">
-      {campaigns.map((campaign) => (
+    <div className="space-y-2">
+      {campaigns?.[0]?.subCategories.map((campaign) => (
         <div
-          key={campaign.id}
+          key={campaign._id}
           className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
         >
           {/* Accordion Header */}
@@ -77,9 +78,9 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
-                        saveEdit(campaign.title)
+                        saveEdit(campaign.title);
                       } else if (e.key === "Escape") {
-                        cancelEdit()
+                        cancelEdit();
                       }
                     }}
                     className="w-32 border border-gray-300 rounded-md px-3 py-1.5 text-sm font-medium text-gray-900 outline-none"
@@ -95,8 +96,8 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                   <div className="flex items-center">
                     <button
                       onClick={(e) => {
-                        e.stopPropagation()
-                        saveEdit(campaign.title)
+                        e.stopPropagation();
+                        saveEdit(campaign.title);
                       }}
                       className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                       title="Save"
@@ -105,8 +106,8 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                     </button>
                     <button
                       onClick={(e) => {
-                        e.stopPropagation()
-                        cancelEdit()
+                        e.stopPropagation();
+                        cancelEdit();
                       }}
                       className="p-1 rounded-md hover:bg-gray-100 transition-colors"
                       title="Cancel"
@@ -117,8 +118,8 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                 ) : (
                   <button
                     onClick={(e) => {
-                      e.stopPropagation()
-                      startEdit(campaign)
+                      e.stopPropagation();
+                      startEdit(campaign);
                     }}
                     className="p-1.5  rounded-md opacity-100 hover:bg-gray-100 transition-all"
                     title="Edit campaign"
@@ -128,11 +129,11 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                 )}
               </div>
 
-              <div className="flex items-center gap-1">
+              <div className="flex  items-center gap-1">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
-                    handleSettingsClick(campaign.title)
+                    e.stopPropagation();
+                    handleSettingsClick(campaign.title);
                   }}
                   className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
                   title="Campaign settings"
@@ -141,11 +142,13 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                 </button>
                 <button
                   onClick={(e) => {
-                    e.stopPropagation()
-                    onCampaignSelect(campaign.title)
+                    e.stopPropagation();
+                    onCampaignSelect(campaign.title);
                   }}
                   className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
-                  title={selectedCampaign === campaign.title ? "Collapse" : "Expand"}
+                  title={
+                    selectedCampaign === campaign.title ? "Collapse" : "Expand"
+                  }
                 >
                   <ChevronDown
                     className={`w-4 h-4 text-gray-400 hover:text-gray-600 transition-transform duration-200 ${
@@ -159,28 +162,35 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
 
           {/* Accordion Content */}
           <div
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              selectedCampaign === campaign.title ? "max-h-32 opacity-100" : "max-h-0 opacity-0"
+            className={`overflow-hidden  transition-all duration-300 ease-in-out ${
+              selectedCampaign === campaign.title
+                ? "max-h-32 opacity-100"
+                : "max-h-0 opacity-0"
             }`}
           >
-            <div className="px-4 pb-4">
-              <button
-                onClick={() => handleCampaignClick(campaign.slug)}
-                className="w-full bg-blue-50 border border-blue-200 rounded-lg p-3 hover:bg-blue-100 transition-colors group"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-900">{campaign.dropDownTitle}</span>
-                  <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-blue-700 transition-colors">
-                    <div className="w-2 h-2 bg-white rounded-full"></div>
+            <div className="px-4  pb-4">
+              {campaign.thirdCategories.map((third, i) => (
+                <button
+                  key={i}
+                  onClick={() => handleCampaignClick(third._id)}
+                  className="w-full bg-blue-50 border border-blue-200 rounded-lg  p-3 hover:bg-blue-100 transition-colors group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-900">
+                      {third.title}
+                    </span>
+                    <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-blue-700 transition-colors">
+                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+              ))}
             </div>
           </div>
         </div>
       ))}
     </div>
-  )
-}
+  );
+};
 
-export default CampaignAccordion
+export default CampaignAccordion;

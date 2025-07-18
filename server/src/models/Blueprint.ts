@@ -5,6 +5,7 @@ interface IBlueprint extends Document {
   description: string;
   offerType: string;
   categories: mongoose.Schema.Types.ObjectId[];
+
 }
 
 const BlueprintSchema = new mongoose.Schema<IBlueprint>({
@@ -25,7 +26,7 @@ const BlueprintSchema = new mongoose.Schema<IBlueprint>({
       ref: "Category",
     },
   ],
-});
+}, { timestamps: true });
 
 export const Blueprint = mongoose.model<IBlueprint>(
   "Blueprint",

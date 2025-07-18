@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import {
   Search,
   Plus,
@@ -17,6 +17,8 @@ import {
   Copy,
   Wand2,
 } from "lucide-react";
+import toast from "react-hot-toast";
+import { Category, getSingleBlueprintApi } from "@/services/blueprintApi";
 
 interface ProgressBarProps {
   current: number;
@@ -25,15 +27,17 @@ interface ProgressBarProps {
 
 const ProgressBar: React.FC<ProgressBarProps> = ({ current, total }) => {
   const percentage = (current / total) * 100;
-  
+
   return (
     <div className="w-full bg-gray-100 rounded-full h-2 mb-6">
-      <div 
+      <div
         className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500 ease-out"
         style={{ width: `${percentage}%` }}
       />
       <div className="flex justify-between text-xs text-gray-500 mt-2">
-        <span>{current} of {total} completed</span>
+        <span>
+          {current} of {total} completed
+        </span>
         <span>{Math.round(percentage)}%</span>
       </div>
     </div>
@@ -97,7 +101,7 @@ const SmartInput: React.FC<SmartInputProps> = ({
           {required && <span className="text-red-400 ml-1">*</span>}
         </label>
       </div>
-      
+
       <div className="relative">
         {type === "textarea" ? (
           <textarea
@@ -136,7 +140,7 @@ const SmartInput: React.FC<SmartInputProps> = ({
             }`}
           />
         )}
-        
+
         {showSuggestions && suggestions.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-xl shadow-lg z-10 max-h-40 overflow-y-auto">
             {suggestions.map((suggestion, index) => (
@@ -162,11 +166,11 @@ interface FlexibleTagProps {
   color?: "blue" | "green" | "purple" | "pink";
 }
 
-const FlexibleTag: React.FC<FlexibleTagProps> = ({ 
-  text, 
-  onRemove, 
-  onEdit, 
-  color = "blue" 
+const FlexibleTag: React.FC<FlexibleTagProps> = ({
+  text,
+  onRemove,
+  onEdit,
+  color = "blue",
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(text);
@@ -187,7 +191,9 @@ const FlexibleTag: React.FC<FlexibleTagProps> = ({
 
   if (isEditing) {
     return (
-      <div className={`inline-flex items-center px-3 py-2 rounded-full border ${colorClasses[color]}`}>
+      <div
+        className={`inline-flex items-center px-3 py-2 rounded-full border ${colorClasses[color]}`}
+      >
         <input
           type="text"
           value={editValue}
@@ -208,8 +214,10 @@ const FlexibleTag: React.FC<FlexibleTagProps> = ({
   }
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border ${colorClasses[color]} group hover:shadow-md transition-all duration-200`}>
-      <span 
+    <div
+      className={`inline-flex items-center gap-2 px-3 py-2 rounded-full border ${colorClasses[color]} group hover:shadow-md transition-all duration-200`}
+    >
+      <span
         className="text-sm cursor-pointer"
         onClick={() => onEdit && setIsEditing(true)}
         title={onEdit ? "Click to edit" : ""}
@@ -234,23 +242,34 @@ interface SimpleCardProps {
   isCompleted?: boolean;
 }
 
-const SimpleCard: React.FC<SimpleCardProps> = ({ title, icon, children, isCompleted }) => {
+const SimpleCard: React.FC<SimpleCardProps> = ({
+  title,
+  icon,
+  children,
+  isCompleted,
+}) => {
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
-    <div className={`bg-white rounded-2xl border-2 transition-all duration-300 ${
-      isCompleted 
-        ? "border-green-200 bg-green-50/30" 
-        : "border-gray-200 hover:border-blue-200 hover:shadow-lg"
-    }`}>
-      <div 
+    <div
+      className={`bg-white rounded-2xl border-2 transition-all duration-300 ${
+        isCompleted
+          ? "border-green-200 bg-green-50/30"
+          : "border-gray-200 hover:border-blue-200 hover:shadow-lg"
+      }`}
+    >
+      <div
         className="flex items-center justify-between p-6 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-3">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-            isCompleted ? "bg-green-100 text-green-600" : "bg-blue-100 text-blue-600"
-          }`}>
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              isCompleted
+                ? "bg-green-100 text-green-600"
+                : "bg-blue-100 text-blue-600"
+            }`}
+          >
             {isCompleted ? <Sparkles className="w-5 h-5" /> : icon}
           </div>
           <h3 className="text-lg font-semibold text-gray-800">{title}</h3>
@@ -266,17 +285,13 @@ const SimpleCard: React.FC<SimpleCardProps> = ({ title, icon, children, isComple
           <ChevronDown className="w-5 h-5 text-gray-400" />
         )}
       </div>
-      
-      {isExpanded && (
-        <div className="px-6 pb-6 space-y-4">
-          {children}
-        </div>
-      )}
+
+      {isExpanded && <div className="px-6 pb-6 space-y-4">{children}</div>}
     </div>
   );
 };
 
-const BlueprintForm: React.FC = () => {
+const BlueprintForm: React.FC<{ id: string }> = ({ id }) => {
   const [projectTitle, setProjectTitle] = useState("My Awesome Course");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -285,7 +300,7 @@ const BlueprintForm: React.FC = () => {
   const [timeActive, setTimeActive] = useState("");
   const [credentials, setCredentials] = useState<string[]>([]);
   const [beforeStates, setBeforeStates] = useState<string[]>([]);
-  
+
   // Additional fields from original form
   const [bioPosition, setBioPosition] = useState("");
   const [afterStates, setAfterStates] = useState<string[]>([]);
@@ -300,18 +315,31 @@ const BlueprintForm: React.FC = () => {
 
   // Sample suggestions
   const positionSuggestions = [
-    "Founder & CEO", "Expert Coach", "Industry Leader", "Senior Consultant", 
-    "Thought Leader", "Master Trainer", "Business Strategist"
+    "Founder & CEO",
+    "Expert Coach",
+    "Industry Leader",
+    "Senior Consultant",
+    "Thought Leader",
+    "Master Trainer",
+    "Business Strategist",
   ];
 
   const credentialSuggestions = [
-    "Certified Professional", "PhD in Business", "20+ Years Experience", 
-    "Best-selling Author", "Industry Award Winner", "Featured Speaker"
+    "Certified Professional",
+    "PhD in Business",
+    "20+ Years Experience",
+    "Best-selling Author",
+    "Industry Award Winner",
+    "Featured Speaker",
   ];
 
   const beforeSuggestions = [
-    "Struggling with productivity", "Overwhelmed entrepreneur", "Burnt-out professional",
-    "Confused beginner", "Stressed business owner", "Procrastinating student"
+    "Struggling with productivity",
+    "Overwhelmed entrepreneur",
+    "Burnt-out professional",
+    "Confused beginner",
+    "Stressed business owner",
+    "Procrastinating student",
   ];
 
   const addCredential = (text: string) => {
@@ -422,7 +450,7 @@ const BlueprintForm: React.FC = () => {
               <p className="text-sm text-gray-500">Blueprint Builder</p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200">
               <Copy className="w-5 h-5" />
@@ -439,7 +467,9 @@ const BlueprintForm: React.FC = () => {
       <div className="max-w-7xl mx-auto p-6 space-y-6">
         {/* Progress */}
         <div className="bg-white rounded-2xl p-6 border border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-800 mb-4">Your Progress</h2>
+          <h2 className="text-lg font-semibold text-gray-800 mb-4">
+            Your Progress
+          </h2>
           <ProgressBar current={getCompletionCount()} total={17} />
         </div>
 
@@ -467,7 +497,7 @@ const BlueprintForm: React.FC = () => {
               required
             />
           </div>
-          
+
           <SmartInput
             label="Bio Position"
             value={bioPosition}
@@ -475,7 +505,7 @@ const BlueprintForm: React.FC = () => {
             placeholder="Your specific role or position in bio"
             icon={<Award className="w-4 h-4 text-purple-500" />}
           />
-          
+
           <SmartInput
             label="Your Title/Position"
             value={position}
@@ -494,15 +524,18 @@ const BlueprintForm: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Who are the people buying your course? Define your ideal customers.
+              Who are the people buying your course? Define your ideal
+              customers.
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {buyers.map((buyer, index) => (
                 <FlexibleTag
                   key={index}
                   text={buyer}
-                  onRemove={() => setBuyers(buyers.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setBuyers(buyers.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...buyers];
                     updated[index] = newText;
@@ -512,11 +545,17 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Quick suggestions:</p>
               <div className="flex flex-wrap gap-2">
-                {["Entrepreneurs", "Small Business Owners", "Freelancers", "Consultants", "Coaches"].map((suggestion, index) => (
+                {[
+                  "Entrepreneurs",
+                  "Small Business Owners",
+                  "Freelancers",
+                  "Consultants",
+                  "Coaches",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -539,13 +578,15 @@ const BlueprintForm: React.FC = () => {
             <p className="text-sm text-gray-600">
               Information about your company or organization.
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {company.map((item, index) => (
                 <FlexibleTag
                   key={index}
                   text={item}
-                  onRemove={() => setCompany(company.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setCompany(company.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...company];
                     updated[index] = newText;
@@ -555,11 +596,16 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Common items:</p>
               <div className="flex flex-wrap gap-2">
-                {["Founded 2020", "Remote Team", "Global Reach", "Award Winner"].map((suggestion, index) => (
+                {[
+                  "Founded 2020",
+                  "Remote Team",
+                  "Global Reach",
+                  "Award Winner",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -580,15 +626,18 @@ const BlueprintForm: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              What do you offer to your students? Your products, services, or solutions.
+              What do you offer to your students? Your products, services, or
+              solutions.
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {offers.map((offer, index) => (
                 <FlexibleTag
                   key={index}
                   text={offer}
-                  onRemove={() => setOffers(offers.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setOffers(offers.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...offers];
                     updated[index] = newText;
@@ -598,11 +647,17 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Popular offers:</p>
               <div className="flex flex-wrap gap-2">
-                {["Online Course", "1-on-1 Coaching", "Group Program", "Certification", "Masterclass"].map((suggestion, index) => (
+                {[
+                  "Online Course",
+                  "1-on-1 Coaching",
+                  "Group Program",
+                  "Certification",
+                  "Masterclass",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -625,7 +680,7 @@ const BlueprintForm: React.FC = () => {
             <p className="text-sm text-gray-600">
               What pages or sections will be part of your course or website?
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {pages.map((page, index) => (
                 <FlexibleTag
@@ -641,11 +696,18 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Common pages:</p>
               <div className="flex flex-wrap gap-2">
-                {["Home", "About", "Course Overview", "Pricing", "Contact", "FAQ"].map((suggestion, index) => (
+                {[
+                  "Home",
+                  "About",
+                  "Course Overview",
+                  "Pricing",
+                  "Contact",
+                  "FAQ",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -666,15 +728,18 @@ const BlueprintForm: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              What will your students achieve or become after taking your course?
+              What will your students achieve or become after taking your
+              course?
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {afterStates.map((state, index) => (
                 <FlexibleTag
                   key={index}
                   text={state}
-                  onRemove={() => setAfterStates(afterStates.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setAfterStates(afterStates.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...afterStates];
                     updated[index] = newText;
@@ -684,11 +749,16 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Transformation outcomes:</p>
               <div className="flex flex-wrap gap-2">
-                {["Confident expert", "Productive professional", "Successful entrepreneur", "Skilled practitioner"].map((suggestion, index) => (
+                {[
+                  "Confident expert",
+                  "Productive professional",
+                  "Successful entrepreneur",
+                  "Skilled practitioner",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -711,13 +781,15 @@ const BlueprintForm: React.FC = () => {
             <p className="text-sm text-gray-600">
               What training methods, modules, or learning formats will you use?
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {training.map((item, index) => (
                 <FlexibleTag
                   key={index}
                   text={item}
-                  onRemove={() => setTraining(training.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setTraining(training.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...training];
                     updated[index] = newText;
@@ -727,11 +799,18 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Training formats:</p>
               <div className="flex flex-wrap gap-2">
-                {["Video Lessons", "Live Sessions", "Worksheets", "Quizzes", "Case Studies", "Group Calls"].map((suggestion, index) => (
+                {[
+                  "Video Lessons",
+                  "Live Sessions",
+                  "Worksheets",
+                  "Quizzes",
+                  "Case Studies",
+                  "Group Calls",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -754,13 +833,15 @@ const BlueprintForm: React.FC = () => {
             <p className="text-sm text-gray-600">
               Elements for building your course book or materials.
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {bookBuilder.map((item, index) => (
                 <FlexibleTag
                   key={index}
                   text={item}
-                  onRemove={() => setBookBuilder(bookBuilder.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setBookBuilder(bookBuilder.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...bookBuilder];
                     updated[index] = newText;
@@ -770,11 +851,18 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Book elements:</p>
               <div className="flex flex-wrap gap-2">
-                {["Introduction", "Chapters", "Exercises", "Summary", "Resources", "Bibliography"].map((suggestion, index) => (
+                {[
+                  "Introduction",
+                  "Chapters",
+                  "Exercises",
+                  "Summary",
+                  "Resources",
+                  "Bibliography",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -797,13 +885,17 @@ const BlueprintForm: React.FC = () => {
             <p className="text-sm text-gray-600">
               Any other important details, notes, or elements for your course.
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {miscellaneous.map((item, index) => (
                 <FlexibleTag
                   key={index}
                   text={item}
-                  onRemove={() => setMiscellaneous(miscellaneous.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setMiscellaneous(
+                      miscellaneous.filter((_, i) => i !== index)
+                    )
+                  }
                   onEdit={(newText) => {
                     const updated = [...miscellaneous];
                     updated[index] = newText;
@@ -813,11 +905,16 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Additional items:</p>
               <div className="flex flex-wrap gap-2">
-                {["Bonus Materials", "Community Access", "Email Support", "Lifetime Updates"].map((suggestion, index) => (
+                {[
+                  "Bonus Materials",
+                  "Community Access",
+                  "Email Support",
+                  "Lifetime Updates",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -838,15 +935,18 @@ const BlueprintForm: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              Custom fields and unique elements specific to your course or business.
+              Custom fields and unique elements specific to your course or
+              business.
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {custom.map((item, index) => (
                 <FlexibleTag
                   key={index}
                   text={item}
-                  onRemove={() => setCustom(custom.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setCustom(custom.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...custom];
                     updated[index] = newText;
@@ -856,11 +956,16 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Add your own:</p>
               <div className="flex flex-wrap gap-2">
-                {["Special Feature", "Unique Approach", "Proprietary Method", "Exclusive Content"].map((suggestion, index) => (
+                {[
+                  "Special Feature",
+                  "Unique Approach",
+                  "Proprietary Method",
+                  "Exclusive Content",
+                ].map((suggestion, index) => (
                   <QuickTag
                     key={index}
                     text={suggestion}
@@ -881,15 +986,18 @@ const BlueprintForm: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              What makes you qualified to teach this? Add your expertise, certifications, or achievements.
+              What makes you qualified to teach this? Add your expertise,
+              certifications, or achievements.
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {credentials.map((credential, index) => (
                 <FlexibleTag
                   key={index}
                   text={credential}
-                  onRemove={() => setCredentials(credentials.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setCredentials(credentials.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...credentials];
                     updated[index] = newText;
@@ -899,7 +1007,7 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Quick suggestions:</p>
               <div className="flex flex-wrap gap-2">
@@ -930,7 +1038,7 @@ const BlueprintForm: React.FC = () => {
             icon={<BookOpen className="w-4 h-4 text-green-500" />}
             type="textarea"
           />
-          
+
           <SmartInput
             label="Time in Field"
             value={timeActive}
@@ -948,15 +1056,18 @@ const BlueprintForm: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
-              What problems or situations are your students dealing with before they find your course?
+              What problems or situations are your students dealing with before
+              they find your course?
             </p>
-            
+
             <div className="flex flex-wrap gap-2">
               {beforeStates.map((state, index) => (
                 <FlexibleTag
                   key={index}
                   text={state}
-                  onRemove={() => setBeforeStates(beforeStates.filter((_, i) => i !== index))}
+                  onRemove={() =>
+                    setBeforeStates(beforeStates.filter((_, i) => i !== index))
+                  }
                   onEdit={(newText) => {
                     const updated = [...beforeStates];
                     updated[index] = newText;
@@ -966,7 +1077,7 @@ const BlueprintForm: React.FC = () => {
                 />
               ))}
             </div>
-            
+
             <div className="space-y-2">
               <p className="text-xs text-gray-500">Common pain points:</p>
               <div className="flex flex-wrap gap-2">
@@ -993,7 +1104,8 @@ const BlueprintForm: React.FC = () => {
               🎉 Amazing! Your blueprint is complete!
             </h3>
             <p className="text-gray-600">
-              You've built a solid foundation for your course. Ready to move to the next step?
+              You've built a solid foundation for your course. Ready to move to
+              the next step?
             </p>
           </div>
         )}

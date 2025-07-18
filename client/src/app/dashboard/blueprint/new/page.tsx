@@ -1,25 +1,47 @@
-'use client';
-import React, { useState } from 'react';
-import { ChevronDown, Wand2 } from 'lucide-react';
+"use client";
+import React, { useState } from "react";
+import { ChevronDown, Wand2 } from "lucide-react";
+import toast from "react-hot-toast";
+import { createBlueprint } from "@/services/blueprintApi";
+import { useRouter } from "next/navigation";
 
 const CreateBlueprint: React.FC = () => {
-  const [blueprintName, setBlueprintName] = useState<string>('');
-  const [feedBnsn, setFeedBnsn] = useState<string>('');
-  const [selectedOfferType, setSelectedOfferType] = useState<string>('');
+  const [blueprintName, setBlueprintName] = useState<string>("");
+  const [feedBnsn, setFeedBnsn] = useState<string>("");
+  const [selectedOfferType, setSelectedOfferType] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
 
-  const wordCount = feedBnsn.trim().split(/\s+/).filter(word => word.length > 0).length;
+  const wordCount = feedBnsn
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
 
   const offerTypes = [
-    'Product Launch',
-    'Service Offering',
-    'Course/Training',
-    'Consultation',
-    'Software/App',
-    'E-book/Digital Product',
-    'Physical Product',
-    'Subscription Service'
+    "Product Launch",
+    "Service Offering",
+    "Course/Training",
+    "Consultation",
+    "Software/App",
+    "E-book/Digital Product",
+    "Physical Product",
+    "Subscription Service",
   ];
+  const router = useRouter();
+
+  const handleSubmitBlueprint = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await createBlueprint({
+        description: feedBnsn,
+        title: blueprintName,
+        offerType: selectedOfferType,
+      });
+      console.log("res", res);
+      router.push(`/dashboard/blueprint/${res.data._id}`);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
 
   const handleOfferTypeSelect = (offerType: string) => {
     setSelectedOfferType(offerType);
@@ -65,7 +87,7 @@ const CreateBlueprint: React.FC = () => {
               maxLength={10000}
             />
             <div className="absolute bottom-3 right-3 text-sm text-gray-500">
-              Words: {feedBnsn.trim() === '' ? 0 : wordCount}
+              Words: {feedBnsn.trim() === "" ? 0 : wordCount}
             </div>
           </div>
         </div>
@@ -80,12 +102,16 @@ const CreateBlueprint: React.FC = () => {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="w-full px-4 py-3 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex items-center justify-between"
             >
-              <span className={selectedOfferType ? 'text-gray-900' : 'text-gray-500'}>
-                {selectedOfferType || 'Select your offer type...'}
+              <span
+                className={
+                  selectedOfferType ? "text-gray-900" : "text-gray-500"
+                }
+              >
+                {selectedOfferType || "Select your offer type..."}
               </span>
               <ChevronDown className="h-5 w-5 text-gray-400" />
             </button>
-            
+
             {isDropdownOpen && (
               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
                 {offerTypes.map((option) => (
@@ -104,7 +130,10 @@ const CreateBlueprint: React.FC = () => {
 
         {/* Create Magically Button */}
         <div className="text-center">
-          <button className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium inline-flex items-center gap-2">
+          <button
+            onClick={handleSubmitBlueprint}
+            className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium inline-flex items-center gap-2"
+          >
             <Wand2 className="h-5 w-5" />
             Create Magically
           </button>

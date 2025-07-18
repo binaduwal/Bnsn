@@ -13,7 +13,7 @@ export interface IProject extends Document {
   isStarred: boolean;
   userId: mongoose.Types.ObjectId;
   blueprintId?: mongoose.Types.ObjectId;
-  categoryValues?: [mongoose.Types.ObjectId];
+  categoryId?: [mongoose.Types.ObjectId];
 }
 
 const ProjectSchema: Schema = new Schema({
@@ -46,9 +46,9 @@ const ProjectSchema: Schema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Blueprint'
   },
-  categoryValues: {
+  categoryId: {
     type: [Schema.Types.ObjectId],
-    ref: 'CategoryValue'
+    ref: 'Category'
   }
 }, {
   timestamps: true

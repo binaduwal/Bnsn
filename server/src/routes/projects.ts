@@ -5,6 +5,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { Project } from '../models';
 import { createError } from '../middleware/errorHandler';
+import { createProject, singleProject } from '../controllers/projectController';
 
 const router = Router();
 
@@ -90,73 +91,9 @@ router.get('/', authenticateToken, validateQuery(projectQuerySchema), async (req
   }
 });
 
-router.post('/', authenticateToken, validateBody(createProjectSchema), async (req: AuthRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return next(createError('User not found in request', 401));
-    }
+router.post('/', authenticateToken, createProject);
 
-    const { title, mode, blueprintId, details, offerType, type } = req.body;
-
-    if (mode === 'select' && !blueprintId) {
-      return next(createError('Blueprint ID is required when mode is select', 400));
-    }
-
-    const projectData: any = {
-      name: title,
-      type: type || 'project',
-      status: 'Draft',
-      userId: req.user.id,
-      isStarred: false,
-      settings: {
-        focus: details || '',
-        tone: 'professional',
-        quantity: 'medium',
-      },
-    };
-
-    if (blueprintId && mongoose.Types.ObjectId.isValid(blueprintId)) {
-      projectData.blueprintId = blueprintId;
-    }
-
-    const project = new Project(projectData);
-    await project.save();
-
-    res.status(201).json({
-      success: true,
-      data: project,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.get('/:id', authenticateToken, validateParams(projectParamsSchema), async (req: AuthRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return next(createError('User not found in request', 401));
-    }
-
-    const { id } = req.params;
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return next(createError('Invalid project ID', 400));
-    }
-
-    const project = await Project.findOne({ _id: id, userId: req.user.id }).lean();
-
-    if (!project) {
-      return next(createError('Project not found', 404));
-    }
-
-    res.json({
-      success: true,
-      data: project,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.get('/:id', authenticateToken, validateParams(projectParamsSchema), singleProject);
 
 router.put('/:id', authenticateToken, validateParams(projectParamsSchema), validateBody(updateProjectSchema), async (req: AuthRequest, res, next) => {
   try {

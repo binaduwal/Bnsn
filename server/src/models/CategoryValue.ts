@@ -5,18 +5,18 @@ interface ICategoryValue extends Document {
   blueprint: mongoose.Schema.Types.ObjectId;
   project: mongoose.Schema.Types.ObjectId;
   value: {
-    key: string; // key of the value (question of the answer)
+    key: string; //(question of the answer)
     value: string;
   }[];
 }
 
 const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
+
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
     required: [true, "Category is required"],
   },
-
   blueprint: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Blueprint",
@@ -37,7 +37,8 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
         required: true,
       },
     },
-  ],
+  ]
+
 });
 
 export const CategoryValue = mongoose.model<ICategoryValue>(

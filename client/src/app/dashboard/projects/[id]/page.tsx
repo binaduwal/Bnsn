@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useState } from "react"
+import type React from "react";
+import { use, useEffect, useState } from "react";
 import {
   ChevronDown,
   Settings,
@@ -13,20 +13,22 @@ import {
   Copy,
   MoreHorizontal,
   AlertTriangle,
-} from "lucide-react"
-import InlineTextEditor from "@/components/ui/InlineTextEditor"
+} from "lucide-react";
+import InlineTextEditor from "@/components/ui/InlineTextEditor";
+import { Category, singleProjectApi } from "@/services/projectApi";
 
 interface EmailCampaignStats {
-  wordsLeft: number
-  totalWords: number
+  wordsLeft: number;
+  totalWords: number;
 }
 
 interface EmailCampaignUIProps {
-  campaignName?: string
-  stats?: EmailCampaignStats
-  onSave?: () => void
-  onPreview?: () => void
-  onSend?: () => void
+  campaignName?: string;
+  stats?: EmailCampaignStats;
+  onSave?: () => void;
+  onPreview?: () => void;
+  onSend?: () => void;
+  params: Promise<{ id: string }>;
 }
 
 const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
@@ -35,26 +37,31 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   onSave,
   onPreview,
   onSend,
+  params,
 }) => {
-  const [isEditing, setIsEditing] = useState(false)
-  const [currentCampaignName, setCurrentCampaignName] = useState(campaignName)
-  const [emailContent, setEmailContent] = useState("")
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentCampaignName, setCurrentCampaignName] = useState(campaignName);
+  const [emailContent, setEmailContent] = useState("");
+ 
 
   const handleNameEdit = () => {
-    setIsEditing(true)
-  }
+    setIsEditing(true);
+  };
 
   const handleNameSave = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      setIsEditing(false)
+      setIsEditing(false);
     }
-  }
+  };
 
   const handleNameBlur = () => {
-    setIsEditing(false)
-  }
+    setIsEditing(false);
+  };
 
-  const progressPercentage = ((stats.totalWords - stats.wordsLeft) / stats.totalWords) * 100
+  
+
+  const progressPercentage =
+    ((stats.totalWords - stats.wordsLeft) / stats.totalWords) * 100;
 
   return (
     <div className="flex flex-col  bg-gray-50">
@@ -112,7 +119,9 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
               <div className="flex items-center space-x-4">
                 <div className="text-sm text-gray-600">
                   Words Left:
-                  <span className="font-medium text-blue-600 ml-1">{stats.wordsLeft.toLocaleString()}</span>
+                  <span className="font-medium text-blue-600 ml-1">
+                    {stats.wordsLeft.toLocaleString()}
+                  </span>
                 </div>
 
                 <div className="w-24 bg-gray-200 rounded-full h-2">
@@ -144,15 +153,20 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
             <div className="text-sm text-amber-800">
               <p className="font-medium mb-1">Important Notice</p>
               <p>
-                Do not copy text into the editor. Always fact-check claims and output as AI can hallucinate. We do not
-                guarantee compliant copy.
+                Do not copy text into the editor. Always fact-check claims and
+                output as AI can hallucinate. We do not guarantee compliant
+                copy.
               </p>
             </div>
           </div>
 
           {/* Editor Container */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[calc(100vh-480px)] ">
-              <InlineTextEditor initialContent="<p>Start writing your email <b>content</b> </p>" placeholder="Start crafting your promotional email..." onChange={(value)=>console.log('data',value)} />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 h-[calc(100vh-480px)] ">
+            <InlineTextEditor
+              initialContent="<p>Start writing your email <b>content</b> </p>"
+              placeholder="Start crafting your promotional email..."
+              onChange={(value) => console.log("data", value)}
+            />
           </div>
         </div>
       </main>
@@ -199,7 +213,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         </div>
       </footer>
     </div>
-  )
-}
+  );
+};
 
-export default EmailCampaignUI
+export default EmailCampaignUI;

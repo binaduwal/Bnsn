@@ -30,6 +30,7 @@ export interface ICategory extends Document {
     quantity: string;
     contentLenght: number;
   }
+  level: number;
   type: "blueprint" | "project";
   parentId?: mongoose.Schema.Types.ObjectId;
 }
@@ -56,7 +57,8 @@ const CategorySchema: Schema = new Schema<ICategory>(
       type: String,
     },
     fields: [FieldSchema],
-    settings: SettingSchema
+    level: { type: Number, required: true },
+    settings: { type: SettingSchema }
   },
   {
     timestamps: true,

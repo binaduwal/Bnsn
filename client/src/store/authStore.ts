@@ -34,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
                 Cookies.set('token', token, { expires: 7 }) // 7 days
             },
             setAuth: (user, token) => {
+                console.log('storee', user, token)
                 set({ user, token })
                 Cookies.set('token', token, { expires: 7 })
             },

@@ -8,9 +8,8 @@ import {
   validateQuery,
 } from "../middleware/validation";
 import { Category as Blueprint } from "../models";
-import { deepSeekService } from "../services/deepseek";
 import { createError } from "../middleware/errorHandler";
-import { createBlueprint } from "../controllers/blueprintController";
+import { createBlueprint, getAllBlueprint, getSingleBlueprint } from "../controllers/blueprintController";
 
 const router = Router();
 
@@ -60,50 +59,7 @@ router.get(
   "/",
   authenticateToken,
   validateQuery(blueprintQuerySchema),
-  async (req: AuthRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return next(createError("User not found in request", 401));
-      }
-
-      const { search, page = 1, limit = 20 } = req.query as any;
-
-      const filter: any = { userId: req.user.id };
-
-      if (search) {
-        filter.$or = [
-          { name: { $regex: search, $options: "i" } },
-          { offerType: { $regex: search, $options: "i" } },
-        ];
-      }
-
-      const skip = (page - 1) * limit;
-
-      const [blueprints, total] = await Promise.all([
-        Blueprint.find(filter)
-          .sort({ updatedAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Blueprint.countDocuments(filter),
-      ]);
-
-      res.json({
-        success: true,
-        data: {
-          blueprints,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-          },
-        },
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getAllBlueprint
 );
 
 router.post(
@@ -117,35 +73,7 @@ router.get(
   "/:id",
   authenticateToken,
   validateParams(blueprintParamsSchema),
-  async (req: AuthRequest, res, next) => {
-    try {
-      if (!req.user) {
-        return next(createError("User not found in request", 401));
-      }
-
-      const { id } = req.params;
-
-      if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-        return next(createError("Invalid blueprint ID", 400));
-      }
-
-      const blueprint = await Blueprint.findOne({
-        _id: id,
-        userId: req.user.id,
-      }).lean();
-
-      if (!blueprint) {
-        return next(createError("Blueprint not found", 404));
-      }
-
-      res.json({
-        success: true,
-        data: blueprint,
-      });
-    } catch (error) {
-      next(error);
-    }
-  }
+  getSingleBlueprint
 );
 
 router.put(

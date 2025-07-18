@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { DeepSeekRequest, DeepSeekResponse } from '../types';
 import { createError } from '../middleware/errorHandler';
+import { ICategory } from '../models/Category';
+import 'dotenv/config'
 
 export class DeepSeekService {
   private apiKey: string;
@@ -24,7 +26,7 @@ export class DeepSeekService {
 
     try {
       const response = await axios.post(
-        `${this.baseURL}/v1/chat/completions`,
+        `${this.baseURL}/chat/completions`,
         data,
         {
           headers: {
@@ -50,36 +52,82 @@ export class DeepSeekService {
     }
   }
 
-  async generateBlueprint(feedBnsn: string, offerType: string): Promise<string> {
-    const systemPrompt = `You are an expert business strategist and copywriter specializing in creating detailed business blueprints. 
-    Your task is to analyze the provided business information and generate a comprehensive blueprint that includes:
-    1. Project analysis and strategy
-    2. Target audience identification
-    3. Content creation suggestions
-    4. Marketing approach recommendations
-    5. Implementation roadmap
+ async generateBlueprint(
+  feedBnsn: string, 
+  offerType: string, 
+  categories: ICategory[]
+): Promise<any> {
+  const categoryList = categories.map(cat => ({
+    title: cat.title,
+    description: cat.description,
+    fields: cat.fields.map(f => ({ fieldName: f.fieldName, fieldType: f.fieldType }))
+  }));
 
-    Provide a structured, actionable blueprint that can be immediately implemented.`;
+  const systemPrompt = `You are an expert business strategist. You must respond with a JSON array of category objects. Each category object must have:
+  - title: string (must match one of the provided categories)
+  - description: string
+  - fields: array of objects with fieldName and value properties
+  
+  Available categories: ${JSON.stringify(categoryList, null, 2)}
+  
+  CRITICAL: Return ONLY the JSON array without any markdown formatting, explanations, or code blocks. Start directly with [ and end with ].`;
 
-    const userPrompt = `Create a comprehensive business blueprint for:
-    Business Description: ${feedBnsn}
-    Offer Type: ${offerType}
-    
-    Please provide a detailed blueprint with specific actionable steps.`;
+  const userPrompt = `Create a comprehensive business blueprint for:
+  Business Description: ${feedBnsn}
+  Offer Type: ${offerType}
+  
+  Return structured data using the provided categories. Each field should have meaningful content related to the business.
+  
+  IMPORTANT: Return pure JSON only - no markdown, no explanations, no code blocks.`;
 
-    const request: DeepSeekRequest = {
-      model: this.defaultModel,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      max_tokens: 2000,
-      temperature: 0.7,
-    };
+  const request: DeepSeekRequest = {
+    model: this.defaultModel,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt }
+    ],
+    max_tokens: 2000,
+    temperature: 0.7,
+  };
 
-    const response = await this.makeRequest(request);
-    return response.choices[0]?.message?.content || '';
+  const response = await this.makeRequest(request);
+  let content = response.choices[0]?.message?.content || '';
+  
+  // Clean the response to extract JSON
+  content = this.cleanJsonResponse(content);
+  
+  try {
+    return JSON.parse(content);
+  } catch (error) {
+    console.error('Failed to parse AI response:', error);
+    console.error('Raw AI response:', response.choices[0]?.message?.content);
+    return [];
   }
+}
+
+// Add this helper method to clean the response
+private cleanJsonResponse(content: string): string {
+  // Remove markdown code blocks
+  content = content.replace(/```json\s*/g, '');
+  content = content.replace(/```\s*/g, '');
+  
+  // Remove any text before the first [
+  const startIndex = content.indexOf('[');
+  if (startIndex !== -1) {
+    content = content.substring(startIndex);
+  }
+  
+  // Remove any text after the last ]
+  const endIndex = content.lastIndexOf(']');
+  if (endIndex !== -1) {
+    content = content.substring(0, endIndex + 1);
+  }
+  
+  // Clean up any remaining whitespace
+  content = content.trim();
+  
+  return content;
+}
 
   async generateEmailContent(blueprint: any, campaignType: string = 'promotional'): Promise<string> {
     const systemPrompt = `You are an expert email marketing copywriter. Create compelling email content based on the provided blueprint information.

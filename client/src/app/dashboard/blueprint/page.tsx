@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Search,
   Plus,
@@ -16,6 +16,8 @@ import {
   Filter,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { getAllBlueprintApi } from "@/services/blueprintApi";
 
 interface Blueprint {
   id: string;
@@ -31,71 +33,30 @@ const BlueprintPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
-  const blueprints: Blueprint[] = [
-    {
-      id: "1",
-      name: "Viral Content Engine for Women's Activewear",
-      created: "2024-01-15",
-      modified: "2024-07-08",
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "AI Agency Accelerator",
-      created: "2024-02-20",
-      modified: "2024-07-07",
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Your Best Life",
-      created: "2024-03-10",
-      modified: "2024-07-05",
-      status: "Draft",
-    },
-    {
-      id: "4",
-      name: "Dr. Hoyos Medical Office",
-      created: "2024-04-05",
-      modified: "2024-07-03",
-      status: "Active",
-    },
-    {
-      id: "5",
-      name: "Test Blueprint 2",
-      created: "2024-05-12",
-      modified: "2024-07-02",
-      status: "Draft",
-    },
-    {
-      id: "6",
-      name: "Outreach for Business Owners to Sell Their Company",
-      created: "2024-06-01",
-      modified: "2024-07-01",
-      status: "Active",
-    },
-    {
-      id: "7",
-      name: "Aatus Test Blueprint",
-      created: "2024-06-15",
-      modified: "2024-06-30",
-      status: "Archived",
-    },
-    {
-      id: "8",
-      name: "AI Assisted Course Creation Launch",
-      created: "2024-06-20",
-      modified: "2024-06-28",
-      status: "Active",
-    },
-    {
-      id: "9",
-      name: "Industry Rockstar AI Summit",
-      created: "2024-06-25",
-      modified: "2024-06-25",
-      status: "Draft",
-    },
-  ];
+  const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
+  // const blueprints: Blueprint[] = ;
+
+  useEffect(() => {
+    fetchBlueprint();
+  }, []);
+
+  const fetchBlueprint = async () => {
+    try {
+      const res = await getAllBlueprintApi();
+      setBlueprints(
+        res.data.map((blueprint: any) => ({
+          id: blueprint._id,
+          name: blueprint.title,
+          created: blueprint.createdAt,
+          modified: blueprint.updatedAt,
+          status: "Active",
+        }))
+      );
+      console.log("res", res);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
 
   const totalPages = Math.ceil(blueprints.length / itemsPerPage);
 

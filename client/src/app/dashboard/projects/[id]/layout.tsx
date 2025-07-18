@@ -1,10 +1,11 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { use, useEffect, useState } from "react"
 import { Plus, Eye } from "lucide-react"
 import CampaignAccordion from "@/components/CampainAccordion"
 import EditableTitle from "@/components/ui/EditableTitle"
+import { Category, singleProjectApi } from "@/services/projectApi"
 export interface Campaign {
   id: string
   title: string
@@ -20,12 +21,15 @@ export interface TitleState {
 
 export interface LayoutProps {
   children: React.ReactNode
+  params: Promise<{ id: string }>
 }
 
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
+const Layout: React.FC<LayoutProps> = ({ children,params }) => {
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>("Promotional Emails")
   const [mainTitle, setMainTitle] = useState("Email Campaign")
+   const [categories, setCategories] = useState<Category[]>([]);
+  const id = use(params).id;
   const [campaigns, setCampaigns] = useState<Campaign[]>([
     {
       id: "1",
@@ -42,6 +46,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       isActive: false,
     },
   ])
+
+  useEffect(() => {
+    fetchSingleProject();
+  }, [id]);
+
+  const fetchSingleProject = async () => {
+    const response = await singleProjectApi(id);
+    setCategories(response.data.categoryId);
+    console.log("first", response);
+  };
 
   const handleCampaignSelect = (campaignTitle: string) => {
     setSelectedCampaign(selectedCampaign === campaignTitle ? null : campaignTitle)
@@ -81,7 +95,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="mb-4">
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Campaigns</h3>
             <CampaignAccordion
-              campaigns={campaigns}
+              campaigns={categories}
               selectedCampaign={selectedCampaign}
               onCampaignSelect={handleCampaignSelect}
               onCampaignUpdate={handleCampaignUpdate}
