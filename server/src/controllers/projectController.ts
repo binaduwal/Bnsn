@@ -4,6 +4,8 @@ import { catchAsync, createError } from "../middleware/errorHandler";
 import mongoose from "mongoose";
 
 import { Category, IProject, Project } from "../models";
+import { CategoryValue } from "../models/CategoryValue";
+import { deepSeekService } from "../services/deepseek";
 
 export const createProject = catchAsync(
     async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -63,44 +65,123 @@ export const generateProject = catchAsync(
             return next(createError("User not found in request", 401));
         }
 
-        const { projectId } = req.body as {
-            projectId: mongoose.Types.ObjectId;
+        const { category, project, values, blueprintId } = req.body as {
+            category: string,
+            project: string,
+            values: { [key: string]: string },
+            blueprintId: string
         };
 
-        let values: { key: string, value: string }[] = [];
-
-        // categoryValues.forEach(async (categoryId) => {
-        //     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
-        //         return next(createError("Invalid categoryId", 400));
-        //     }
-
-        //     const category = await CategoryValue.findById(categoryId);
-
-        //     if (!category) {
-        //         return next(createError("Category not found", 404));
-        //     }
-
-        //     values.push(...category.value)
-        // });
-
-        //summarize the values to give them to deepseek
-        // const aiGeneratedContent = await deepSeekService.analyzeProject(
-        //     description,
-        // );
-
-        // if (!aiGeneratedContent) {
-        //     return next(createError("Failed to generate project", 500));
-        // }
-
-
-        //save the projects
-
-        res.json({
-            success: true,
+        // Set up SSE headers
+        res.writeHead(200, {
+            'Content-Type': 'text/plain; charset=utf-8',
+            'Transfer-Encoding': 'chunked',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive',
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Cache-Control'
         });
 
+        try {
+            // Stream initial progress
+            res.write(JSON.stringify({
+                type: 'progress',
+                message: 'Processing field values...',
+                progress: 10
+            }) + '\n');
+
+            const fieldValue = Object.keys(values).map((key) => {
+                return { key: key?.split('-')[0], value: values[key] };
+            });
+
+            const categoryValue = new CategoryValue({
+                category,
+                project,
+                value: fieldValue
+            });
+
+            // Stream progress update
+            res.write(JSON.stringify({
+                type: 'progress',
+                message: 'Fetching blueprint values...',
+                progress: 30
+            }) + '\n');
+
+            console.log('paylowa', { blueprint: blueprintId, category });
+            const blueprintValues = (await CategoryValue.find({ blueprint: blueprintId })
+                .populate('category')
+                .lean() as any[])
+                .map(blue => ({ title: blue.category.title, values: blue.value }));
+
+            // Stream blueprint values
+            res.write(JSON.stringify({
+                type: 'data',
+                key: 'blueprintValues',
+                value: blueprintValues,
+                progress: 50
+            }) + '\n');
+
+            // Stream progress update
+            res.write(JSON.stringify({
+                type: 'progress',
+                message: 'Generating AI content...',
+                progress: 70
+            }) + '\n');
+
+            // Generate AI content with streaming if your deepSeekService supports it
+            const aiGeneratedContent = await deepSeekService.generateEmail(
+                blueprintValues,
+                fieldValue
+            );
+
+            if (!aiGeneratedContent) {
+                res.write(JSON.stringify({
+                    type: 'error',
+                    message: 'Failed to generate project'
+                }) + '\n');
+                return res.end();
+            }
+
+            // Stream AI generated content
+            res.write(JSON.stringify({
+                type: 'data',
+                key: 'aiContent',
+                value: aiGeneratedContent,
+                progress: 90
+            }) + '\n');
+
+            // Stream field values
+            res.write(JSON.stringify({
+                type: 'data',
+                key: 'fieldValue',
+                value: fieldValue,
+                progress: 95
+            }) + '\n');
+
+            // Stream completion
+            res.write(JSON.stringify({
+                type: 'complete',
+                message: 'Project generation completed successfully',
+                progress: 100,
+                data: {
+                    success: true,
+                    blueprintValues,
+                    fieldValue,
+                    aiContent: aiGeneratedContent
+                }
+            }) + '\n');
+
+            res.end();
+
+        } catch (error: any) {
+            res.write(JSON.stringify({
+                type: 'error',
+                message: error.message || 'An error occurred during generation'
+            }) + '\n');
+            res.end();
+        }
     }
-)
+);
 
 export const singleProject = catchAsync(
     async (req: AuthRequest, res: Response, next: NextFunction) => {

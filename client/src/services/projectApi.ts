@@ -27,6 +27,14 @@ export const singleProjectApi = async (id: string) => {
     }
 }
 
+export const generateProjectApi = async (body: { category: string, project: string, values: { [key: string]: string, }, blueprintId?: string }) => {
+    try {
+        const res = await api.post('/projects/generate', body)
+        return res.data
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}
 
 export interface Project {
     _id: string;

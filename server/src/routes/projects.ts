@@ -5,7 +5,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { Project } from '../models';
 import { createError } from '../middleware/errorHandler';
-import { createProject, singleProject } from '../controllers/projectController';
+import { createProject, generateProject, singleProject } from '../controllers/projectController';
 
 const router = Router();
 
@@ -92,6 +92,9 @@ router.get('/', authenticateToken, validateQuery(projectQuerySchema), async (req
 });
 
 router.post('/', authenticateToken, createProject);
+router.post('/generate', authenticateToken, generateProject);
+
+
 
 router.get('/:id', authenticateToken, validateParams(projectParamsSchema), singleProject);
 

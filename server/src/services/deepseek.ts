@@ -3,6 +3,7 @@ import { DeepSeekRequest, DeepSeekResponse } from '../types';
 import { createError } from '../middleware/errorHandler';
 import { ICategory } from '../models/Category';
 import 'dotenv/config'
+import { BlueprintValue, ProjectCategoryValue } from '../types/project';
 
 export class DeepSeekService {
   private apiKey: string;
@@ -52,18 +53,18 @@ export class DeepSeekService {
     }
   }
 
- async generateBlueprint(
-  feedBnsn: string, 
-  offerType: string, 
-  categories: ICategory[]
-): Promise<any> {
-  const categoryList = categories.map(cat => ({
-    title: cat.title,
-    description: cat.description,
-    fields: cat.fields.map(f => ({ fieldName: f.fieldName, fieldType: f.fieldType }))
-  }));
+  async generateBlueprint(
+    feedBnsn: string,
+    offerType: string,
+    categories: ICategory[]
+  ): Promise<any> {
+    const categoryList = categories.map(cat => ({
+      title: cat.title,
+      description: cat.description,
+      fields: cat.fields.map(f => ({ fieldName: f.fieldName, fieldType: f.fieldType }))
+    }));
 
-  const systemPrompt = `You are an expert business strategist. You must respond with a JSON array of category objects. Each category object must have:
+    const systemPrompt = `You are an expert business strategist. You must respond with a JSON array of category objects. Each category object must have:
   - title: string (must match one of the provided categories)
   - description: string
   - fields: array of objects with fieldName and value properties
@@ -72,7 +73,7 @@ export class DeepSeekService {
   
   CRITICAL: Return ONLY the JSON array without any markdown formatting, explanations, or code blocks. Start directly with [ and end with ].`;
 
-  const userPrompt = `Create a comprehensive business blueprint for:
+    const userPrompt = `Create a comprehensive business blueprint for:
   Business Description: ${feedBnsn}
   Offer Type: ${offerType}
   
@@ -80,54 +81,54 @@ export class DeepSeekService {
   
   IMPORTANT: Return pure JSON only - no markdown, no explanations, no code blocks.`;
 
-  const request: DeepSeekRequest = {
-    model: this.defaultModel,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt }
-    ],
-    max_tokens: 2000,
-    temperature: 0.7,
-  };
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt }
+      ],
+      max_tokens: 2000,
+      temperature: 0.7,
+    };
 
-  const response = await this.makeRequest(request);
-  let content = response.choices[0]?.message?.content || '';
-  
-  // Clean the response to extract JSON
-  content = this.cleanJsonResponse(content);
-  
-  try {
-    return JSON.parse(content);
-  } catch (error) {
-    console.error('Failed to parse AI response:', error);
-    console.error('Raw AI response:', response.choices[0]?.message?.content);
-    return [];
-  }
-}
+    const response = await this.makeRequest(request);
+    let content = response.choices[0]?.message?.content || '';
 
-// Add this helper method to clean the response
-private cleanJsonResponse(content: string): string {
-  // Remove markdown code blocks
-  content = content.replace(/```json\s*/g, '');
-  content = content.replace(/```\s*/g, '');
-  
-  // Remove any text before the first [
-  const startIndex = content.indexOf('[');
-  if (startIndex !== -1) {
-    content = content.substring(startIndex);
+    // Clean the response to extract JSON
+    content = this.cleanJsonResponse(content);
+
+    try {
+      return JSON.parse(content);
+    } catch (error) {
+      console.error('Failed to parse AI response:', error);
+      console.error('Raw AI response:', response.choices[0]?.message?.content);
+      return [];
+    }
   }
-  
-  // Remove any text after the last ]
-  const endIndex = content.lastIndexOf(']');
-  if (endIndex !== -1) {
-    content = content.substring(0, endIndex + 1);
+
+  // Add this helper method to clean the response
+  private cleanJsonResponse(content: string): string {
+    // Remove markdown code blocks
+    content = content.replace(/```json\s*/g, '');
+    content = content.replace(/```\s*/g, '');
+
+    // Remove any text before the first [
+    const startIndex = content.indexOf('[');
+    if (startIndex !== -1) {
+      content = content.substring(startIndex);
+    }
+
+    // Remove any text after the last ]
+    const endIndex = content.lastIndexOf(']');
+    if (endIndex !== -1) {
+      content = content.substring(0, endIndex + 1);
+    }
+
+    // Clean up any remaining whitespace
+    content = content.trim();
+
+    return content;
   }
-  
-  // Clean up any remaining whitespace
-  content = content.trim();
-  
-  return content;
-}
 
   async generateEmailContent(blueprint: any, campaignType: string = 'promotional'): Promise<string> {
     const systemPrompt = `You are an expert email marketing copywriter. Create compelling email content based on the provided blueprint information.
@@ -248,20 +249,34 @@ private cleanJsonResponse(content: string): string {
     return response.choices[0]?.message?.content || '';
   }
 
-  async generateEmail(emailData: any): Promise<string> {
+  async generateEmail(blueprintValue: BlueprintValue[], projectCategoryValue: ProjectCategoryValue[]): Promise<string> {
     const systemPrompt = `You are an expert email copywriter. Create high-converting emails that drive clicks, engagement, and conversions. Use proven psychological techniques, personalization, and strong CTAs for different email types like sales, follow-up, nurture, or broadcast.`;
 
-    const userPrompt = `Generate a professional, engaging email based on the following data:
+    const formattedBlueprint = blueprintValue.map(section => {
+      const values = section.values
+        .map(val => `- ${val.key}: ${val.value}`)
+        .join('\n');
+      return `### ${section.title}\n${values}`;
+    }).join('\n\n');
 
-Email Data: ${JSON.stringify(emailData)}
+    const formattedCategoryInputs = projectCategoryValue.map(item => {
+      return `- ${item.key}: ${item.value}`;
+    }).join('\n');
 
-Include:
-- Subject line
+    const userPrompt = `Generate a professional, engaging email based on the following user inputs:
+
+## Blueprint Information
+${formattedBlueprint}
+
+## Email-Specific Details
+${formattedCategoryInputs}
+
+Please include:
+- A compelling subject line
 - Preheader text
-- Email body with a strong CTA
-- Adapt tone and length for the context (e.g., sales vs nurture)
+- Email body with personalized tone and strong CTA
 
-Ensure it's suitable for email marketing best practices.`;
+Ensure the email is optimized for marketing engagement and conversion, and fits best practices for the type of content described.`;
 
     const request: DeepSeekRequest = {
       model: this.defaultModel,
@@ -276,6 +291,7 @@ Ensure it's suitable for email marketing best practices.`;
     const response = await this.makeRequest(request);
     return response.choices[0]?.message?.content || '';
   }
+
 
   async generateBookDraft(bookData: any): Promise<string> {
     const systemPrompt = `You are a professional book ghostwriter. Based on the provided book data, help structure and write an engaging, coherent book. Focus on clear chapter organization, tone consistency, and value delivery to the reader.`;

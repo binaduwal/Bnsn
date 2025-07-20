@@ -4,19 +4,20 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Settings, Pencil, Check, X } from "lucide-react";
-import { Campaign } from "@/app/dashboard/projects/[id]/layout";
 import { Category, SubCategory } from "@/services/projectApi";
 
 interface CampaignAccordionProps {
   campaigns: Category[];
   selectedCampaign: string | null;
-  onCampaignSelect: (campaignTitle: string) => void;
+  onCategoryChange: (id: string) => void;
+  onCampaignSelect: (id: string) => void;
   onCampaignUpdate: (oldTitle: string, newTitle: string) => void;
 }
 
 const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
   campaigns,
   selectedCampaign,
+  onCategoryChange,
   onCampaignSelect,
   onCampaignUpdate,
 }) => {
@@ -42,13 +43,12 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
     setEditValue("");
   };
 
-  const handleSettingsClick = (campaignTitle: string) => {
-    const slug = campaignTitle.toLowerCase().replace(/\s+/g, "-");
-    router.push(`/dashboard/projects/${slug}/settings`);
+  const handleSettingsClick = (id: string) => {
+    router.push(`/dashboard/projects/${id}/settings`);
   };
 
-  const handleCampaignClick = (campaignSlug: string) => {
-    router.push(`/dashboard/projects/${campaignSlug}`);
+  const handleCampaignClick = (id: string) => {
+    onCategoryChange?.(id);
   };
 
   const handleHeaderClick = (campaignTitle: string) => {
@@ -67,7 +67,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
           {/* Accordion Header */}
           <div
             onClick={() => handleHeaderClick(campaign.title)}
-            className="p-4 hover:bg-gray-50  transition-colors cursor-pointer"
+            className="p-4  hover:bg-gray-50  transition-colors cursor-pointer"
           >
             <div className="flex items-center justify-between">
               <div className="flex-1 flex items-center gap-1">
@@ -133,9 +133,9 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleSettingsClick(campaign.title);
+                    handleSettingsClick(campaign._id);
                   }}
-                  className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                  className="p-1.5 rounded-md  hover:bg-gray-100 transition-colors"
                   title="Campaign settings"
                 >
                   <Settings className="w-4 h-4 text-gray-400 hover:text-gray-600" />
@@ -145,7 +145,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                     e.stopPropagation();
                     onCampaignSelect(campaign.title);
                   }}
-                  className="p-1.5 rounded-md hover:bg-gray-100 transition-colors"
+                  className="p-1.5 rounded-md  hover:bg-gray-100 transition-colors"
                   title={
                     selectedCampaign === campaign.title ? "Collapse" : "Expand"
                   }
@@ -173,7 +173,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                 <button
                   key={i}
                   onClick={() => handleCampaignClick(third._id)}
-                  className="w-full bg-blue-50 border border-blue-200 rounded-lg  p-3 hover:bg-blue-100 transition-colors group"
+                  className="w-full  bg-blue-50 border border-blue-200 rounded-lg  p-3 hover:bg-blue-100 transition-colors group"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-blue-900">
