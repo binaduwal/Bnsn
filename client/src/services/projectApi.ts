@@ -29,6 +29,25 @@ export const singleProjectApi = async (id: string) => {
     }
 }
 
+export const deleteProjectApi = async (id: string) => {
+    try {
+        const res = await api.delete('/projects/' + id)
+        return res.data as { success: boolean, data: Project }
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}
+
+export const getAllProjectApi = async () => {
+    try {
+        const res = await api.get('/projects')
+        return res.data as { success: boolean, data: Project[] }
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}
+
+
 export const generateProjectApi = async (body: { category: string, project: string, values: { [key: string]: string, }, blueprintId?: string }) => {
     try {
         const res = await api.post('/projects/generate', body)
@@ -63,12 +82,7 @@ export const generateProjectStreamApi = async (body: {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        console.log("Response:", response);
-        console.log("Response.body:", response.body);
-        console.log("Response.ok:", response.ok);
-        console.log("Response.status:", response.status);
-        console.log("Response.headers:", [...response.headers.entries()]);
-
+    
         return response; // Return Response object for streaming
     } catch (error) {
         throw errorHandler(error);
@@ -77,7 +91,10 @@ export const generateProjectStreamApi = async (body: {
 
 export interface Project {
     _id: string;
-    blueprintId: string;
+    blueprintId: {
+        _id: string;
+        title: string;
+    };
     userId: string;
     name: string;
     description: string;

@@ -14,10 +14,13 @@ import {
   ChevronDown,
   MoreHorizontal,
   Filter,
+  Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { getAllBlueprintApi } from "@/services/blueprintApi";
+import { deleteBlueprintApi, getAllBlueprintApi } from "@/services/blueprintApi";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { formatTableDate } from "@/utils/dateUtils";
 
 interface Blueprint {
   id: string;
@@ -34,7 +37,9 @@ const BlueprintPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
-  // const blueprints: Blueprint[] = ;
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [blueprintToDelete, setBlueprintToDelete] = useState<Blueprint | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     fetchBlueprint();
@@ -42,6 +47,7 @@ const BlueprintPage: React.FC = () => {
 
   const fetchBlueprint = async () => {
     try {
+      setIsLoading(true);
       const res = await getAllBlueprintApi();
       setBlueprints(
         res.data.map((blueprint: any) => ({
@@ -55,6 +61,8 @@ const BlueprintPage: React.FC = () => {
       console.log("res", res);
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -73,13 +81,30 @@ const BlueprintPage: React.FC = () => {
     }
   };
 
+  const handleDeleteClick = (blueprint: Blueprint) => {
+    setBlueprintToDelete(blueprint);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!blueprintToDelete) return;
+
+    try {
+      await deleteBlueprintApi(blueprintToDelete.id);
+      toast.success("Blueprint deleted successfully");
+      fetchBlueprint();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const BlueprintRow: React.FC<{ blueprint: Blueprint }> = ({ blueprint }) => {
     return (
       <tr className="hover:bg-gray-50 border-b border-gray-100">
         <td className="px-6 py-4">
           <div
             onClick={() => router.push(`/dashboard/blueprint/${blueprint.id}`)}
-            className="font-medium text-gray-900 hover:text-blue-600 cursor-pointer max-w-max"
+            className="font-medium text-gray-900 capitalize hover:text-blue-600 cursor-pointer max-w-max"
           >
             {blueprint.name}
           </div>
@@ -93,15 +118,15 @@ const BlueprintPage: React.FC = () => {
             {blueprint.status}
           </span>
         </td>
-        <td className="px-6 py-4 text-sm text-gray-600">{blueprint.created}</td>
         <td className="px-6 py-4 text-sm text-gray-600">
-          {blueprint.modified}
+          {formatTableDate(blueprint.created)}
+        </td>
+        <td className="px-6 py-4 text-sm text-gray-600">
+          {formatTableDate(blueprint.modified)}
         </td>
         <td className="px-6 py-4">
           <div className="flex items-center space-x-2">
-            <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
-              <Copy size={16} />
-            </button>
+            
             <button
               onClick={() =>
                 router.push(`/dashboard/blueprint/${blueprint.id}`)
@@ -110,12 +135,13 @@ const BlueprintPage: React.FC = () => {
             >
               <Edit size={16} />
             </button>
-            <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+            <button
+              onClick={() => handleDeleteClick(blueprint)}
+              className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            >
               <Trash2 size={16} />
             </button>
-            <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
-              <MoreHorizontal size={16} />
-            </button>
+         
           </div>
         </td>
       </tr>
@@ -130,6 +156,18 @@ const BlueprintPage: React.FC = () => {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="animate-spin h-8 w-8 text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600 text-lg">Loading blueprints...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -315,6 +353,21 @@ const BlueprintPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setBlueprintToDelete(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Blueprint"
+        message={`Are you sure you want to delete "${blueprintToDelete?.name}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

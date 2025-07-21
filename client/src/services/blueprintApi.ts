@@ -34,6 +34,24 @@ export const getSingleBlueprintApi = async (id: string) => {
     }
 }
 
+export const deleteBlueprintApi = async (id: string) => {
+    try {
+        const res = await api.delete('/blueprints/' + id)
+        return res.data as { success: boolean, data: BlueprintProps }
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}
+
+export const updateCategoryValueApi = async (id: string, value: { key: string; value: string; _id?: string }[]) => {
+    try {
+        const res = await api.put(`/category/value/${id}`, { value })
+        return res.data as { success: boolean, data: CategoryValue }
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}
+
 export type CategoryValue = {
     _id: string;
     category: string; // ObjectId as string

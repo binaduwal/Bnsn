@@ -3,10 +3,11 @@ import BlueprintForm from "@/components/BlueprintForm";
 import { CategorizedForm } from "@/components/CategorizedForm";
 import EditableInput from "@/components/ui/EditableInput";
 import {
-  Category,
+  
   CategoryValue,
   getSingleBlueprintApi,
 } from "@/services/blueprintApi";
+import { Category } from "@/services/categoryApi";
 import { Copy } from "lucide-react";
 import React, { use, useEffect, useState } from "react";
 import toast from "react-hot-toast";

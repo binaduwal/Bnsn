@@ -5,7 +5,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { Project } from '../models';
 import { createError } from '../middleware/errorHandler';
-import { createProject, generateProject, singleProject } from '../controllers/projectController';
+import { allProject, createProject, deleteProject, generateProject, singleProject } from '../controllers/projectController';
 
 const router = Router();
 
@@ -41,55 +41,7 @@ const projectQuerySchema = Joi.object({
   limit: Joi.number().min(1).max(100).default(20),
 });
 
-router.get('/', authenticateToken, validateQuery(projectQuerySchema), async (req: AuthRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return next(createError('User not found in request', 401));
-    }
-
-    const { search, status, type, page = 1, limit = 20 } = req.query as any;
-
-    const filter: any = { userId: req.user.id };
-
-    if (search) {
-      filter.name = { $regex: search, $options: 'i' };
-    }
-
-    if (status) {
-      filter.status = status;
-    }
-
-    if (type) {
-      filter.type = type;
-    }
-
-    const skip = (page - 1) * limit;
-
-    const [projects, total] = await Promise.all([
-      Project.find(filter)
-        .sort({ updatedAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Project.countDocuments(filter)
-    ]);
-
-    res.json({
-      success: true,
-      data: {
-        projects,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.get('/', authenticateToken, allProject);
 
 router.post('/', authenticateToken, createProject);
 router.post('/generate', authenticateToken, generateProject);
@@ -129,32 +81,7 @@ router.put('/:id', authenticateToken, validateParams(projectParamsSchema), valid
   }
 });
 
-router.delete('/:id', authenticateToken, validateParams(projectParamsSchema), async (req: AuthRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return next(createError('User not found in request', 401));
-    }
-
-    const { id } = req.params;
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return next(createError('Invalid project ID', 400));
-    }
-
-    const deletedProject = await Project.findOneAndDelete({ _id: id, userId: req.user.id });
-
-    if (!deletedProject) {
-      return next(createError('Project not found', 404));
-    }
-
-    res.json({
-      success: true,
-      message: 'Project deleted successfully',
-    });
-  } catch (error) {
-    next(error);
-  }
-});
+router.delete('/:id', authenticateToken, deleteProject);
 
 router.put('/:id/star', authenticateToken, validateParams(projectParamsSchema), async (req: AuthRequest, res, next) => {
   try {
@@ -186,43 +113,6 @@ router.put('/:id/star', authenticateToken, validateParams(projectParamsSchema), 
   }
 });
 
-router.post('/:id/duplicate', authenticateToken, validateParams(projectParamsSchema), async (req: AuthRequest, res, next) => {
-  try {
-    if (!req.user) {
-      return next(createError('User not found in request', 401));
-    }
 
-    const { id } = req.params;
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return next(createError('Invalid project ID', 400));
-    }
-
-    const project = await Project.findOne({ _id: id, userId: req.user.id }).lean();
-
-    if (!project) {
-      return next(createError('Project not found', 404));
-    }
-
-    const duplicatedProject = new Project({
-      name: `${project.name} (Copy)`,
-      type: project.type,
-      status: 'Draft',
-      userId: req.user.id,
-      blueprintId: project.blueprintId,
-      isStarred: false,
-      settings: project.settings,
-    });
-
-    await duplicatedProject.save();
-
-    res.status(201).json({
-      success: true,
-      data: duplicatedProject,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
 
 export default router;

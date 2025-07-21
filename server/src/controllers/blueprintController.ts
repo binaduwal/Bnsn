@@ -37,7 +37,6 @@ export const createBlueprint = catchAsync(
         allCategories
       );
 
-      console.log("AI Generated Content:", aiGeneratedContent);
 
       if (Array.isArray(aiGeneratedContent) && aiGeneratedContent.length > 0) {
         for (const aiCategory of aiGeneratedContent) {
@@ -96,7 +95,7 @@ export const getAllBlueprint = catchAsync(
       return next(createError("User not found in request", 401));
     }
 
-    const blueprints = await Blueprint.find().lean()
+    const blueprints = await Blueprint.find().sort({ createdAt: -1 }).lean()
 
     if (!blueprints) {
       return next(createError("No blueprints found", 404))
@@ -114,7 +113,7 @@ export const getSingleBlueprint = catchAsync(
       return next(createError("User not found in request", 401));
     }
     const { id } = req.params
-    const blueprints = await Blueprint.findOne({ _id: id }).populate('categories').lean()
+    const blueprints = await Blueprint.findOne({ _id: id }).populate('categories').lean() as any
     if (!blueprints) {
       return next(createError("No blueprint found", 404))
     }
@@ -125,7 +124,7 @@ export const getSingleBlueprint = catchAsync(
     const categoryValues: any[] = []
 
     for (const category of blueprints.categories) {
-      const categoryData = await CategoryValue.findOne({ blueprint: blueprints._id, category: category._id as any }).lean()
+      const categoryData = await CategoryValue.findOne({ blueprint: blueprints._id, category: category._id }).lean()
       console.log('category data', categoryData)
       categoryValues.push(categoryData)
     }
@@ -142,3 +141,20 @@ export const getSingleBlueprint = catchAsync(
     })
 
   })
+
+export const deleteBlueprint = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(createError("User not found in request", 401));
+    }
+    const { id } = req.params
+    const blueprint = await Blueprint.findByIdAndDelete(id)
+    if (!blueprint) {
+      return next(createError("Blueprint not found", 404))
+    }
+    res.status(200).json({
+      success: true,
+      data: blueprint
+    })
+  }
+)

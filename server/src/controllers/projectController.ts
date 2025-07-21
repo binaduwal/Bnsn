@@ -72,6 +72,9 @@ export const generateProject = catchAsync(
             blueprintId: string
         };
 
+
+
+
         // Set up SSE headers
         res.writeHead(200, {
             'Content-Type': 'text/plain; charset=utf-8',
@@ -126,14 +129,30 @@ export const generateProject = catchAsync(
                 message: 'Generating AI content...',
                 progress: 70
             }) + '\n');
-            console.log(' generating content',);
+            console.log(' generating api request body: ', req.body);
+            // testing 
+            const categoryData = await Category.findById(category).lean()
 
-            // Generate AI content with streaming if your deepSeekService supports it
-            const aiGeneratedContent = await deepSeekService.generateEmail(
-                blueprintValues,
-                fieldValue
-            );
-            console.log('ai generated content', aiGeneratedContent);
+            let aiGeneratedContent;
+
+            switch (categoryData?.title) {
+                case "Email":
+                    aiGeneratedContent = await deepSeekService.generateEmail(
+                        blueprintValues,
+                        fieldValue
+                    );
+
+                    break;
+
+                case "Website":
+                    break;
+                default:
+                    break;
+            }
+
+
+
+
 
             if (!aiGeneratedContent) {
                 res.write(JSON.stringify({
@@ -261,19 +280,15 @@ export const allProject = catchAsync(
         if (!req.user) {
             return next(createError("User not found in request", 401));
         }
-
-
-
-
         const projects = await Project.find({ userId: req.user.id })
             .populate("categoryId")
+            .populate("blueprintId", "_id title")
+            .sort({ createdAt: -1 })
             .lean() as any;
 
         if (!projects) {
             return next(createError("Project not found", 404));
         }
-
-
 
         res.json({
             success: true,
@@ -281,3 +296,20 @@ export const allProject = catchAsync(
         });
     }
 );
+
+export const deleteProject = catchAsync(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+        if (!req.user) {
+            return next(createError("User not found in request", 401));
+        }
+        const { id } = req.params;
+        const project = await Project.findByIdAndDelete(id);
+        if (!project) {
+            return next(createError("Project not found", 404));
+        }
+        res.json({
+            success: true,
+            data: project
+        });
+    }
+)

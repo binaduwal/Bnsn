@@ -9,7 +9,7 @@ import {
 } from "../middleware/validation";
 import { Category as Blueprint } from "../models";
 import { createError } from "../middleware/errorHandler";
-import { createBlueprint, getAllBlueprint, getSingleBlueprint } from "../controllers/blueprintController";
+import { createBlueprint, deleteBlueprint, getAllBlueprint, getSingleBlueprint } from "../controllers/blueprintController";
 
 const router = Router();
 
@@ -75,7 +75,12 @@ router.get(
   validateParams(blueprintParamsSchema),
   getSingleBlueprint
 );
+router.delete(
+  "/:id",
+  authenticateToken,
 
+  deleteBlueprint
+);
 router.put(
   "/:id",
   authenticateToken,

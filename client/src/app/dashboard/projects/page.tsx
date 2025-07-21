@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Search,
   Plus,
@@ -15,18 +15,16 @@ import {
   MoreHorizontal,
   Filter,
   FolderOpen,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { deleteProjectApi, getAllProjectApi, Project } from "@/services/projectApi";
+import ConfirmationModal from "@/components/ui/ConfirmationModal";
+import { formatTableDate } from "@/utils/dateUtils";
 
-interface Project {
-  id: string;
-  name: string;
-  blueprint?: string;
-  created: string;
-  modified: string;
-  status: "Active" | "Draft" | "Archived";
-}
+
 
 const ProjectsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -35,8 +33,26 @@ const ProjectsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBlueprint, setSelectedBlueprint] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const router = useRouter();
+
+  useEffect(() => {
+    fetchAllProjects()
+  }, [])
+
+  const fetchAllProjects = async () =>{
+    setIsLoading(true);
+    try {
+      const res = await getAllProjectApi()
+      setProjects(res.data)
+    } catch (error:any) {
+      toast.error(error.message)
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   const blueprints = [
     "All Blueprints",
@@ -47,80 +63,24 @@ const ProjectsPage: React.FC = () => {
     "Outreach for business owners to sell their company",
   ];
 
-  const projects: Project[] = [
-    {
-      id: "1",
-      name: "Viral Content Engine for Women's Activewear",
-      blueprint: "Viral Content Engine for Women's Activewear",
-      created: "2024-01-15",
-      modified: "2024-07-08",
-      status: "Active",
-    },
-    {
-      id: "2",
-      name: "AI Agency Accelerator",
-      blueprint: "AI Agency Accelerator",
-      created: "2024-02-20",
-      modified: "2024-07-07",
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "Your Best Life",
-      blueprint: "Your Best Life",
-      created: "2024-03-10",
-      modified: "2024-07-05",
-      status: "Draft",
-    },
-    {
-      id: "4",
-      name: "Dr. Hoyos Medical Office",
-      blueprint: "Dr. Hoyos Medical Office",
-      created: "2024-04-05",
-      modified: "2024-07-03",
-      status: "Active",
-    },
-    {
-      id: "5",
-      name: "Test Project 2",
-      blueprint: "AI Agency Accelerator",
-      created: "2024-05-12",
-      modified: "2024-07-02",
-      status: "Draft",
-    },
-    {
-      id: "6",
-      name: "Outreach for Business Owners to Sell Their Company",
-      blueprint: "Outreach for business owners to sell their company",
-      created: "2024-06-01",
-      modified: "2024-07-01",
-      status: "Active",
-    },
-    {
-      id: "7",
-      name: "Aatus Test Project",
-      blueprint: "AI Agency Accelerator",
-      created: "2024-06-15",
-      modified: "2024-06-30",
-      status: "Archived",
-    },
-    {
-      id: "8",
-      name: "AI Assisted Course Creation Launch",
-      blueprint: "AI Agency Accelerator",
-      created: "2024-06-20",
-      modified: "2024-06-28",
-      status: "Active",
-    },
-    {
-      id: "9",
-      name: "Industry Rockstar AI Summit",
-      blueprint: "Your Best Life",
-      created: "2024-06-25",
-      modified: "2024-06-25",
-      status: "Draft",
-    },
-  ];
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
+
+  const handleDeleteClick = (project: Project) => {
+    setProjectToDelete(project);
+    setShowDeleteModal(true);
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!projectToDelete) return;
+    try {
+      await deleteProjectApi(projectToDelete._id);
+      toast.success("Project deleted successfully");
+      fetchAllProjects();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -139,14 +99,14 @@ const ProjectsPage: React.FC = () => {
     <tr className="hover:bg-gray-50 border-b border-gray-100">
       <td className="px-6 py-4">
         <div
-          onClick={() => router.push(`/dashboard/projects/${project.id}`)}
-          className="font-medium text-gray-900 hover:text-blue-600 cursor-pointer max-w-max"
+          onClick={() => router.push(`/dashboard/projects/${project._id}`)}
+          className="font-medium text-gray-900 hover:text-blue-600 capitalize cursor-pointer max-w-max"
         >
           {project.name}
         </div>
-        {project.blueprint && (
+        {project.blueprintId && (
           <div className="text-sm text-gray-500 mt-1">
-            Blueprint: {project.blueprint}
+            Blueprint: {project.blueprintId.title}
           </div>
         )}
       </td>
@@ -159,25 +119,21 @@ const ProjectsPage: React.FC = () => {
           {project.status}
         </span>
       </td>
-      <td className="px-6 py-4 text-sm text-gray-600">{project.created}</td>
-      <td className="px-6 py-4 text-sm text-gray-600">{project.modified}</td>
+      <td className="px-6 py-4 text-sm text-gray-600">{formatTableDate(project.createdAt)}</td>
+      <td className="px-6 py-4 text-sm text-gray-600">{formatTableDate(project.updatedAt)}</td>
       <td className="px-6 py-4">
         <div className="flex items-center space-x-2">
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
-            <Copy size={16} />
-          </button>
+        
           <button
-            onClick={() => router.push(`/dashboard/projects/${project.id}`)}
+            onClick={() => router.push(`/dashboard/projects/${project._id}`)}
             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
           >
             <Edit size={16} />
           </button>
-          <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+          <button onClick={() => handleDeleteClick(project)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
             <Trash2 size={16} />
           </button>
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
-            <MoreHorizontal size={16} />
-          </button>
+
         </div>
       </td>
     </tr>
@@ -190,7 +146,7 @@ const ProjectsPage: React.FC = () => {
     const matchesBlueprint =
       selectedBlueprint === "" ||
       selectedBlueprint === "All Blueprints" ||
-      project.blueprint === selectedBlueprint;
+      project.blueprintId.title === selectedBlueprint;
     return matchesSearch && matchesBlueprint;
   });
 
@@ -289,7 +245,7 @@ const ProjectsPage: React.FC = () => {
           <div className="flex items-center space-x-6 text-sm text-gray-600 mb-6">
             <span>{filteredProjects.length} total projects</span>
             <span>
-              {filteredProjects.filter((p) => p.status === "Active").length}{" "}
+              {filteredProjects.filter((p) => p.status === "Published").length}{" "}
               active
             </span>
             <span>
@@ -303,132 +259,156 @@ const ProjectsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <button
-                    onClick={() =>
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                    }
-                    className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
-                  >
-                    <span>Name</span>
-                    {sortOrder === "asc" ? (
-                      <ChevronUp size={16} />
-                    ) : (
-                      <ChevronDown size={16} />
-                    )}
-                  </button>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Modified
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {paginatedProjects.map((project) => (
-                <ProjectRow key={project.id} project={project} />
-              ))}
-            </tbody>
-          </table>
-
-          {/* Empty State */}
-          {filteredProjects.length === 0 && (
-            <div className="text-center py-12">
-              <div className="text-gray-500 mb-2">No projects found</div>
-              <div className="text-gray-400 text-sm">
-                Try adjusting your search or filter criteria
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Pagination */}
-        {filteredProjects.length > 0 && (
-          <div className="flex items-center justify-between mt-6">
-            <div className="text-sm text-gray-600">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-              {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of{" "}
-              {filteredProjects.length} results
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1}
-                className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ChevronsLeft size={16} />
-              </button>
-
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-
-              <div className="flex items-center space-x-2 px-3">
-                <span className="text-sm text-gray-600">Page</span>
-                <input
-                  type="number"
-                  value={currentPage}
-                  onChange={(e) => setCurrentPage(Number(e.target.value))}
-                  className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  min="1"
-                  max={totalPages}
-                />
-                <span className="text-sm text-gray-600">of {totalPages}</span>
-              </div>
-
-              <button
-                onClick={() =>
-                  setCurrentPage(Math.min(totalPages, currentPage + 1))
-                }
-                disabled={currentPage === totalPages}
-                className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ChevronRight size={16} />
-              </button>
-
-              <button
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages}
-                className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                <ChevronsRight size={16} />
-              </button>
-
-              <div className="flex items-center space-x-2 ml-6 pl-6 border-l border-gray-200">
-                <span className="text-sm text-gray-600">Rows per page:</span>
-                <select
-                  value={itemsPerPage}
-                  onChange={(e) => setItemsPerPage(Number(e.target.value))}
-                  className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                >
-                  <option value={10}>10</option>
-                  <option value={25}>25</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="flex items-center justify-center py-12">
+              <div className="flex items-center space-x-3">
+                <Loader2 className="animate-spin text-blue-600" size={24} />
+                <span className="text-gray-600">Loading projects...</span>
               </div>
             </div>
           </div>
+        ) : (
+          <>
+            {/* Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <button
+                        onClick={() =>
+                          setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                        }
+                        className="flex items-center space-x-1 hover:text-gray-700 transition-colors"
+                      >
+                        <span>Name</span>
+                        {sortOrder === "asc" ? (
+                          <ChevronUp size={16} />
+                        ) : (
+                          <ChevronDown size={16} />
+                        )}
+                      </button>
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Created
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Modified
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedProjects.map((project) => (
+                    <ProjectRow key={project._id} project={project} />
+                  ))}
+                </tbody>
+              </table>
+
+              {/* Empty State */}
+              {filteredProjects.length === 0 && (
+                <div className="text-center py-12">
+                  <div className="text-gray-500 mb-2">No projects found</div>
+                  <div className="text-gray-400 text-sm">
+                    Try adjusting your search or filter criteria
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Pagination */}
+            {filteredProjects.length > 0 && (
+              <div className="flex items-center justify-between mt-6">
+                <div className="text-sm text-gray-600">
+                  Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                  {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of{" "}
+                  {filteredProjects.length} results
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setCurrentPage(1)}
+                    disabled={currentPage === 1}
+                    className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <ChevronsLeft size={16} />
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  <div className="flex items-center space-x-2 px-3">
+                    <span className="text-sm text-gray-600">Page</span>
+                    <input
+                      type="number"
+                      value={currentPage}
+                      onChange={(e) => setCurrentPage(Number(e.target.value))}
+                      className="w-16 px-2 py-1 text-center text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                      min="1"
+                      max={totalPages}
+                    />
+                    <span className="text-sm text-gray-600">of {totalPages}</span>
+                  </div>
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage(Math.min(totalPages, currentPage + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+
+                  <button
+                    onClick={() => setCurrentPage(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="p-2 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg hover:bg-gray-100 transition-colors"
+                  >
+                    <ChevronsRight size={16} />
+                  </button>
+
+                  <div className="flex items-center space-x-2 ml-6 pl-6 border-l border-gray-200">
+                    <span className="text-sm text-gray-600">Rows per page:</span>
+                    <select
+                      value={itemsPerPage}
+                      onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                      className="px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Project"
+        message={`Are you sure you want to delete "${projectToDelete?.name}" ? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };

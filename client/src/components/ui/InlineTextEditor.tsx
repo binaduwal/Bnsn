@@ -8,6 +8,7 @@ interface InlineTextEditorProps {
   initialContent?: string
   onChange?: (content: string) => void
   placeholder?: string
+  className?: string
 }
 
 interface FloatingToolbarProps {
@@ -69,6 +70,7 @@ const InlineTextEditor: React.FC<InlineTextEditorProps> = ({
   initialContent = "",
   onChange,
   placeholder = "Start writing your email content...",
+  className = "",
 }) => {
   const [showToolbar, setShowToolbar] = useState(false)
   const [toolbarPosition, setToolbarPosition] = useState({ top: 0, left: 0 })
@@ -125,7 +127,7 @@ const InlineTextEditor: React.FC<InlineTextEditorProps> = ({
 
     if (rect.width > 0 && rect.height > 0) {
       setToolbarPosition({
-        top: rect.top + window.scrollY,
+        top: rect.top + window.scrollY - 50,
         left: rect.left + rect.width / 2,
       })
       setShowToolbar(true)
@@ -254,10 +256,11 @@ const InlineTextEditor: React.FC<InlineTextEditorProps> = ({
   return (
     <>
       <div className=" rounded-lg overflow-hidden bg-white h-full relative">
+        
         <div
           ref={editorRef}
           contentEditable
-          className="p-6 min-h-[400px] focus:outline-none text-gray-900 leading-relaxed relative"
+          className={`p-6 min-h-[400px] focus:outline-none text-gray-900 leading-relaxed relative ${className}`}
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onMouseUp={handleMouseUp}

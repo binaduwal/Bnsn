@@ -1,6 +1,7 @@
 "use client";
-import { CategoryValue } from "@/services/blueprintApi";
+import { CategoryValue, updateCategoryValueApi } from "@/services/blueprintApi";
 import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 export type Category = {
   _id: string;
@@ -18,7 +19,8 @@ export type Field = {
   _id: string;
 };
 
-type FormData = Record<string, Record<string, any>>;
+type FormData = Record<string, Record<string, any[]>>;
+type EditingState = Record<string, Record<string, { isEditing: boolean; tempValue: string }>>;
 
 interface CategoryFormProps {
   categories: Category[];
@@ -37,9 +39,10 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
   categoryValues,
 }) => {
   const [formData, setFormData] = useState<FormData>({});
-  const [errors, setErrors] = useState<Record<string, Record<string, string>>>(
-    {}
-  );
+  const [errors, setErrors] = useState<Record<string, Record<string, string>>>({});
+  const [editingState, setEditingState] = useState<EditingState>({});
+  const [inlineEditingState, setInlineEditingState] = useState<Record<string, Record<string, { isEditing: boolean; tempValue: string; editingIndex: number }>>>({});
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const initialFormData: FormData = {};
@@ -50,7 +53,7 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
       );
 
       if (matchedCategoryValue) {
-        const fieldMap: Record<string, any> = {};
+        const fieldMap: Record<string, any[]> = {};
 
         category.fields.forEach((field) => {
           const matchedField = matchedCategoryValue.value.find(
@@ -58,16 +61,42 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
           );
 
           if (matchedField) {
-            fieldMap[field._id] = matchedField.value;
+            // Try to parse as JSON first, then fallback to comma-separated string
+            let fieldValues: any[] = [];
+            try {
+              // Check if the value is a JSON string (array)
+              const parsed = JSON.parse(matchedField.value);
+              if (Array.isArray(parsed)) {
+                fieldValues = parsed;
+              } else {
+                // If it's not an array, treat as single value
+                fieldValues = [matchedField.value];
+              }
+            } catch {
+              // If JSON parsing fails, split by comma and trim
+              fieldValues = matchedField.value.split(',').map((v: string) => v.trim()).filter(Boolean);
+            }
+            
+            fieldMap[field._id] = fieldValues;
+          } else {
+            fieldMap[field._id] = [];
           }
         });
 
+        initialFormData[category._id] = fieldMap;
+      } else {
+        // Initialize empty arrays for fields without values
+        const fieldMap: Record<string, any[]> = {};
+        category.fields.forEach((field) => {
+          fieldMap[field._id] = [];
+        });
         initialFormData[category._id] = fieldMap;
       }
     });
 
     setFormData(initialFormData);
   }, [categories, categoryValues]);
+
   const handleInputChange = (
     categoryId: string,
     fieldId: string,
@@ -93,27 +122,96 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
     }
   };
 
+  const handleAddValue = (categoryId: string, fieldId: string) => {
+    setEditingState((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [fieldId]: { isEditing: true, tempValue: "" },
+      },
+    }));
+  };
+
+  const handleSaveValue = (categoryId: string, fieldId: string) => {
+    const currentEditing = editingState[categoryId]?.[fieldId];
+    if (currentEditing && currentEditing.tempValue.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        [categoryId]: {
+          ...prev[categoryId],
+          [fieldId]: [...(prev[categoryId]?.[fieldId] || []), currentEditing.tempValue],
+        },
+      }));
+
+      // Clear editing state
+      setEditingState((prev) => ({
+        ...prev,
+        [categoryId]: {
+          ...prev[categoryId],
+          [fieldId]: { isEditing: false, tempValue: "" },
+        },
+      }));
+    }
+  };
+
+  const handleCancelEdit = (categoryId: string, fieldId: string) => {
+    setEditingState((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [fieldId]: { isEditing: false, tempValue: "" },
+      },
+    }));
+  };
+
+  const handleRemoveValue = (categoryId: string, fieldId: string, index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [fieldId]: prev[categoryId]?.[fieldId]?.filter((_, i) => i !== index) || [],
+      },
+    }));
+  };
+
+  const handleTempValueChange = (categoryId: string, fieldId: string, value: string) => {
+    setEditingState((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [fieldId]: { isEditing: true, tempValue: value },
+      },
+    }));
+  };
+
   const validateCategory = (category: Category): boolean => {
     const newErrors: Record<string, string> = {};
     const categoryData = formData[category._id] || {};
 
     category.fields.forEach((field) => {
-      const value = categoryData[field._id];
+      const values = categoryData[field._id] || [];
 
-      if (!value || (typeof value === "string" && value.trim() === "")) {
+      if (values.length === 0) {
         newErrors[field._id] = `${field.fieldName} is required`;
       }
 
-      if (field.fieldType === "email" && value) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(value)) {
-          newErrors[field._id] = "Please enter a valid email address";
+      // Validate each value
+      values.forEach((value, index) => {
+        if (!value || (typeof value === "string" && value.trim() === "")) {
+          newErrors[field._id] = `${field.fieldName} value ${index + 1} is required`;
         }
-      }
 
-      if (field.fieldType === "number" && value && isNaN(Number(value))) {
-        newErrors[field._id] = "Please enter a valid number";
-      }
+        if (field.fieldType === "email" && value) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(value)) {
+            newErrors[field._id] = "Please enter a valid email address";
+          }
+        }
+
+        if (field.fieldType === "number" && value && isNaN(Number(value))) {
+          newErrors[field._id] = "Please enter a valid number";
+        }
+      });
     });
 
     setErrors((prev) => ({
@@ -170,152 +268,245 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
     setErrors({});
   };
 
-  const renderField = (category: Category, field: Field) => {
-    const value = formData[category._id]?.[field._id] || "";
-    const hasError = errors[category._id]?.[field._id];
+  const handleInlineEdit = (categoryId: string, fieldId: string, index: number, currentValue: string) => {
+    setInlineEditingState((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [fieldId]: { isEditing: true, tempValue: currentValue, editingIndex: index },
+      },
+    }));
+  };
 
-    const baseInputClasses = `w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-      hasError ? "border-red-500" : "border-gray-300"
-    }`;
+  const handleInlineSave = (categoryId: string, fieldId: string) => {
+    const currentEditing = inlineEditingState[categoryId]?.[fieldId];
+    if (currentEditing && currentEditing.tempValue.trim()) {
+      setFormData((prev) => {
+        const newValues = [...(prev[categoryId]?.[fieldId] || [])];
+        newValues[currentEditing.editingIndex] = currentEditing.tempValue;
+        
+        return {
+          ...prev,
+          [categoryId]: {
+            ...prev[categoryId],
+            [fieldId]: newValues,
+          },
+        };
+      });
+      
 
-    switch (field.fieldType.toLowerCase()) {
-      case "text":
-      case "string":
-        return (
-          <input
-            type="text"
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={baseInputClasses}
-            placeholder={`Enter ${field.fieldName.toLowerCase()}`}
-          />
-        );
-
-      case "email":
-        return (
-          <input
-            type="email"
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={baseInputClasses}
-            placeholder={`Enter ${field.fieldName.toLowerCase()}`}
-          />
-        );
-
-      case "number":
-        return (
-          <input
-            type="number"
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={baseInputClasses}
-            placeholder={`Enter ${field.fieldName.toLowerCase()}`}
-          />
-        );
-
-      case "password":
-        return (
-          <input
-            type="password"
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={baseInputClasses}
-            placeholder={`Enter ${field.fieldName.toLowerCase()}`}
-          />
-        );
-
-      case "textarea":
-        return (
-          <textarea
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={`${baseInputClasses} min-h-[100px] resize-vertical`}
-            placeholder={`Enter ${field.fieldName.toLowerCase()}`}
-            rows={4}
-          />
-        );
-
-      case "select":
-        return (
-          <select
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={baseInputClasses}
-          >
-            <option value="">Select {field.fieldName.toLowerCase()}</option>
-            <option value="option1">Option 1</option>
-            <option value="option2">Option 2</option>
-            <option value="option3">Option 3</option>
-          </select>
-        );
-
-      case "checkbox":
-        return (
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              checked={value || false}
-              onChange={(e) =>
-                handleInputChange(category._id, field._id, e.target.checked)
-              }
-              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-            />
-            <label className="ml-2 text-sm text-gray-700">
-              {field.fieldName}
-            </label>
-          </div>
-        );
-
-      case "date":
-        return (
-          <input
-            type="date"
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={baseInputClasses}
-          />
-        );
-
-      default:
-        return (
-          <input
-            type="text"
-            value={value}
-            onChange={(e) =>
-              handleInputChange(category._id, field._id, e.target.value)
-            }
-            className={baseInputClasses}
-            placeholder={`Enter ${field.fieldName.toLowerCase()}`}
-          />
-        );
+      // Clear editing state
+      setInlineEditingState((prev) => ({
+        ...prev,
+        [categoryId]: {
+          ...prev[categoryId],
+          [fieldId]: { isEditing: false, tempValue: "", editingIndex: -1 },
+        },
+      }));
     }
+  };
+
+  const handleInlineCancel = (categoryId: string, fieldId: string) => {
+    setInlineEditingState((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [fieldId]: { isEditing: false, tempValue: "", editingIndex: -1 },
+      },
+    }));
+  };
+
+  const handleInlineValueChange = (categoryId: string, fieldId: string, value: string) => {
+    setInlineEditingState((prev) => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        [fieldId]: { 
+          ...prev[categoryId]?.[fieldId], 
+          tempValue: value 
+        },
+      },
+    }));
+  };
+
+  const handleUpdateCategoryValue = async (categoryId: string) => {
+  
+    const categoryValue = categoryValues.find(cv => cv.category === categoryId);
+    if (!categoryValue) {
+      toast.error("Category value not found");
+      return;
+    }
+
+    setLoadingStates(prev => ({ ...prev, [categoryId]: true }));
+
+    try {
+      const categoryData = formData[categoryId] || {};
+      const category = categories.find(c => c._id === categoryId);
+      
+      if (!category) {
+        toast.error("Category not found");
+        return;
+      }
+
+      // Convert form data back to the expected API format
+      const valueArray = category.fields.map(field => {
+        const fieldValues = categoryData[field._id] || [];
+        return {
+          key: field.fieldName,
+          value: JSON.stringify(fieldValues), // Store as JSON string to preserve array structure
+        };
+      });
+
+      await updateCategoryValueApi(categoryValue._id, valueArray);
+      toast.success("Category updated successfully");
+      
+      // Optionally refresh the data
+      if (onCategorySubmit) {
+        onCategorySubmit(categoryId, categoryData);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update category");
+    } finally {
+      setLoadingStates(prev => ({ ...prev, [categoryId]: false }));
+    }
+  };
+
+  const renderField = (category: Category, field: Field) => {
+    const values = formData[category._id]?.[field._id] || [];
+    const hasError = errors[category._id]?.[field._id];
+    const isEditing = editingState[category._id]?.[field._id]?.isEditing || false;
+    const tempValue = editingState[category._id]?.[field._id]?.tempValue || "";
+    const inlineEditing = inlineEditingState[category._id]?.[field._id];
+    const isLoading = loadingStates[category._id];
+
+    const baseInputClasses = `min-w-64 px-3 py-2 pr-16 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${hasError ? "border-red-500" : "border-gray-300"}`;
+
+    return (
+      <div className="space-y-2">
+      
+        {/* Existing values in row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {values.map((value, index) => (
+            <div key={index} className="relative">
+              {inlineEditing?.isEditing && inlineEditing.editingIndex === index ? (
+                <input
+                  type="text"
+                  value={inlineEditing.tempValue}
+                  onChange={(e) => handleInlineValueChange(category._id, field._id, e.target.value)}
+                  className={baseInputClasses}
+                  autoFocus
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={value}
+                  readOnly
+                  className={`${baseInputClasses} bg-gray-50 cursor-pointer hover:bg-gray-100`}
+                  onDoubleClick={() => handleInlineEdit(category._id, field._id, index, value)}
+                />
+              )}
+              
+              <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center gap-0.5">
+                {inlineEditing?.isEditing && inlineEditing.editingIndex === index ? (
+                  <>
+                    <button
+                      onClick={() => handleInlineSave(category._id, field._id)}
+                      className="p-1.5 bg-green-500 text-white rounded-full hover:bg-green-600 transition-colors"
+                      title="Save"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleInlineCancel(category._id, field._id)}
+                      className="p-1.5 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors"
+                      title="Cancel"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleInlineEdit(category._id, field._id, index, value)}
+                      className="p-1.5 text-blue-500 hover:text-blue-700 transition-colors"
+                      title="Edit"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleRemoveValue(category._id, field._id, index)}
+                      className="p-1.5 text-red-500 hover:text-red-700 transition-colors"
+                      title="Remove value"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {/* Add new value section */}
+          {isEditing ? (
+            <div className="relative">
+              <input
+                type="text"
+                value={tempValue}
+                onChange={(e) => handleTempValueChange(category._id, field._id, e.target.value)}
+                className={baseInputClasses}
+                placeholder={`Enter ${field.fieldName.toLowerCase()}`}
+                autoFocus
+              />
+              <div className="absolute right-1 top-1/2 transform -translate-y-1/2 flex items-center gap-0.5">
+                <button
+                  onClick={() => handleSaveValue(category._id, field._id)}
+                  className="p-1.5 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+                  title="Save"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => handleCancelEdit(category._id, field._id)}
+                  className="p-1.5 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors"
+                  title="Cancel"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => handleAddValue(category._id, field._id)}
+              className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+              title="Add new value"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="max-w-6xl mx-auto p-6 bg-white">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-gray-800 mb-4">Blueprint</h1>
-        {/* <p className="text-gray-600">
-          Fill out the forms below. You can submit individual categories or all
-          at once.
-        </p> */}
       </div>
-
-      {/* Global Actions */}
 
       {/* Category Forms */}
       <div className="space-y-8">
@@ -324,10 +515,38 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
             key={category._id}
             className="bg-gray-50 rounded-lg p-6 border border-gray-200"
           >
-            <div className="mb-6">
+            <div className="mb-6 flex justify-between items-center">
               <h2 className="text-2xl font-semibold text-gray-800 mb-2">
                 {category.title}
               </h2>
+              
+              {/* Check/Update Button */}
+              <button
+                onClick={() => handleUpdateCategoryValue(category._id)}
+                disabled={loadingStates[category._id]}
+                className={`px-4 py-2 rounded-md text-white font-medium transition-colors ${
+                  loadingStates[category._id]
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-500 hover:bg-green-600'
+                }`}
+              >
+                {loadingStates[category._id] ? (
+                  <div className="flex items-center gap-2">
+                    <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Update
+                  </div>
+                )}
+              </button>
             </div>
 
             <div className="space-y-4">

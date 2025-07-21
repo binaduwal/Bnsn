@@ -122,7 +122,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   const fetchSingleProject = async () => {
     const response = await singleProjectApi(id);
     setCategories(response.data.categoryId);
-    setBlueprintId(response?.data?.blueprintId);
+    setBlueprintId(response?.data?.blueprintId._id);
     console.log("first", response);
   };
 
@@ -302,6 +302,33 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   const [fieldValues, setFieldValues] = useState<{ [key: string]: string }>({});
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
+  interface ParsedEmail {
+    title: string;
+    subject: string;
+    preheader: string;
+    body: string;
+  }
+
+  function parseMultipleEmails(rawHtml: string): ParsedEmail[] {
+    const emailBlocks = rawHtml.split(/<\/html>/gi).filter(Boolean); // Split by </html>
+
+    const emails: ParsedEmail[] = emailBlocks.map((block, index) => {
+      const titleMatch = block.match(/<title>(.*?)<\/title>/i);
+      const subjectMatch = block.match(/<!--\s*Subject:\s*(.*?)\s*-->/i);
+      const preheaderMatch = block.match(/<!--\s*Preheader:\s*(.*?)\s*-->/i);
+      const bodyMatch = block.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+
+      return {
+        title: titleMatch?.[1]?.trim() || `Email ${index + 1}`,
+        subject: subjectMatch?.[1]?.trim() || '',
+        preheader: preheaderMatch?.[1]?.trim() || '',
+        body: bodyMatch?.[1]?.trim() || '',
+      };
+    });
+
+    return emails;
+  }
+
   const handleFieldChange = (fieldId: string, value: string) => {
     setFieldValues((prev) => ({
       ...prev,
@@ -309,13 +336,19 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     }));
   };
 
+  const parse = (html: string) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    return doc.body.textContent || doc.body.innerText || '';
+  }
+
   const campaignFields = getSelectedCampaignFields();
   const hasFields = campaignFields.length > 0;
 
   return (
     <div className="bg-gray-50 flex">
       {/* Left Sidebar */}
-      <aside className="w-80 max-h-[calc(100vh-120px)] bg-white border-r border-gray-200 flex flex-col shadow-sm">
+      <aside className="w-80 min-h-[calc(100vh-120px)]  bg-white border-r border-gray-200 flex flex-col shadow-sm">
         {/* Sidebar Header */}
         <div className="p-6 border-b border-gray-200">
           <EditableTitle title={mainTitle} onSave={setMainTitle} />
@@ -338,7 +371,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50">
+        <div className="p-4 border-t sticky bottom-0 border-gray-200 bg-gray-50">
           <div className="flex gap-2">
             <button className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors">
               <Eye className="w-4 h-4 inline mr-2" />
@@ -488,7 +521,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                                 type="text"
                                 value={
                                   fieldValues[
-                                    `${field.fieldName}-${field._id}`
+                                  `${field.fieldName}-${field._id}`
                                   ] || ""
                                 }
                                 onChange={(e) =>
@@ -549,32 +582,47 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                   {/* Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
-                    <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
-                      <h2 className="text-xl font-bold mb-4 text-gray-800">
-                        Generated Content
-                      </h2>
+                      <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">
+                          Generated Content
+                        </h2>
 
-                      {/* AI Generated Content */}
-                      {generatedContent.aiContent && (
-                        <div className="mb-6">
-                          <h3 className="text-lg font-semibold mb-2 text-gray-700">
-                            AI Generated Email:
-                          </h3>
-                          <div className="bg-gray-50 p-4 rounded-lg ">
-                            {/* <div className="whitespace-pre-wrap text-gray-800">
-                              {generatedContent.aiContent}
-                            </div> */}
-                            <div
-                              className="prose prose-sm sm:prose lg:prose-lg max-w-none text-gray-800"
-                              dangerouslySetInnerHTML={{
-                                __html: generatedContent.aiContent,
-                              }}
-                            ></div>
+                        {/* AI Generated Content */}
+                        {generatedContent.aiContent && (
+                          <div className="mb-6">
+                            <h3 className="text-lg font-semibold mb-2 text-gray-700">
+                              AI Generated Email:
+                            </h3>
+                            <div className="bg-gray-50 p-4 rounded-lg ">
+
+                              <div className="space-y-10">
+                                {parseMultipleEmails(generatedContent.aiContent).map((email, idx) => (
+                                  <div key={idx} className="border relative border-gray-200 flex flex-col gap-1  rounded-lg p-6 shadow">
+                                    <div className="absolute top-0 right-0">
+                                      {/* copy btn  */}
+                                      <button onClick={() => {
+                                        //copy to clipboard after parsing the html
+                                        const parsedHtml = parse(email.body);
+                                        navigator.clipboard.writeText(parsedHtml);
+                                        toast.success("Copied to clipboard");
+                                      }} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                        <Copy className="w-4 h-4" />
+                                      </button>
+
+                                    </div>
+                                    <h2 className="text-xl font-semibold mb-2">Email {idx + 1}: {email.title}</h2>
+                                    <p className="text-base text-gray-600  mb-1"><strong>Subject:</strong> {email.subject}</p>
+                                    <p className="text-sm text-gray-600 mb-4"><strong>Preheader:</strong> {email.preheader}</p>
+                                  
+                                    <InlineTextEditor className="p-0 " initialContent={email.body} onChange={(value)=>{}}/>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        )}
+                      </div>
+                    )}
                 </div>
               ) : (
                 <ContentGenerationSection />

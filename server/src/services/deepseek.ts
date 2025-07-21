@@ -269,7 +269,7 @@ async generateEmail(
     .join('\n');
 
   const userPrompt = [
-    `You are tasked with writing 10 high-performing marketing emails in HTML format using the structured information below.`,
+    `You are tasked with writing  high-performing marketing emails in HTML format using the structured information below.`,
     ``,
     `## 🎯 Target Audience & Intent`,
     `Use the input to tailor each email’s goal and message.`,
@@ -282,7 +282,7 @@ async generateEmail(
     ``,
     `---`,
     ``,
-    `Please generate 10 unique and compelling emails following these rules:`,
+    `Please generate 1 unique and compelling emails following these rules:`,
     ``,
     `- Each email must be in pure HTML format only. Use HTML tags like <html>, <head>, <body>, <h1>, <p>, <a>, <ul>, etc.`,
     `- Each email should include:`,
@@ -292,7 +292,7 @@ async generateEmail(
     `    - A strong hook`,
     `    - Highlighted benefits or offers`,
     `    - Clear, compelling structure (headings, short paragraphs, bullets)`,
-    `    - A single strong call-to-action (e.g., <a href="#">Book now</a>)`,
+
     `- Tone: Friendly, persuasive, professional.`,
     `- Each email should be concise yet impactful.`,
     `- Do NOT use markdown or explanations — only return the HTML.`,
@@ -307,8 +307,8 @@ async generateEmail(
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
     ],
-    max_tokens: 4000,
-    temperature: 0.65,
+    // max_tokens: 2000,
+    // temperature: 0.7,
   };
 
   const response = await this.makeRequest(request);

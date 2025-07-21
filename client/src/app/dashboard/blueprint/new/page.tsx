@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { ChevronDown, Wand2 } from "lucide-react";
+import { ChevronDown, Loader2, Wand2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { createBlueprint } from "@/services/blueprintApi";
 import { useRouter } from "next/navigation";
@@ -10,6 +10,7 @@ const CreateBlueprint: React.FC = () => {
   const [feedBnsn, setFeedBnsn] = useState<string>("");
   const [selectedOfferType, setSelectedOfferType] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const wordCount = feedBnsn
     .trim()
@@ -30,6 +31,7 @@ const CreateBlueprint: React.FC = () => {
 
   const handleSubmitBlueprint = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const res = await createBlueprint({
         description: feedBnsn,
@@ -40,6 +42,8 @@ const CreateBlueprint: React.FC = () => {
       router.push(`/dashboard/blueprint/${res.data._id}`);
     } catch (error: any) {
       toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -133,8 +137,9 @@ const CreateBlueprint: React.FC = () => {
           <button
             onClick={handleSubmitBlueprint}
             className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium inline-flex items-center gap-2"
+            disabled={isLoading}
           >
-            <Wand2 className="h-5 w-5" />
+            {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Wand2 className="h-5 w-5" />}
             Create Magically
           </button>
         </div>
