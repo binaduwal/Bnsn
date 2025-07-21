@@ -249,48 +249,72 @@ export class DeepSeekService {
     return response.choices[0]?.message?.content || '';
   }
 
-  async generateEmail(blueprintValue: BlueprintValue[], projectCategoryValue: ProjectCategoryValue[]): Promise<string> {
-    const systemPrompt = `You are an expert email copywriter. Create high-converting emails that drive clicks, engagement, and conversions. Use proven psychological techniques, personalization, and strong CTAs for different email types like sales, follow-up, nurture, or broadcast.`;
+async generateEmail(
+  blueprintValue: BlueprintValue[],
+  projectCategoryValue: ProjectCategoryValue[]
+): Promise<string> {
+  const systemPrompt = `You are an expert email copywriter with deep knowledge of behavioral psychology, marketing funnels, and persuasive writing. You craft high-converting emails for various types such as sales, onboarding, follow-ups, newsletters, cold outreach, and re-engagement. Your goal is to maximize open rates, click-through rates, and conversions — while maintaining a personal, human touch.`;
 
-    const formattedBlueprint = blueprintValue.map(section => {
+  const formattedBlueprint = blueprintValue
+    .map(section => {
       const values = section.values
         .map(val => `- ${val.key}: ${val.value}`)
         .join('\n');
       return `### ${section.title}\n${values}`;
-    }).join('\n\n');
+    })
+    .join('\n\n');
 
-    const formattedCategoryInputs = projectCategoryValue.map(item => {
-      return `- ${item.key}: ${item.value}`;
-    }).join('\n');
+  const formattedCategoryInputs = projectCategoryValue
+    .map(item => `- ${item.key}: ${item.value}`)
+    .join('\n');
 
-    const userPrompt = `Generate a professional, engaging email based on the following user inputs:
+  const userPrompt = [
+    `You are tasked with writing 10 high-performing marketing emails in HTML format using the structured information below.`,
+    ``,
+    `## 🎯 Target Audience & Intent`,
+    `Use the input to tailor each email’s goal and message.`,
+    ``,
+    `## 📦 Blueprint Content Blocks`,
+    `${formattedBlueprint}`,
+    ``,
+    `## 📝 Additional Context`,
+    `${formattedCategoryInputs}`,
+    ``,
+    `---`,
+    ``,
+    `Please generate 10 unique and compelling emails following these rules:`,
+    ``,
+    `- Each email must be in pure HTML format only. Use HTML tags like <html>, <head>, <body>, <h1>, <p>, <a>, <ul>, etc.`,
+    `- Each email should include:`,
+    `  - A subject line <!-- Subject: Your Subject Here -->`,
+    `  - A preheader text <!-- Preheader: Your preheader here -->`,
+    `  - A full email body in HTML with:`,
+    `    - A strong hook`,
+    `    - Highlighted benefits or offers`,
+    `    - Clear, compelling structure (headings, short paragraphs, bullets)`,
+    `    - A single strong call-to-action (e.g., <a href="#">Book now</a>)`,
+    `- Tone: Friendly, persuasive, professional.`,
+    `- Each email should be concise yet impactful.`,
+    `- Do NOT use markdown or explanations — only return the HTML.`,
+    `- Separate emails using <!-- Email X --> comments.`,
+    ``,
+    `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
+  ].join('\n');
 
-## Blueprint Information
-${formattedBlueprint}
+  const request: DeepSeekRequest = {
+    model: this.defaultModel,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ],
+    max_tokens: 4000,
+    temperature: 0.65,
+  };
 
-## Email-Specific Details
-${formattedCategoryInputs}
+  const response = await this.makeRequest(request);
+  return response.choices[0]?.message?.content || '';
+}
 
-Please include:
-- A compelling subject line
-- Preheader text
-- Email body with personalized tone and strong CTA
-
-Ensure the email is optimized for marketing engagement and conversion, and fits best practices for the type of content described.`;
-
-    const request: DeepSeekRequest = {
-      model: this.defaultModel,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      max_tokens: 1500,
-      temperature: 0.65,
-    };
-
-    const response = await this.makeRequest(request);
-    return response.choices[0]?.message?.content || '';
-  }
 
 
   async generateBookDraft(bookData: any): Promise<string> {

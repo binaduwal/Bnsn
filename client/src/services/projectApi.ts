@@ -1,5 +1,7 @@
 import { api, errorHandler } from "./api";
 import { Field } from "./categoryApi";
+import Cookies from "js-cookie";
+
 
 interface CategoryBodyProps {
     name: string;
@@ -30,11 +32,48 @@ export const singleProjectApi = async (id: string) => {
 export const generateProjectApi = async (body: { category: string, project: string, values: { [key: string]: string, }, blueprintId?: string }) => {
     try {
         const res = await api.post('/projects/generate', body)
+        console.log('api res', res)
         return res.data
     } catch (error) {
         throw errorHandler(error)
     }
 }
+
+
+export const generateProjectStreamApi = async (body: {
+    category: string,
+    project: string,
+    values: { [key: string]: string },
+    blueprintId?: string
+}) => {
+    const token = Cookies.get("token")
+    try {
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+
+        const response = await fetch(`${baseURL}/projects/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        console.log("Response:", response);
+        console.log("Response.body:", response.body);
+        console.log("Response.ok:", response.ok);
+        console.log("Response.status:", response.status);
+        console.log("Response.headers:", [...response.headers.entries()]);
+
+        return response; // Return Response object for streaming
+    } catch (error) {
+        throw errorHandler(error);
+    }
+};
 
 export interface Project {
     _id: string;

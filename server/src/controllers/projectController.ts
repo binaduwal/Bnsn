@@ -107,7 +107,6 @@ export const generateProject = catchAsync(
                 progress: 30
             }) + '\n');
 
-            console.log('paylowa', { blueprint: blueprintId, category });
             const blueprintValues = (await CategoryValue.find({ blueprint: blueprintId })
                 .populate('category')
                 .lean() as any[])
@@ -127,12 +126,14 @@ export const generateProject = catchAsync(
                 message: 'Generating AI content...',
                 progress: 70
             }) + '\n');
+            console.log(' generating content',);
 
             // Generate AI content with streaming if your deepSeekService supports it
             const aiGeneratedContent = await deepSeekService.generateEmail(
                 blueprintValues,
                 fieldValue
             );
+            console.log('ai generated content', aiGeneratedContent);
 
             if (!aiGeneratedContent) {
                 res.write(JSON.stringify({
@@ -174,6 +175,7 @@ export const generateProject = catchAsync(
             res.end();
 
         } catch (error: any) {
+            console.log("error", error);
             res.write(JSON.stringify({
                 type: 'error',
                 message: error.message || 'An error occurred during generation'
@@ -250,6 +252,32 @@ export const singleProject = catchAsync(
                 ...project,
                 categoryId: nestedCategories // Replace flat categories with nested structure
             }
+        });
+    }
+);
+
+export const allProject = catchAsync(
+    async (req: AuthRequest, res: Response, next: NextFunction) => {
+        if (!req.user) {
+            return next(createError("User not found in request", 401));
+        }
+
+
+
+
+        const projects = await Project.find({ userId: req.user.id })
+            .populate("categoryId")
+            .lean() as any;
+
+        if (!projects) {
+            return next(createError("Project not found", 404));
+        }
+
+
+
+        res.json({
+            success: true,
+            data: projects
         });
     }
 );

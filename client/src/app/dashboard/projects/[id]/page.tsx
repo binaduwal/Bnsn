@@ -22,6 +22,7 @@ import InlineTextEditor from "@/components/ui/InlineTextEditor";
 import {
   Category,
   generateProjectApi,
+  generateProjectStreamApi,
   singleProjectApi,
 } from "@/services/projectApi";
 import CampaignAccordion from "@/components/CampainAccordion";
@@ -235,41 +236,63 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     setStreamingData([]);
 
     try {
-      const response = await generateProjectApi({
+      const response = await generateProjectStreamApi({
         category: categories[0]._id,
         project: id,
         values: fieldValues,
         blueprintId,
       });
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        throw new Error("No response body reader available");
+      // Check if response body exists
+      if (!response.body) {
+        throw new Error("Response body is not available for streaming");
       }
 
+      const reader = response.body.getReader(); // ✅ Fixed: Use response.body.getReader()
       const decoder = new TextDecoder();
+      let buffer = "";
 
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) {
+          // Process any remaining data in buffer
+          if (buffer.trim()) {
+            try {
+              const data = JSON.parse(buffer);
+              handleStreamData(data);
+            } catch (e) {
+              console.warn("Error parsing final buffer:", e, "Buffer:", buffer);
+            }
+          }
           break;
         }
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n").filter((line) => line.trim());
+        // Decode the chunk and add to buffer
+        buffer += decoder.decode(value, { stream: true });
 
+        // Split by newlines to process complete JSON objects
+        const lines = buffer.split("\n");
+
+        // Keep the last incomplete line in buffer
+        buffer = lines.pop() || "";
+
+        // Process each complete line
         for (const line of lines) {
-          try {
-            const data = JSON.parse(line);
-            handleStreamData(data);
-          } catch (e) {
-            console.error("Error parsing JSON:", e, "Line:", line);
+          const trimmedLine = line.trim();
+          if (trimmedLine) {
+            try {
+              const data = JSON.parse(trimmedLine);
+              handleStreamData(data);
+            } catch (e) {
+              console.error("Error parsing JSON:", e, "Line:", trimmedLine);
+            }
           }
         }
       }
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Streaming error:", error);
+      toast.error(error.message || "Generation failed");
       setStreamingMessage("Generation failed");
     } finally {
       setIsGenerating(false);
@@ -521,36 +544,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                         "Click Magic Button"
                       )}
                     </button>
-
-                    {/* Real-time Data Display */}
-                    {streamingData.length > 0 && (
-                      <div className="w-full max-w-2xl mt-4">
-                        <h3 className="text-lg font-semibold mb-2">
-                          Generation Progress:
-                        </h3>
-                        <div className="space-y-2 max-h-60 overflow-y-auto bg-gray-50 p-4 rounded-lg">
-                          {streamingData.map((item, index) => (
-                            <div
-                              key={index}
-                              className="bg-white p-3 rounded-lg shadow-sm"
-                            >
-                              <div className="text-sm font-medium text-blue-600">
-                                {item.key || "Data"}
-                              </div>
-                              <div className="text-xs text-gray-500 mt-1">
-                                {typeof item.value === "string"
-                                  ? item.value.substring(0, 100) +
-                                    (item.value.length > 100 ? "..." : "")
-                                  : JSON.stringify(item.value).substring(
-                                      0,
-                                      100
-                                    ) + "..."}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Generated Content Display */}
@@ -567,46 +560,16 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                           <h3 className="text-lg font-semibold mb-2 text-gray-700">
                             AI Generated Email:
                           </h3>
-                          <div className="bg-gray-50 p-4 rounded-lg border">
-                            <div className="whitespace-pre-wrap text-gray-800">
+                          <div className="bg-gray-50 p-4 rounded-lg ">
+                            {/* <div className="whitespace-pre-wrap text-gray-800">
                               {generatedContent.aiContent}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Blueprint Values */}
-                      {generatedContent.blueprintValues && (
-                        <div className="mb-6">
-                          <h3 className="text-lg font-semibold mb-2 text-gray-700">
-                            Blueprint Values:
-                          </h3>
-                          <div className="bg-blue-50 p-4 rounded-lg border">
-                            <pre className="text-sm text-gray-700 overflow-x-auto">
-                              {JSON.stringify(
-                                generatedContent.blueprintValues,
-                                null,
-                                2
-                              )}
-                            </pre>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Field Values */}
-                      {generatedContent.fieldValue && (
-                        <div>
-                          <h3 className="text-lg font-semibold mb-2 text-gray-700">
-                            Field Values:
-                          </h3>
-                          <div className="bg-green-50 p-4 rounded-lg border">
-                            <pre className="text-sm text-gray-700 overflow-x-auto">
-                              {JSON.stringify(
-                                generatedContent.fieldValue,
-                                null,
-                                2
-                              )}
-                            </pre>
+                            </div> */}
+                            <div
+                              className="prose prose-sm sm:prose lg:prose-lg max-w-none text-gray-800"
+                              dangerouslySetInnerHTML={{
+                                __html: generatedContent.aiContent,
+                              }}
+                            ></div>
                           </div>
                         </div>
                       )}
