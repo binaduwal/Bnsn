@@ -5,8 +5,8 @@ interface ICategoryValue extends Document {
   blueprint: mongoose.Schema.Types.ObjectId;
   project: mongoose.Schema.Types.ObjectId;
   value: {
-    key: string; //(question of the answer)
-    value: string;
+    key: string;
+    value: [string];
   }[];
 }
 
@@ -33,7 +33,7 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
         required: true,
       },
       value: {
-        type: String,
+        type: [String],
         required: true,
       },
     },

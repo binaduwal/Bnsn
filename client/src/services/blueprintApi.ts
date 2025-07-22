@@ -43,7 +43,7 @@ export const deleteBlueprintApi = async (id: string) => {
     }
 }
 
-export const updateCategoryValueApi = async (id: string, value: { key: string; value: string; _id?: string }[]) => {
+export const updateCategoryValueApi = async (id: string, value: { key: string; value: string | string[]; _id?: string }[]) => {
     try {
         const res = await api.put(`/category/value/${id}`, { value })
         return res.data as { success: boolean, data: CategoryValue }
@@ -54,11 +54,11 @@ export const updateCategoryValueApi = async (id: string, value: { key: string; v
 
 export type CategoryValue = {
     _id: string;
-    category: string; // ObjectId as string
-    blueprint: string; // ObjectId as string
+    category: string;
+    blueprint: string;
     value: {
         key: string;
-        value: string;
+        value: string | string[];
         _id: string;
     }[];
     __v: number;
@@ -69,7 +69,7 @@ export type BlueprintProps = {
     title: string;
     description: string;
     offerType: string;
-    
+
     categories: string[];
     createdAt: string;
     updatedAt: string;

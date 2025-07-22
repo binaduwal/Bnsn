@@ -48,7 +48,7 @@ export const getAllProjectApi = async () => {
 }
 
 
-export const generateProjectApi = async (body: { category: string, project: string, values: { [key: string]: string, }, blueprintId?: string }) => {
+export const generateProjectApi = async (body: { category: string, project: string, values: { [key: string]: string, }, blueprintId: string }) => {
     try {
         const res = await api.post('/projects/generate', body)
         console.log('api res', res)

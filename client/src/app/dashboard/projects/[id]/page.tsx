@@ -320,9 +320,9 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
 
       return {
         title: titleMatch?.[1]?.trim() || `Email ${index + 1}`,
-        subject: subjectMatch?.[1]?.trim() || '',
-        preheader: preheaderMatch?.[1]?.trim() || '',
-        body: bodyMatch?.[1]?.trim() || '',
+        subject: subjectMatch?.[1]?.trim() || "",
+        preheader: preheaderMatch?.[1]?.trim() || "",
+        body: bodyMatch?.[1]?.trim() || "",
       };
     });
 
@@ -338,9 +338,9 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
 
   const parse = (html: string) => {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    return doc.body.textContent || doc.body.innerText || '';
-  }
+    const doc = parser.parseFromString(html, "text/html");
+    return doc.body.textContent || doc.body.innerText || "";
+  };
 
   const campaignFields = getSelectedCampaignFields();
   const hasFields = campaignFields.length > 0;
@@ -521,7 +521,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                                 type="text"
                                 value={
                                   fieldValues[
-                                  `${field.fieldName}-${field._id}`
+                                    `${field.fieldName}-${field._id}`
                                   ] || ""
                                 }
                                 onChange={(e) =>
@@ -582,47 +582,66 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                   {/* Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
-                      <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">
-                          Generated Content
-                        </h2>
+                    <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
+                      <h2 className="text-xl font-bold mb-4 text-gray-800">
+                        Generated Content
+                      </h2>
 
-                        {/* AI Generated Content */}
-                        {generatedContent.aiContent && (
-                          <div className="mb-6">
-                            <h3 className="text-lg font-semibold mb-2 text-gray-700">
-                              AI Generated Email:
-                            </h3>
-                            <div className="bg-gray-50 p-4 rounded-lg ">
-
-                              <div className="space-y-10">
-                                {parseMultipleEmails(generatedContent.aiContent).map((email, idx) => (
-                                  <div key={idx} className="border relative border-gray-200 flex flex-col gap-1  rounded-lg p-6 shadow">
-                                    <div className="absolute top-0 right-0">
-                                      {/* copy btn  */}
-                                      <button onClick={() => {
+                      {/* AI Generated Content */}
+                      {generatedContent.aiContent && (
+                        <div className="mb-6">
+                          <h3 className="text-lg font-semibold mb-2 text-gray-700">
+                            AI Generated Email:
+                          </h3>
+                          <div className="bg-gray-50 p-4 rounded-lg ">
+                            <div className="space-y-10">
+                              {parseMultipleEmails(
+                                generatedContent.aiContent
+                              ).map((email, idx) => (
+                                <div
+                                  key={idx}
+                                  className="border relative border-gray-200 flex flex-col gap-1  rounded-lg p-6 shadow"
+                                >
+                                  <div className="absolute top-0 right-0">
+                                    {/* copy btn  */}
+                                    <button
+                                      onClick={() => {
                                         //copy to clipboard after parsing the html
                                         const parsedHtml = parse(email.body);
-                                        navigator.clipboard.writeText(parsedHtml);
+                                        navigator.clipboard.writeText(
+                                          parsedHtml
+                                        );
                                         toast.success("Copied to clipboard");
-                                      }} className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                                        <Copy className="w-4 h-4" />
-                                      </button>
-
-                                    </div>
-                                    <h2 className="text-xl font-semibold mb-2">Email {idx + 1}: {email.title}</h2>
-                                    <p className="text-base text-gray-600  mb-1"><strong>Subject:</strong> {email.subject}</p>
-                                    <p className="text-sm text-gray-600 mb-4"><strong>Preheader:</strong> {email.preheader}</p>
-                                  
-                                    <InlineTextEditor className="p-0 " initialContent={email.body} onChange={(value)=>{}}/>
+                                      }}
+                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                                    >
+                                      <Copy className="w-4 h-4" />
+                                    </button>
                                   </div>
-                                ))}
-                              </div>
+                                  <h2 className="text-xl font-semibold mb-2">
+                                    Email {idx + 1}: {email.title}
+                                  </h2>
+                                  <p className="text-base text-gray-600  mb-1">
+                                    <strong>Subject:</strong> {email.subject}
+                                  </p>
+                                  <p className="text-sm text-gray-600 mb-4">
+                                    <strong>Preheader:</strong>{" "}
+                                    {email.preheader}
+                                  </p>
+
+                                  <InlineTextEditor
+                                    className="p-0 "
+                                    initialContent={email.body}
+                                    onChange={(value) => {}}
+                                  />
+                                </div>
+                              ))}
                             </div>
                           </div>
-                        )}
-                      </div>
-                    )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <ContentGenerationSection />

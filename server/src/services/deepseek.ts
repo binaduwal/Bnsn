@@ -67,7 +67,7 @@ export class DeepSeekService {
     const systemPrompt = `You are an expert business strategist. You must respond with a JSON array of category objects. Each category object must have:
   - title: string (must match one of the provided categories)
   - description: string
-  - fields: array of objects with fieldName and value properties
+  - fields: array of objects with fieldName and value (which is array of string cause there would be multiple answer of same field) properties
   
   Available categories: ${JSON.stringify(categoryList, null, 2)}
   
@@ -249,71 +249,71 @@ export class DeepSeekService {
     return response.choices[0]?.message?.content || '';
   }
 
-async generateEmail(
-  blueprintValue: BlueprintValue[],
-  projectCategoryValue: ProjectCategoryValue[]
-): Promise<string> {
-  const systemPrompt = `You are an expert email copywriter with deep knowledge of behavioral psychology, marketing funnels, and persuasive writing. You craft high-converting emails for various types such as sales, onboarding, follow-ups, newsletters, cold outreach, and re-engagement. Your goal is to maximize open rates, click-through rates, and conversions — while maintaining a personal, human touch.`;
+  async generateEmail(
+    blueprintValue: BlueprintValue[],
+    projectCategoryValue: ProjectCategoryValue[]
+  ): Promise<string> {
+    const systemPrompt = `You are an expert email copywriter with deep knowledge of behavioral psychology, marketing funnels, and persuasive writing. You craft high-converting emails for various types such as sales, onboarding, follow-ups, newsletters, cold outreach, and re-engagement. Your goal is to maximize open rates, click-through rates, and conversions — while maintaining a personal, human touch.`;
 
-  const formattedBlueprint = blueprintValue
-    .map(section => {
-      const values = section.values
-        .map(val => `- ${val.key}: ${val.value}`)
-        .join('\n');
-      return `### ${section.title}\n${values}`;
-    })
-    .join('\n\n');
+    const formattedBlueprint = blueprintValue
+      .map(section => {
+        const values = section.values
+          .map(val => `- ${val.key}: ${val.value}`)
+          .join('\n');
+        return `### ${section.title}\n${values}`;
+      })
+      .join('\n\n');
 
-  const formattedCategoryInputs = projectCategoryValue
-    .map(item => `- ${item.key}: ${item.value}`)
-    .join('\n');
+    const formattedCategoryInputs = projectCategoryValue
+      .map(item => `- ${item.key}: ${item.value}`)
+      .join('\n');
 
-  const userPrompt = [
-    `You are tasked with writing  high-performing marketing emails in HTML format using the structured information below.`,
-    ``,
-    `## 🎯 Target Audience & Intent`,
-    `Use the input to tailor each email’s goal and message.`,
-    ``,
-    `## 📦 Blueprint Content Blocks`,
-    `${formattedBlueprint}`,
-    ``,
-    `## 📝 Additional Context`,
-    `${formattedCategoryInputs}`,
-    ``,
-    `---`,
-    ``,
-    `Please generate 1 unique and compelling emails following these rules:`,
-    ``,
-    `- Each email must be in pure HTML format only. Use HTML tags like <html>, <head>, <body>, <h1>, <p>, <a>, <ul>, etc.`,
-    `- Each email should include:`,
-    `  - A subject line <!-- Subject: Your Subject Here -->`,
-    `  - A preheader text <!-- Preheader: Your preheader here -->`,
-    `  - A full email body in HTML with:`,
-    `    - A strong hook`,
-    `    - Highlighted benefits or offers`,
-    `    - Clear, compelling structure (headings, short paragraphs, bullets)`,
+    const userPrompt = [
+      `You are tasked with writing  high-performing marketing emails in HTML format using the structured information below.`,
+      ``,
+      `## 🎯 Target Audience & Intent`,
+      `Use the input to tailor each email’s goal and message.`,
+      ``,
+      `## 📦 Blueprint Content Blocks`,
+      `${formattedBlueprint}`,
+      ``,
+      `## 📝 Additional Context`,
+      `${formattedCategoryInputs}`,
+      ``,
+      `---`,
+      ``,
+      `Please generate 1 unique and compelling emails following these rules:`,
+      ``,
+      `- Each email must be in pure HTML format only. Use HTML tags like <html>, <head>, <body>, <h1>, <p>, <a>, <ul>, etc.`,
+      `- Each email should include:`,
+      `  - A subject line <!-- Subject: Your Subject Here -->`,
+      `  - A preheader text <!-- Preheader: Your preheader here -->`,
+      `  - A full email body in HTML with:`,
+      `    - A strong hook`,
+      `    - Highlighted benefits or offers`,
+      `    - Clear, compelling structure (headings, short paragraphs, bullets)`,
 
-    `- Tone: Friendly, persuasive, professional.`,
-    `- Each email should be concise yet impactful.`,
-    `- Do NOT use markdown or explanations — only return the HTML.`,
-    `- Separate emails using <!-- Email X --> comments.`,
-    ``,
-    `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
-  ].join('\n');
+      `- Tone: Friendly, persuasive, professional.`,
+      `- Each email should be concise yet impactful.`,
+      `- Do NOT use markdown or explanations — only return the HTML.`,
+      `- Separate emails using <!-- Email X --> comments.`,
+      ``,
+      `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
+    ].join('\n');
 
-  const request: DeepSeekRequest = {
-    model: this.defaultModel,
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userPrompt },
-    ],
-    // max_tokens: 2000,
-    // temperature: 0.7,
-  };
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      // max_tokens: 2000,
+      // temperature: 0.7,
+    };
 
-  const response = await this.makeRequest(request);
-  return response.choices[0]?.message?.content || '';
-}
+    const response = await this.makeRequest(request);
+    return response.choices[0]?.message?.content || '';
+  }
 
 
 

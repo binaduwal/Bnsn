@@ -72,9 +72,6 @@ export const generateProject = catchAsync(
             blueprintId: string
         };
 
-
-
-
         // Set up SSE headers
         res.writeHead(200, {
             'Content-Type': 'text/plain; charset=utf-8',
@@ -102,6 +99,8 @@ export const generateProject = catchAsync(
                 project,
                 value: fieldValue
             });
+            // save the value if needed
+            // await categoryValue.save()
 
             // Stream progress update
             res.write(JSON.stringify({
@@ -114,6 +113,8 @@ export const generateProject = catchAsync(
                 .populate('category')
                 .lean() as any[])
                 .map(blue => ({ title: blue.category.title, values: blue.value }));
+
+
 
             // Stream blueprint values
             res.write(JSON.stringify({
@@ -135,15 +136,15 @@ export const generateProject = catchAsync(
 
             let aiGeneratedContent;
 
+            console.log('blueprintValues: ', JSON.stringify(blueprintValues));
+
             switch (categoryData?.title) {
                 case "Email":
                     aiGeneratedContent = await deepSeekService.generateEmail(
                         blueprintValues,
                         fieldValue
                     );
-
                     break;
-
                 case "Website":
                     break;
                 default:
@@ -217,7 +218,7 @@ export const singleProject = catchAsync(
         }
 
         const project = await Project.findOne({ _id: id, userId: req.user.id })
-            .populate("categoryId")
+            .populate("categoryId").populate("blueprintId","_id title")
             .lean() as any;
 
         if (!project) {

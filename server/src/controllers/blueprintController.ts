@@ -37,6 +37,8 @@ export const createBlueprint = catchAsync(
         allCategories
       );
 
+      console.log("AI Generated Content:", JSON.stringify(aiGeneratedContent));
+
 
       if (Array.isArray(aiGeneratedContent) && aiGeneratedContent.length > 0) {
         for (const aiCategory of aiGeneratedContent) {
