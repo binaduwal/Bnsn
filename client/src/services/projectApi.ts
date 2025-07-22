@@ -63,8 +63,10 @@ export const generateProjectStreamApi = async (body: {
     category: string,
     project: string,
     values: { [key: string]: string },
-    blueprintId?: string
+    blueprintId?: string,
+    currentCategory?: string
 }) => {
+
     const token = Cookies.get("token")
     try {
         const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
@@ -119,6 +121,7 @@ export interface ThirdCategory {
     createdAt: string;
     updatedAt: string;
     __v: number;
+    fieldValue: FieldValue;
 }
 
 export interface SubCategory {
@@ -133,6 +136,7 @@ export interface SubCategory {
     updatedAt: string;
     __v: number;
     thirdCategories: ThirdCategory[];
+    fieldValue: FieldValue;
 }
 
 export interface Category {
@@ -142,9 +146,22 @@ export interface Category {
     parentId: string | null;
     description: string;
     fields: Field[];
+    fieldValue: FieldValue;
     level: number;
     createdAt: string;
     updatedAt: string;
     __v: number;
     subCategories: SubCategory[];
 }
+interface FieldValue {
+    _id: string;
+    category: string;
+    project: string;
+    isAiGeneratedContent: string; // contains HTML and comment blocks as a string
+    value: {
+      key: string;
+      value: string[]; // array of idea strings
+      _id: string;
+    }[];
+    __v: number;
+  };

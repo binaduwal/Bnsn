@@ -122,7 +122,7 @@ export const getSingleBlueprint = catchAsync(
 
     console.log('blueprint category', blueprints.categories)
 
-
+   
     const categoryValues: any[] = []
 
     for (const category of blueprints.categories) {
@@ -131,9 +131,7 @@ export const getSingleBlueprint = catchAsync(
       categoryValues.push(categoryData)
     }
 
-    if (!blueprints) {
-      return next(createError("No blueprint found", 404))
-    }
+  
     console.log('category values', categoryValues)
 
     res.status(200).json({

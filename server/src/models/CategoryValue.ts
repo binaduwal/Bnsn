@@ -4,6 +4,7 @@ interface ICategoryValue extends Document {
   category: mongoose.Schema.Types.ObjectId;
   blueprint: mongoose.Schema.Types.ObjectId;
   project: mongoose.Schema.Types.ObjectId;
+  isAiGeneratedContent: string;
   value: {
     key: string;
     value: [string];
@@ -21,9 +22,15 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Blueprint",
   },
+  
   project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Project",
+  },
+
+  isAiGeneratedContent: {
+    type: String,
+    default: "",
   },
 
   value: [

@@ -43,9 +43,9 @@ export const deleteBlueprintApi = async (id: string) => {
     }
 }
 
-export const updateCategoryValueApi = async (id: string, value: { key: string; value: string | string[]; _id?: string }[]) => {
+export const updateCategoryValueApi = async ({id,value,isAiGeneratedContent}:{id: string, value?: { key: string; value: string | string[]; _id?: string }[], isAiGeneratedContent?: string}) => {
     try {
-        const res = await api.put(`/category/value/${id}`, { value })
+        const res = await api.put(`/category/value/${id}`, { value, isAiGeneratedContent })
         return res.data as { success: boolean, data: CategoryValue }
     } catch (error) {
         throw errorHandler(error)

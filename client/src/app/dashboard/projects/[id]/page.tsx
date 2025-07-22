@@ -9,41 +9,23 @@ import {
   Eye,
   ShoppingCart,
   Save,
-  Send,
   Copy,
-  MoreHorizontal,
-  AlertTriangle,
   Plus,
-  Trash2,
-  ArrowUp,
   Loader,
 } from "lucide-react";
 import InlineTextEditor from "@/components/ui/InlineTextEditor";
 import {
   Category,
-  generateProjectApi,
   generateProjectStreamApi,
   singleProjectApi,
 } from "@/services/projectApi";
 import CampaignAccordion from "@/components/CampainAccordion";
 import EditableTitle from "@/components/ui/EditableTitle";
 import ContentGenerationSection from "@/components/ContentGenerationSection";
-import { createCategoryValueApi, Field } from "@/services/categoryApi";
+import { Field } from "@/services/categoryApi";
 import toast from "react-hot-toast";
+import { updateCategoryValueApi } from "@/services/blueprintApi";
 
-interface EmailCampaignStats {
-  wordsLeft: number;
-  totalWords: number;
-}
-
-interface EmailCampaignUIProps {
-  campaignName?: string;
-  stats?: EmailCampaignStats;
-  onSave?: () => void;
-  onPreview?: () => void;
-  onSend?: () => void;
-  params: Promise<{ id: string }>;
-}
 
 export interface Campaign {
   id: string;
@@ -53,18 +35,25 @@ export interface Campaign {
   isActive?: boolean;
 }
 
+interface EmailCampaignUIProps {
+  params: Promise<{ id: string }>;
+}
+
 const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
-  campaignName = "Promotional Email Generator",
-  stats = { wordsLeft: 97340, totalWords: 100000 },
-  onSave,
-  onPreview,
-  onSend,
+
+
+
   params,
 }) => {
+
   const [isEditing, setIsEditing] = useState(false);
-  const [currentCampaignName, setCurrentCampaignName] = useState(campaignName);
-  const [emailContent, setEmailContent] = useState("");
+  const [currentCampaignName, setCurrentCampaignName] = useState('Promotional Email Generator');
+
   const [isGenerating, setIsGenerating] = useState(false);
+
+  const [streamingAiContent, setStreamingAiContent] = useState<string>("");
+  const [isAiStreaming, setIsAiStreaming] = useState<boolean>(false);
+  const stats = { wordsLeft: 97340, totalWords: 100000 }
 
   // New streaming states
   const [streamingProgress, setStreamingProgress] = useState(0);
@@ -74,7 +63,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     fieldValue?: any[];
     aiContent?: string;
   }>({});
-  const [streamingData, setStreamingData] = useState<any[]>([]);
+
 
   const handleNameEdit = () => {
     setIsEditing(true);
@@ -94,34 +83,44 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     "Promotional Emails"
   );
   const [selectedCategory, setSelectedCategory] = useState<string | null>("");
-  const [mainTitle, setMainTitle] = useState("Email Campaign");
+  const [mainTitle, setMainTitle] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
   const [blueprintId, setBlueprintId] = useState<string | undefined>(undefined);
+  const [fieldValues, setFieldValues] = useState<{ [key: string]: string }>({});
+
   const id = use(params).id;
-  const [campaigns, setCampaigns] = useState<Campaign[]>([
-    {
-      id: "1",
-      title: "Promotional Emails",
-      slug: "promotional-emails",
-      dropDownTitle: "Promotional Email Generator",
-      isActive: true,
-    },
-    {
-      id: "2",
-      title: "Content Emails",
-      slug: "content-emails",
-      dropDownTitle: "Content Email Generator",
-      isActive: false,
-    },
-  ]);
+
 
   useEffect(() => {
     fetchSingleProject();
   }, [id]);
 
+  useEffect(() => {
+    const fieldValue = getFieldValue();
+
+    console.log("fieldValue",fieldValue)
+
+    const values = fieldValue?.value.forEach((item:any)=>{
+      setFieldValues((prev)=>({...prev,[item.key]:item.value[0]}))
+    })
+
+    
+
+    if (fieldValue) {
+      setGeneratedContent({
+        ...generatedContent,
+        aiContent: fieldValue.isAiGeneratedContent
+      });
+    }
+  }, [selectedCategory, categories]);
+
   const fetchSingleProject = async () => {
     const response = await singleProjectApi(id);
     setCategories(response.data.categoryId);
+    setSelectedCategory(response.data?.categoryId[0]?.subCategories[0]?.thirdCategories[0]?._id)
+    setSelectedCampaign(response.data?.categoryId[0]?.subCategories[0]?.title)
+    setMainTitle(response.data?.categoryId[0]?.title)
+
     setBlueprintId(response?.data?.blueprintId._id);
     console.log("first", response);
   };
@@ -137,11 +136,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   };
 
   const handleCampaignUpdate = (oldTitle: string, newTitle: string) => {
-    setCampaigns((prev) =>
-      prev.map((camp) =>
-        camp.title === oldTitle ? { ...camp, title: newTitle } : camp
-      )
-    );
+
 
     // Update selectedCampaign if it was the one being edited
     if (selectedCampaign === oldTitle) {
@@ -149,16 +144,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     }
   };
 
-  const handleAddCampaign = () => {
-    const newCampaign: Campaign = {
-      id: Date.now().toString(),
-      title: "New Campaign",
-      slug: "new-campaign",
-      dropDownTitle: "New Campaign Generator",
-      isActive: false,
-    };
-    setCampaigns((prev) => [...prev, newCampaign]);
-  };
+
 
   const progressPercentage =
     ((stats.totalWords - stats.wordsLeft) / stats.totalWords) * 100;
@@ -189,10 +175,16 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
       case "progress":
         setStreamingProgress(data.progress || 0);
         setStreamingMessage(data.message || "Processing...");
+
+        // Start AI streaming when AI generation begins
+        if (data.message?.includes("Generating AI content")) {
+          setIsAiStreaming(true);
+          setStreamingAiContent(""); // Reset streaming content
+        }
         break;
 
       case "data":
-        setStreamingData((prev) => [...prev, data]);
+
         if (data.key === "blueprintValues") {
           setGeneratedContent((prev) => ({
             ...prev,
@@ -201,8 +193,19 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         } else if (data.key === "fieldValue") {
           setGeneratedContent((prev) => ({ ...prev, fieldValue: data.value }));
         } else if (data.key === "aiContent") {
+          // Final AI content received
           setGeneratedContent((prev) => ({ ...prev, aiContent: data.value }));
+          setIsAiStreaming(false); // Stop streaming mode
+          setStreamingAiContent(""); // Clear streaming content
         }
+        if (data.progress) {
+          setStreamingProgress(data.progress);
+        }
+        break;
+
+      // NEW: Handle real-time AI content chunks
+      case "ai_chunk":
+        setStreamingAiContent((prev) => prev + data.content);
         if (data.progress) {
           setStreamingProgress(data.progress);
         }
@@ -211,6 +214,8 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
       case "complete":
         setStreamingProgress(100);
         setStreamingMessage("Generation completed successfully!");
+        setIsAiStreaming(false); // Ensure streaming mode is off
+
         if (data.data) {
           setGeneratedContent(data.data);
         }
@@ -220,6 +225,8 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
       case "error":
         toast.error(data.message || "An error occurred");
         setStreamingMessage(data.message || "Generation failed");
+        setIsAiStreaming(false); // Stop streaming on error
+        setStreamingAiContent(""); // Clear streaming content
         break;
 
       default:
@@ -233,11 +240,12 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     setStreamingProgress(0);
     setStreamingMessage("Starting generation...");
     setGeneratedContent({});
-    setStreamingData([]);
+
 
     try {
       const response = await generateProjectStreamApi({
         category: categories[0]._id,
+        currentCategory: selectedCategory || "",
         project: id,
         values: fieldValues,
         blueprintId,
@@ -248,7 +256,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         throw new Error("Response body is not available for streaming");
       }
 
-      const reader = response.body.getReader(); // ✅ Fixed: Use response.body.getReader()
+      const reader = response.body.getReader(); 
       const decoder = new TextDecoder();
       let buffer = "";
 
@@ -299,14 +307,207 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     }
   };
 
-  const [fieldValues, setFieldValues] = useState<{ [key: string]: string }>({});
-  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const renderAiContent = () => {
+    // Show streaming content if AI is currently streaming
+    const contentToShow = isAiStreaming ? streamingAiContent : generatedContent.aiContent;
+
+    if (!contentToShow && !isAiStreaming) return null;
+
+    return (
+      <div className="mb-6">
+        <div className="flex items-center gap-2 mb-2">
+         
+          {isAiStreaming && (
+            <div className="flex items-center gap-1 text-blue-600">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+              <span className="text-sm">Generating...</span>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="space-y-10">
+            {isAiStreaming ? (
+              // Show streaming content in real-time
+              <StreamingEmailPreview content={streamingAiContent} />
+            ) : (
+              // Show final parsed emails
+              parseMultipleEmails(contentToShow || "").map((email, idx) => (
+                <EmailCard key={idx} email={email} index={idx} />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const StreamingEmailPreview: React.FC<{ content: string }> = ({ content }) => {
+    if (!content.trim()) {
+      return (
+        <div className="border border-gray-200 rounded-lg p-6 shadow">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-200 rounded"></div>
+              <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Try to parse partial emails for better preview
+    const partialEmails = parseStreamingEmails(content);
+
+    return (
+      <>
+        {partialEmails.map((email, idx) => (
+          <div key={idx} className="border border-gray-200 rounded-lg p-6 shadow">
+            <div className="flex items-center gap-2 mb-2">
+              <h2 className="text-xl font-semibold ">Email {idx + 1}</h2>
+              <div className="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></div>
+            </div>
+
+            {email.subject && (
+              <p className="text-base text-gray-600 mb-1">
+                <strong>Subject:</strong> {email.subject}
+              </p>
+            )}
+
+            {email.preheader && (
+              <p className="text-sm text-gray-600 mb-4">
+                <strong>Preheader:</strong> {email.preheader}
+              </p>
+            )}
+
+            {email.body && (
+              <div className="prose max-w-none">
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: email.body + (idx === partialEmails.length - 1 ? '<span class="animate-pulse">|</span>' : '')
+                  }}
+                />
+              </div>
+            )}
+          </div>
+        ))}
+
+        {/* Show raw streaming content if no emails parsed yet */}
+        {partialEmails.length === 0 && (
+          <div className="border border-gray-200 rounded-lg p-6 shadow">
+            <div className="text-sm text-gray-600 font-mono whitespace-pre-wrap">
+              {content}
+              <span className="animate-pulse">|</span>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  };
+
+  // Component for final email cards
+  const EmailCard: React.FC<{ email: any; index: number }> = ({ email, index }) => (
+    <div className="border relative border-gray-200 flex flex-col gap-1 rounded-lg p-6 shadow">
+      <div className="absolute top-0 right-0">
+        <button
+          onClick={() => {
+            const parsedHtml = parse(email.body);
+            navigator.clipboard.writeText(parsedHtml);
+            toast.success("Copied to clipboard");
+          }}
+          className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+        >
+          <Copy className="w-4 h-4" />
+        </button>
+      </div>
+        {email.title && <h2 className="text-xl  font-semibold mb-2">
+          {email.title}
+        </h2>}
+
+     {email.subject && <p className="text-base text-gray-600 mb-1">
+        <strong>Subject:</strong> {email.subject}
+      </p>}
+
+      {email.preheader && <p className="text-sm text-gray-600 mb-4">
+        <strong>Preheader:</strong> {email.preheader}
+      </p>}
+
+      <InlineTextEditor
+        className="p-0"
+        initialContent={email.body}
+        onChange={(value) => { }}
+      />
+    </div>
+  );
+
+  // Helper function to parse streaming emails (partial content)
+  const parseStreamingEmails = (content: string) => {
+    const emails: ParsedEmail[] = [];
+
+    // Look for subject lines
+    const subjectMatches = content.match(/<!--\s*Subject:\s*([^>]+)\s*-->/gi) || [];
+
+    // Look for preheader
+    const preheaderMatches = content.match(/<!--\s*Preheader:\s*([^>]+)\s*-->/gi) || [];
+
+    // Look for email separators
+    const emailSeparators = content.match(/<!--\s*Email\s*\d+\s*-->/gi) || [];
+
+    if (subjectMatches.length > 0 || preheaderMatches.length > 0 || emailSeparators.length > 0) {
+      // Try to extract structured email data
+      const emailParts = content.split(/<!--\s*Email\s*\d+\s*-->/gi);
+
+      emailParts.forEach((part, idx) => {
+        if (part.trim()) {
+          const subjectMatch = part.match(/<!--\s*Subject:\s*([^>]+)\s*-->/i);
+          const preheaderMatch = part.match(/<!--\s*Preheader:\s*([^>]+)\s*-->/i);
+
+          // Extract body content (everything after preheader or subject)
+          let bodyContent = part;
+          if (preheaderMatch) {
+            bodyContent = part.split(preheaderMatch[0])[1] || '';
+          } else if (subjectMatch) {
+            bodyContent = part.split(subjectMatch[0])[1] || '';
+          }
+
+          emails.push({
+            subject: subjectMatch ? subjectMatch[1].trim() : '',
+            preheader: preheaderMatch ? preheaderMatch[1].trim() : '',
+            body: bodyContent.trim(),
+            title: `Streaming Email ${idx + 1}`
+          });
+        }
+      });
+    }
+
+    return emails;
+  };
+
+
+
+  const handleSave = async () => {
+
+    try {
+      const response = await updateCategoryValueApi({
+        id:selectedCategory || "",
+        isAiGeneratedContent: generatedContent.aiContent
+      });
+
+      console.log(response);
+      toast.success("Saved successfully");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to save");
+    }
+    console.log("save");
+  }
 
   interface ParsedEmail {
-    title: string;
-    subject: string;
-    preheader: string;
-    body: string;
+    title: string | undefined;
+    subject: string | undefined;
+    preheader: string | undefined;
+    body: string | undefined;
   }
 
   function parseMultipleEmails(rawHtml: string): ParsedEmail[] {
@@ -319,14 +520,15 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
       const bodyMatch = block.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
 
       return {
-        title: titleMatch?.[1]?.trim() || `Email ${index + 1}`,
-        subject: subjectMatch?.[1]?.trim() || "",
-        preheader: preheaderMatch?.[1]?.trim() || "",
-        body: bodyMatch?.[1]?.trim() || "",
+        title: titleMatch?.[1]?.trim() || undefined,
+        subject: subjectMatch?.[1]?.trim() || undefined,
+        preheader: preheaderMatch?.[1]?.trim() || undefined,
+        body: bodyMatch?.[1]?.trim() || undefined,
       };
     });
 
-    return emails;
+    console.log("emails",emails.filter(email => email.body ))
+    return emails.filter(email => email.body );
   }
 
   const handleFieldChange = (fieldId: string, value: string) => {
@@ -336,6 +538,28 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     }));
   };
 
+  const getFieldValue = ()=>{
+    if(!selectedCategory) return undefined;
+    if(categories.length === 0) return undefined;
+
+    for (const category of categories) {
+      if (category.subCategories) {
+        for (const subCategory of category.subCategories) {
+          if (subCategory.thirdCategories) {
+            for (const thirdCategory of subCategory.thirdCategories) {
+              if (thirdCategory._id === selectedCategory) {
+                return thirdCategory.fieldValue;
+              }
+            }
+          }
+        }
+      }
+    }
+    return undefined; 
+  }
+
+  
+
   const parse = (html: string) => {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, "text/html");
@@ -343,10 +567,11 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   };
 
   const campaignFields = getSelectedCampaignFields();
-  const hasFields = campaignFields.length > 0;
+  
 
   return (
     <div className="bg-gray-50 flex">
+     
       {/* Left Sidebar */}
       <aside className="w-80 min-h-[calc(100vh-120px)]  bg-white border-r border-gray-200 flex flex-col shadow-sm">
         {/* Sidebar Header */}
@@ -363,6 +588,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
             <CampaignAccordion
               campaigns={categories}
               onCategoryChange={handleCategoryChange}
+              selectedCategory={selectedCategory}
               selectedCampaign={selectedCampaign}
               onCampaignSelect={handleCampaignSelect}
               onCampaignUpdate={handleCampaignUpdate}
@@ -378,7 +604,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
               View All
             </button>
             <button
-              onClick={handleAddCampaign}
               className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
             >
               <Plus className="w-4 h-4 inline mr-2" />
@@ -408,7 +633,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1  overflow-hidden">
           <div className="flex flex-col bg-gray-50">
             {/* Header */}
             <header className="bg-white border-b border-gray-200 shadow-sm">
@@ -420,7 +645,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                       <span>Promotional Emails</span>
                       <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
                     </nav>
-
+                    {/* campaign name */}
                     <div className="flex items-center space-x-2">
                       {isEditing ? (
                         <input
@@ -452,7 +677,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                       </button>
 
                       <button
-                        onClick={onPreview}
+
                         className="p-1 rounded hover:bg-gray-100 transition-colors"
                         title="Preview email"
                       >
@@ -492,7 +717,10 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1  min-h-[calc(100vh-320px)] overflow-y-auto">
+          
+           
+
               {campaignFields.length > 0 ? (
                 <div className="max-w-4xl mx-auto p-3">
                   {campaignFields.map((field, index) => (
@@ -515,23 +743,23 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
 
                         {/* Input Field */}
                         <div className="relative">
+                   
                           {field.fieldType === "text" && (
                             <div className="relative">
                               <input
                                 type="text"
                                 value={
-                                  fieldValues[
-                                    `${field.fieldName}-${field._id}`
-                                  ] || ""
+                                  fieldValues?.[
+                                  field.fieldName
+                                  ] || getFieldValue()?.value[0]?.value[0] || ""
                                 }
                                 onChange={(e) =>
                                   handleFieldChange(
-                                    `${field.fieldName}-${field._id}`,
+                                    `${field.fieldName}`,
                                     e.target.value
                                   )
                                 }
-                                onFocus={() => setFocusedField(field._id)}
-                                onBlur={() => setFocusedField(null)}
+
                                 placeholder={`Enter ${field.fieldName.toLowerCase()}`}
                                 className={`w-full px-4 py-3 border-2 rounded-lg text-gray-700 placeholder-gray-400 
                           transition-all duration-200 focus:outline-none focus:ring-0
@@ -582,66 +810,16 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                   {/* Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
-                    <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
-                      <h2 className="text-xl font-bold mb-4 text-gray-800">
-                        Generated Content
-                      </h2>
+                      <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">
+                          Generated Content
+                        </h2>
 
-                      {/* AI Generated Content */}
-                      {generatedContent.aiContent && (
-                        <div className="mb-6">
-                          <h3 className="text-lg font-semibold mb-2 text-gray-700">
-                            AI Generated Email:
-                          </h3>
-                          <div className="bg-gray-50 p-4 rounded-lg ">
-                            <div className="space-y-10">
-                              {parseMultipleEmails(
-                                generatedContent.aiContent
-                              ).map((email, idx) => (
-                                <div
-                                  key={idx}
-                                  className="border relative border-gray-200 flex flex-col gap-1  rounded-lg p-6 shadow"
-                                >
-                                  <div className="absolute top-0 right-0">
-                                    {/* copy btn  */}
-                                    <button
-                                      onClick={() => {
-                                        //copy to clipboard after parsing the html
-                                        const parsedHtml = parse(email.body);
-                                        navigator.clipboard.writeText(
-                                          parsedHtml
-                                        );
-                                        toast.success("Copied to clipboard");
-                                      }}
-                                      className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                                    >
-                                      <Copy className="w-4 h-4" />
-                                    </button>
-                                  </div>
-                                  <h2 className="text-xl font-semibold mb-2">
-                                    Email {idx + 1}: {email.title}
-                                  </h2>
-                                  <p className="text-base text-gray-600  mb-1">
-                                    <strong>Subject:</strong> {email.subject}
-                                  </p>
-                                  <p className="text-sm text-gray-600 mb-4">
-                                    <strong>Preheader:</strong>{" "}
-                                    {email.preheader}
-                                  </p>
-
-                                  <InlineTextEditor
-                                    className="p-0 "
-                                    initialContent={email.body}
-                                    onChange={(value) => {}}
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                        {/* AI Generated Content */}
+                    
+                        {(streamingAiContent || generatedContent.aiContent) && renderAiContent()}
+                      </div>
+                    )}
                 </div>
               ) : (
                 <ContentGenerationSection />
@@ -649,44 +827,24 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
             </main>
 
             {/* Footer Actions */}
-            <footer className="bg-white border-t border-gray-200 px-6 py-4">
+            <footer className="bg-white  border-t border-gray-200 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <button
-                    onClick={onSave}
+                    onClick={handleSave}
+
                     className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save Draft</span>
+                    <span>Save</span>
                   </button>
 
-                  <button className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors">
-                    <Copy className="w-4 h-4" />
-                    <span>Copy</span>
-                  </button>
 
-                  <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                    <MoreHorizontal className="w-5 h-5 text-gray-500" />
-                  </button>
+
+
                 </div>
 
-                <div className="flex items-center space-x-3">
-                  <button
-                    onClick={onPreview}
-                    className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
-                  >
-                    Preview
-                  </button>
 
-                  <button
-                    onClick={onSend}
-                    className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={!emailContent.trim()}
-                  >
-                    <Send className="w-4 h-4" />
-                    <span>Send Campaign</span>
-                  </button>
-                </div>
               </div>
             </footer>
           </div>

@@ -9,14 +9,7 @@ export const allCategoryApi = async (type: string, level?: number) => {
     }
 }
 
-export const createCategoryValueApi = async (body: { category: string, project: string, values: { [key: string]: string, }, blueprintId?: string }) => {
-    try {
-        const res = await api.post(`/category/value`, body)
-        return res.data as { success: boolean, data: Category[] }
-    } catch (error) {
-        throw errorHandler(error)
-    }
-}
+
 
 
 export type Category = {

@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Settings, Pencil, Check, X } from "lucide-react";
 import { Category, SubCategory } from "@/services/projectApi";
@@ -9,6 +9,7 @@ import { Category, SubCategory } from "@/services/projectApi";
 interface CampaignAccordionProps {
   campaigns: Category[];
   selectedCampaign: string | null;
+  selectedCategory: string | null;
   onCategoryChange: (id: string) => void;
   onCampaignSelect: (id: string) => void;
   onCampaignUpdate: (oldTitle: string, newTitle: string) => void;
@@ -17,13 +18,20 @@ interface CampaignAccordionProps {
 const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
   campaigns,
   selectedCampaign,
+  selectedCategory,
   onCategoryChange,
   onCampaignSelect,
   onCampaignUpdate,
 }) => {
+  
+
   const router = useRouter();
   const [editingCampaign, setEditingCampaign] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
+
+//  useEffect(()=>{
+//   onCategoryChange(campaigns?.[0]?.subCategories[0].thirdCategories[0]?._id)
+//  },[campaigns])
 
   const startEdit = (campaign: SubCategory) => {
     setEditingCampaign(campaign.title);
@@ -55,6 +63,10 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
     if (editingCampaign === null) {
       onCampaignSelect(campaignTitle);
     }
+  };
+
+  const isOpen = (campaignTitle: string): boolean => {
+    return selectedCampaign === campaignTitle;
   };
 
   return (
@@ -162,8 +174,8 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
 
           {/* Accordion Content */}
           <div
-            className={`overflow-hidden  transition-all duration-300 ease-in-out ${
-              selectedCampaign === campaign.title
+            className={`overflow-hidden  transition-all duration-300 ease-in-out  ${
+              isOpen(campaign.title)
                 ? "max-h-32 opacity-100"
                 : "max-h-0 opacity-0"
             }`}
@@ -173,13 +185,13 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                 <button
                   key={i}
                   onClick={() => handleCampaignClick(third._id)}
-                  className="w-full  bg-blue-50 border border-blue-200 rounded-lg  p-3 hover:bg-blue-100 transition-colors group"
+                  className={`w-full  ${selectedCategory === third._id ? "bg-blue-100 border border-blue-200" : " border border-gray-200 hover:bg-blue-50"}  rounded-lg  p-3  transition-colors group`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-blue-900">
+                    <span className={`text-sm font-medium ${selectedCategory === third._id ? "text-blue-900" : "text-gray-800"}`}>
                       {third.title}
                     </span>
-                    <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center group-hover:bg-blue-700 transition-colors">
+                   <div className={`w-4 h-4 ${selectedCategory === third._id ? "bg-blue-600" : "bg-gray-400"} rounded-full flex items-center justify-center  transition-colors`}>
                       <div className="w-2 h-2 bg-white rounded-full"></div>
                     </div>
                   </div>

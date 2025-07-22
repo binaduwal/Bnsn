@@ -260,7 +260,7 @@ const InlineTextEditor: React.FC<InlineTextEditorProps> = ({
         <div
           ref={editorRef}
           contentEditable
-          className={`p-6 min-h-[400px] focus:outline-none text-gray-900 leading-relaxed relative ${className}`}
+          className={`p-6 min-h-[400px] prose prose-sm focus:outline-none text-gray-900 leading-relaxed relative ${className}`}
           onInput={handleInput}
           onKeyDown={handleKeyDown}
           onMouseUp={handleMouseUp}

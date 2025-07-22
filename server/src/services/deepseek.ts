@@ -301,12 +301,15 @@ export class DeepSeekService {
       `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
     ].join('\n');
 
+    console.log(JSON.stringify(userPrompt, null, 2));
+
     const request: DeepSeekRequest = {
       model: this.defaultModel,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
       ],
+      stream: true,
       // max_tokens: 2000,
       // temperature: 0.7,
     };
@@ -315,7 +318,217 @@ export class DeepSeekService {
     return response.choices[0]?.message?.content || '';
   }
 
+  // email stream 
+  async generateEmailStream(
+    blueprintValue: BlueprintValue[],
+    projectCategoryValue: ProjectCategoryValue[],
+    onProgress?: (chunk: string) => void
+  ): Promise<string> {
+    const systemPrompt = `You are an expert email copywriter with deep knowledge of behavioral psychology, marketing funnels, and persuasive writing. You craft high-converting emails for various types such as sales, onboarding, follow-ups, newsletters, cold outreach, and re-engagement. Your goal is to maximize open rates, click-through rates, and conversions — while maintaining a personal, human touch.`;
+  
+    const formattedBlueprint = blueprintValue
+      .map(section => {
+        const values = section.values
+          .map(val => `- ${val.key}: ${val.value}`)
+          .join('\n');
+        return `### ${section.title}\n${values}`;
+      })
+      .join('\n\n');
+  
+    const formattedCategoryInputs = projectCategoryValue
+      .map(item => `- ${item.key}: ${item.value}`)
+      .join('\n');
+  
+    const userPrompt = [
+      `You are tasked with writing high-performing marketing emails in HTML format using the structured information below.`,
+      ``,
+      `## 🎯 Target Audience & Intent`,
+      `Use the input to tailor each email's goal and message.`,
+      ``,
+      `## 📦 Blueprint Content Blocks`,
+      `${formattedBlueprint}`,
+      ``,
+      `## 📝 Additional Context`,
+      `${formattedCategoryInputs}`,
+      ``,
+      `---`,
+      ``,
+      `Please generate 2 unique and compelling emails following these rules:`,
+      ``,
+      `- Each email must be in pure HTML format only. Use HTML tags like <html>, <head>, <body>, <h1>, <p>, <a>, <ul>, etc.`,
+      `Do not use any kind of placeholder text or meta data. Use the information provided to create the email.`,
+      `- Each email should include:`,
+      `  - A subject line <!-- Subject: Your Subject Here -->`,
+      `  - A preheader text <!-- Preheader: Your preheader here -->`,
+      `  - A full email body in HTML with:`,
+      `    - A strong hook`,
+      `    - Highlighted benefits or offers`,
+      `    - Clear, compelling structure (headings, short paragraphs, bullets)`,
+      `- Tone: Friendly, persuasive, professional.`,
+      `- Each email should be concise yet impactful.`,
+      `- Do NOT use markdown or explanations — only return the HTML.`,
+      `- Separate emails using <!-- Email X --> comments.`,
+      ``,
+      `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
+    ].join('\n');
+  
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: true, // Enable streaming
+      max_tokens: 4000,
+      temperature: 0.7,
+    };
+  
+    return await this.makeStreamingRequest(request, onProgress);
+  }
+  async generateArticleStream(
+    blueprintValue: BlueprintValue[],
+    projectCategoryValue: ProjectCategoryValue[],
+    onProgress?: (chunk: string) => void
+  ): Promise<string> {
+    const systemPrompt = `You are a senior-level SEO content writer with expertise in search engine optimization, storytelling, and audience engagement. You write in a human-like tone while ensuring the content is keyword-optimized, informative, and conversion-driven. Your writing balances clarity, depth, and flow, ideal for blogs, knowledge bases, landing pages, and marketing content. Your goal is to produce articles that rank well on Google while delivering genuine value to readers.`;
+  
+    const formattedBlueprint = blueprintValue
+      .map(section => {
+        const values = section.values
+          .map(val => `- ${val.key}: ${val.value}`)
+          .join('\n');
+        return `### ${section.title}\n${values}`;
+      })
+      .join('\n\n');
+  
+    const formattedCategoryInputs = projectCategoryValue
+      .map(item => `- ${item.key}: ${item.value}`)
+      .join('\n');
+  
+  
 
+const userPrompt = [
+  `You are tasked with writing an SEO-optimized, long-form HTML article.`,
+  ``,
+  `## 🎯 Writing Intent & SEO Context`,
+  ``,
+  ``,
+  `Below are important context values submitted by the user. Use them to shape the tone, audience focus, keyword usage, and structure of the article.`,
+  ``,
+  `${formattedCategoryInputs}`,
+  ``,
+  `## 👤 Author Information`,
+  `${formattedBlueprint}`,
+  `## 📝 Additional Context`,
+  `${formattedCategoryInputs}`,
+  ``,
+  `---`,
+  ``,
+  `Please generate 1 full-length article with these instructions:`,
+  ``,
+  `- Use <html>, <head>, <body>, <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <a> where appropriate.`,
+  `- Title must be wrapped in <h1> and include at least one Primary Keyword.`,
+  `- Introduction should hook the reader and align with the intent.`,
+  `- Include well-structured body sections with subheadings and use keywords contextually.`,
+  `- Weave in the author backstory and credentials naturally to build authority.`,
+  `- Wrap up with a strong conclusion and optional CTA.`,
+  `- DO NOT include markdown or explanations. Output only valid HTML.`,
+  `- Separate articles using <!-- Article 1 --> if needed.`,
+].join('\n');
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      stream: true,
+      max_tokens: 4000,
+      temperature: 0.7,
+    };
+  
+    return await this.makeStreamingRequest(request, onProgress);
+  }
+  
+  private async makeStreamingRequest(
+    request: DeepSeekRequest,
+    onProgress?: (chunk: string) => void
+  ): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseURL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Accept': 'text/event-stream',
+        },
+        body: JSON.stringify(request),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`DeepSeek API error: ${response.status} ${response.statusText}`);
+      }
+  
+      if (!response.body) {
+        throw new Error('No response body received');
+      }
+  
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullContent = '';
+      let buffer = '';
+  
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) break;
+  
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+          
+          // Process complete lines
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
+  
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            
+            if (trimmedLine === '' || trimmedLine === 'data: [DONE]') {
+              continue;
+            }
+  
+            if (trimmedLine.startsWith('data: ')) {
+              try {
+                const jsonData = JSON.parse(trimmedLine.slice(6));
+                
+                if (jsonData.choices?.[0]?.delta?.content) {
+                  const content = jsonData.choices[0].delta.content;
+                  fullContent += content;
+                  
+                  // Send progress update if callback provided
+                  if (onProgress) {
+                    onProgress(content);
+                  }
+                }
+              } catch (parseError) {
+                console.warn('Failed to parse streaming response:', parseError);
+                // Continue processing other chunks
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+  
+      return fullContent;
+  
+    } catch (error) {
+      console.error('Streaming request failed:', error);
+      throw new Error(`Failed to generate email: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
 
   async generateBookDraft(bookData: any): Promise<string> {
     const systemPrompt = `You are a professional book ghostwriter. Based on the provided book data, help structure and write an engaging, coherent book. Focus on clear chapter organization, tone consistency, and value delivery to the reader.`;

@@ -65,11 +65,12 @@ export const generateProject = catchAsync(
             return next(createError("User not found in request", 401));
         }
 
-        const { category, project, values, blueprintId } = req.body as {
+        const { category, project, values, blueprintId, currentCategory } = req.body as {
             category: string,
             project: string,
             values: { [key: string]: string },
-            blueprintId: string
+            blueprintId: string,
+            currentCategory: string
         };
 
         // Set up SSE headers
@@ -95,12 +96,11 @@ export const generateProject = catchAsync(
             });
 
             const categoryValue = new CategoryValue({
-                category,
+                category: currentCategory,
                 project,
                 value: fieldValue
             });
-            // save the value if needed
-            // await categoryValue.save()
+           
 
             // Stream progress update
             res.write(JSON.stringify({
@@ -113,8 +113,6 @@ export const generateProject = catchAsync(
                 .populate('category')
                 .lean() as any[])
                 .map(blue => ({ title: blue.category.title, values: blue.value }));
-
-
 
             // Stream blueprint values
             res.write(JSON.stringify({
@@ -130,30 +128,45 @@ export const generateProject = catchAsync(
                 message: 'Generating AI content...',
                 progress: 70
             }) + '\n');
-            console.log(' generating api request body: ', req.body);
-            // testing 
-            const categoryData = await Category.findById(category).lean()
 
-            let aiGeneratedContent;
+            const categoryData = await Category.findById(category).lean();
 
-            console.log('blueprintValues: ', JSON.stringify(blueprintValues));
+            let aiGeneratedContent = '';
+            console.log("categoryData",categoryData?.title)
 
             switch (categoryData?.title) {
                 case "Email":
-                    aiGeneratedContent = await deepSeekService.generateEmail(
+                    // Use streaming version with progress callback
+                    aiGeneratedContent = await deepSeekService.generateEmailStream(
                         blueprintValues,
-                        fieldValue
+                        fieldValue,
+                        (chunk: string) => {
+                            // Stream AI content chunks as they arrive
+                            res.write(JSON.stringify({
+                                type: 'ai_chunk',
+                                content: chunk,
+                                progress: 85
+                            }) + '\n');
+                        }
                     );
                     break;
-                case "Website":
+                case "Articles":
+                    aiGeneratedContent = await deepSeekService.generateArticleStream(
+                        blueprintValues,
+                        fieldValue,
+                        (chunk: string) => {
+                            // Stream AI content chunks as they arrive
+                            res.write(JSON.stringify({
+                                type: 'ai_chunk',
+                                content: chunk,
+                                progress: 85
+                            }) + '\n');
+                        }
+                    );
                     break;
                 default:
                     break;
             }
-
-
-
-
 
             if (!aiGeneratedContent) {
                 res.write(JSON.stringify({
@@ -163,7 +176,7 @@ export const generateProject = catchAsync(
                 return res.end();
             }
 
-            // Stream AI generated content
+            // Stream final AI generated content
             res.write(JSON.stringify({
                 type: 'data',
                 key: 'aiContent',
@@ -191,6 +204,16 @@ export const generateProject = catchAsync(
                     aiContent: aiGeneratedContent
                 }
             }) + '\n');
+
+            categoryValue.isAiGeneratedContent = aiGeneratedContent;
+            await categoryValue.save();
+            res.status(200).json({
+                success: true,
+                data: {
+                    success: true,
+                    categoryValueId: categoryValue._id
+                }
+            })
 
             res.end();
 
@@ -236,10 +259,13 @@ export const singleProject = catchAsync(
                     type: "project"
                 }).lean();
 
+                const categoryValue = await CategoryValue.findOne({ category: category._id, project: id }).lean();
+
                 // Build the category object with nested structure
                 const categoryWithChildren = {
                     ...category,
-                    subCategories: []
+                    subCategories: [],
+                    fieldValue: categoryValue
                 };
 
                 // Process each subcategory
@@ -250,10 +276,24 @@ export const singleProject = catchAsync(
                         type: "project"
                     }).lean();
 
+                    const subCategoryValue = await CategoryValue.findOne({ category: subCategory._id, project: id }).lean();
+
+                    // Process third-level categories and get their values
+                    const thirdCategoriesWithValues = [];
+                    for (const thirdCategory of thirdCategories) {
+                        const thirdCategoryValue = await CategoryValue.findOne({ category: thirdCategory._id, project: id }).lean();
+                        
+                        thirdCategoriesWithValues.push({
+                            ...thirdCategory,
+                            fieldValue: thirdCategoryValue
+                        });
+                    }
+
                     // Add subcategory with its children
                     categoryWithChildren.subCategories.push({
                         ...subCategory,
-                        thirdCategories: thirdCategories
+                        thirdCategories: thirdCategoriesWithValues,
+                        fieldValue: subCategoryValue
                     });
                 }
 
@@ -265,12 +305,13 @@ export const singleProject = catchAsync(
 
         // Build the nested category structure
         const nestedCategories = await buildCategoryTree(project.categoryId);
+        console.log('nestedCategories', project.categoryId)
 
         res.json({
             success: true,
             data: {
                 ...project,
-                categoryId: nestedCategories // Replace flat categories with nested structure
+                categoryId: nestedCategories 
             }
         });
     }
