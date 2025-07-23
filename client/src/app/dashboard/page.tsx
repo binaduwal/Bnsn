@@ -17,16 +17,20 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import useProject from "@/hooks/useProject";
+import useBlueprint from "@/hooks/useBlueprint";
+import { Project } from "@/services/projectApi";
+import { BlueprintProps } from "@/services/blueprintApi";
 
-interface Project {
-  id: string;
-  name: string;
-  type: "project" | "blueprint";
-  lastModified?: string;
-  created?: string;
-  status?: "Active" | "Draft" | "Archived";
-  isStarred?: boolean;
-}
+// interface Project {
+//   id: string;
+//   name: string;
+//   type: "project" | "blueprint";
+//   lastModified?: string;
+//   created?: string;
+//   status?: "Active" | "Draft" | "Archived";
+//   isStarred?: boolean;
+// }
 
 const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -34,95 +38,8 @@ const Dashboard: React.FC = () => {
     "all"
   );
   const router = useRouter();
-
-  const projects: Project[] = [
-    {
-      id: "1",
-      name: "Test with ecom",
-      type: "project",
-      lastModified: "2024-07-08",
-      created: "2024-07-06",
-      status: "Active",
-      isStarred: true,
-    },
-    {
-      id: "2",
-      name: "Test",
-      type: "project",
-      lastModified: "2024-07-07",
-      created: "2024-07-06",
-      status: "Draft",
-    },
-    {
-      id: "3",
-      name: "Ai Assisted Agency Accelerator",
-      type: "project",
-      lastModified: "2024-07-05",
-      created: "2024-07-02",
-      status: "Active",
-      isStarred: true,
-    },
-    {
-      id: "4",
-      name: "Ai Assisted Agency Accelerator",
-      type: "project",
-      lastModified: "2024-07-01",
-      created: "2024-06-25",
-      status: "Active",
-    },
-    {
-      id: "5",
-      name: "Ai Assisted® Agency Accelerator",
-      type: "project",
-      lastModified: "2024-06-24",
-      created: "2024-06-20",
-      status: "Archived",
-    },
-  ];
-
-  const blueprints: Project[] = [
-    {
-      id: "1",
-      name: "Viral Content Engine for Women's Activewear (Copy)",
-      type: "blueprint",
-      lastModified: "2024-07-08",
-      created: "2024-07-03",
-      status: "Active",
-      isStarred: true,
-    },
-    {
-      id: "2",
-      name: "Viral Content Engine for Women's Activewear",
-      type: "blueprint",
-      lastModified: "2024-07-07",
-      created: "2024-07-06",
-      status: "Active",
-    },
-    {
-      id: "3",
-      name: "AI Agency Accelerator",
-      type: "blueprint",
-      lastModified: "2024-07-04",
-      created: "2024-06-30",
-      status: "Draft",
-    },
-    {
-      id: "4",
-      name: "Your Best Life",
-      type: "blueprint",
-      lastModified: "2024-07-01",
-      created: "2024-06-25",
-      status: "Active",
-    },
-    {
-      id: "5",
-      name: "Dr. Hoyos Medical Office",
-      type: "blueprint",
-      lastModified: "2024-06-24",
-      created: "2024-06-20",
-      status: "Archived",
-    },
-  ];
+  const { projects, isLoading: projectFetching } = useProject();
+  const { blueprints, isLoading } = useBlueprint();
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -156,7 +73,7 @@ const Dashboard: React.FC = () => {
                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
               )}
             </div>
-            <p className="text-sm text-gray-500 capitalize">{project.type}</p>
+            <p className="text-sm text-gray-500 capitalize">Project</p>
           </div>
         </div>
         <div className="flex items-center space-x-1">
@@ -179,7 +96,7 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center space-x-4 text-sm text-gray-500">
           <div className="flex items-center space-x-1">
             <Clock className="w-4 h-4" />
-            <span>Modified {project.lastModified}</span>
+            <span>Modified {project.updatedAt}</span>
           </div>
         </div>
         <span
@@ -193,9 +110,11 @@ const Dashboard: React.FC = () => {
     </div>
   );
 
-  const BlueprintCard: React.FC<{ blueprint: Project }> = ({ blueprint }) => (
+  const BlueprintCard: React.FC<{ blueprint: BlueprintProps }> = ({
+    blueprint,
+  }) => (
     <div
-      onClick={() => router.push(`/dashboard/blueprint/${blueprint.name}`)}
+      onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
       className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
     >
       <div className="flex items-center justify-between mb-4">
@@ -206,13 +125,13 @@ const Dashboard: React.FC = () => {
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-lg font-medium text-gray-900">
-                {blueprint.name}
+                {blueprint.title}
               </h3>
-              {blueprint.isStarred && (
+              {/* {blueprint.isStarred && (
                 <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              )}
+              )} */}
             </div>
-            <p className="text-sm text-gray-500 capitalize">{blueprint.type}</p>
+            <p className="text-sm text-gray-500 capitalize">Blueprint</p>
           </div>
         </div>
         <div className="flex items-center space-x-1">
@@ -235,36 +154,33 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center space-x-4 text-sm text-gray-500">
           <div className="flex items-center space-x-1">
             <Clock className="w-4 h-4" />
-            <span>Modified {blueprint.lastModified}</span>
+            <span>Modified {blueprint.updatedAt}</span>
           </div>
         </div>
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-            blueprint.status || "Active"
+            "Active"
           )}`}
         >
-          {blueprint.status || "Active"}
+          {"Active"}
         </span>
       </div>
     </div>
   );
 
   const allItems = [...projects, ...blueprints];
-  const filteredItems = allItems.filter((item) => {
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesTab =
-      activeTab === "all" || item.type === activeTab.slice(0, -1);
-    return matchesSearch && matchesTab;
-  });
+  // const filteredItems = allItems.filter((item) => {
+  //   const matchesSearch = item.
+  //     .toLowerCase()
+  //     .includes(searchQuery.toLowerCase());
+  //   const matchesTab =
+  //     activeTab === "all" || item.type === activeTab.slice(0, -1);
+  //   return matchesSearch && matchesTab;
+  // });
 
-  const activeProjects = projects.filter((p) => p.status === "Active").length;
-  const draftProjects = projects.filter((p) => p.status === "Draft").length;
-  const activeBlueprints = blueprints.filter(
-    (b) => b.status === "Active"
-  ).length;
-  const draftBlueprints = blueprints.filter((b) => b.status === "Draft").length;
+  const activeProjects = projects.length;
+  // const draftProjects = projects.filter((p) => p.status === "Draft").length;
+  const activeBlueprints = blueprints.length;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -388,9 +304,7 @@ const Dashboard: React.FC = () => {
                   Draft Projects
                 </span>
               </div>
-              <div className="text-2xl font-semibold text-gray-900">
-                {draftProjects}
-              </div>
+              <div className="text-2xl font-semibold text-gray-900">0</div>
             </div>
             <div className="bg-white p-4 rounded-lg border border-gray-300">
               <div className="flex items-center space-x-2 mb-2">
@@ -400,7 +314,7 @@ const Dashboard: React.FC = () => {
                 </span>
               </div>
               <div className="text-2xl font-semibold text-gray-900">
-                {allItems.filter((item) => item.isStarred).length}
+                {allItems.length}
               </div>
             </div>
           </div>
@@ -412,23 +326,21 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-semibold text-gray-900">
                 {searchQuery
-                  ? `Search Results (${filteredItems.length})`
+                  ? `Search Results 0`
                   : activeTab === "projects"
                   ? "All Projects"
                   : "All Blueprints"}
               </h2>
-              <div className="text-sm text-gray-600">
-                {filteredItems.length} items found
-              </div>
+              <div className="text-sm text-gray-600">0 items found</div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filteredItems.map((item, i) =>
-                item.type === "project" ? (
-                  <ProjectCard key={i} project={item} />
-                ) : (
-                  <BlueprintCard key={i} blueprint={item} />
-                )
-              )}
+              {projects.map((item, i) => (
+                <ProjectCard key={i} project={item} />
+              ))}
+
+              {blueprints.map((item, i) => (
+                <BlueprintCard key={i} blueprint={item} />
+              ))}
             </div>
           </div>
         ) : (
@@ -449,7 +361,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="space-y-4">
                 {projects.slice(0, 5).map((project) => (
-                  <ProjectCard key={project.id} project={project} />
+                  <ProjectCard key={project._id} project={project} />
                 ))}
               </div>
             </div>
@@ -470,7 +382,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="space-y-4">
                 {blueprints.slice(0, 5).map((blueprint) => (
-                  <BlueprintCard key={blueprint.id} blueprint={blueprint} />
+                  <BlueprintCard key={blueprint._id} blueprint={blueprint} />
                 ))}
               </div>
             </div>

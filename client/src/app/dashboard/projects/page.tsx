@@ -1,9 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Search,
   Plus,
-  Copy,
   Edit,
   Trash2,
   ChevronLeft,
@@ -12,7 +11,6 @@ import {
   ChevronsRight,
   ChevronUp,
   ChevronDown,
-  MoreHorizontal,
   Filter,
   FolderOpen,
   Loader2,
@@ -20,11 +18,10 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { deleteProjectApi, getAllProjectApi, Project } from "@/services/projectApi";
+import { deleteProjectApi, Project } from "@/services/projectApi";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { formatTableDate } from "@/utils/dateUtils";
-
-
+import useProject from "@/hooks/useProject";
 
 const ProjectsPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,26 +30,9 @@ const ProjectsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBlueprint, setSelectedBlueprint] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
   const router = useRouter();
 
-  useEffect(() => {
-    fetchAllProjects()
-  }, [])
-
-  const fetchAllProjects = async () =>{
-    setIsLoading(true);
-    try {
-      const res = await getAllProjectApi()
-      setProjects(res.data)
-    } catch (error:any) {
-      toast.error(error.message)
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const { isLoading, projects, fetchAllProjects } = useProject();
 
   const blueprints = [
     "All Blueprints",
@@ -69,7 +49,7 @@ const ProjectsPage: React.FC = () => {
   const handleDeleteClick = (project: Project) => {
     setProjectToDelete(project);
     setShowDeleteModal(true);
-  }
+  };
 
   const handleDeleteConfirm = async () => {
     if (!projectToDelete) return;
@@ -80,7 +60,7 @@ const ProjectsPage: React.FC = () => {
     } catch (error: any) {
       toast.error(error.message);
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -119,21 +99,26 @@ const ProjectsPage: React.FC = () => {
           {project.status}
         </span>
       </td>
-      <td className="px-6 py-4 text-sm text-gray-600">{formatTableDate(project.createdAt)}</td>
-      <td className="px-6 py-4 text-sm text-gray-600">{formatTableDate(project.updatedAt)}</td>
+      <td className="px-6 py-4 text-sm text-gray-600">
+        {formatTableDate(project.createdAt)}
+      </td>
+      <td className="px-6 py-4 text-sm text-gray-600">
+        {formatTableDate(project.updatedAt)}
+      </td>
       <td className="px-6 py-4">
         <div className="flex items-center space-x-2">
-        
           <button
             onClick={() => router.push(`/dashboard/projects/${project._id}`)}
             className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
           >
             <Edit size={16} />
           </button>
-          <button onClick={() => handleDeleteClick(project)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
+          <button
+            onClick={() => handleDeleteClick(project)}
+            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+          >
             <Trash2 size={16} />
           </button>
-
         </div>
       </td>
     </tr>
@@ -328,8 +313,11 @@ const ProjectsPage: React.FC = () => {
               <div className="flex items-center justify-between mt-6">
                 <div className="text-sm text-gray-600">
                   Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-                  {Math.min(currentPage * itemsPerPage, filteredProjects.length)} of{" "}
-                  {filteredProjects.length} results
+                  {Math.min(
+                    currentPage * itemsPerPage,
+                    filteredProjects.length
+                  )}{" "}
+                  of {filteredProjects.length} results
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -359,7 +347,9 @@ const ProjectsPage: React.FC = () => {
                       min="1"
                       max={totalPages}
                     />
-                    <span className="text-sm text-gray-600">of {totalPages}</span>
+                    <span className="text-sm text-gray-600">
+                      of {totalPages}
+                    </span>
                   </div>
 
                   <button
@@ -381,7 +371,9 @@ const ProjectsPage: React.FC = () => {
                   </button>
 
                   <div className="flex items-center space-x-2 ml-6 pl-6 border-l border-gray-200">
-                    <span className="text-sm text-gray-600">Rows per page:</span>
+                    <span className="text-sm text-gray-600">
+                      Rows per page:
+                    </span>
                     <select
                       value={itemsPerPage}
                       onChange={(e) => setItemsPerPage(Number(e.target.value))}

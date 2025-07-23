@@ -1,9 +1,8 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   Search,
   Plus,
-  Copy,
   Edit,
   Trash2,
   ChevronLeft,
@@ -12,23 +11,15 @@ import {
   ChevronsRight,
   ChevronUp,
   ChevronDown,
-  MoreHorizontal,
   Filter,
   Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { deleteBlueprintApi, getAllBlueprintApi } from "@/services/blueprintApi";
+import { BlueprintProps, deleteBlueprintApi } from "@/services/blueprintApi";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { formatTableDate } from "@/utils/dateUtils";
-
-interface Blueprint {
-  id: string;
-  name: string;
-  created: string;
-  modified: string;
-  status: "Active" | "Draft" | "Archived";
-}
+import useBlueprint from "@/hooks/useBlueprint";
 
 const BlueprintPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,35 +27,11 @@ const BlueprintPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [searchQuery, setSearchQuery] = useState("");
   const router = useRouter();
-  const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [blueprintToDelete, setBlueprintToDelete] = useState<Blueprint | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [blueprintToDelete, setBlueprintToDelete] =
+    useState<BlueprintProps | null>(null);
 
-  useEffect(() => {
-    fetchBlueprint();
-  }, []);
-
-  const fetchBlueprint = async () => {
-    try {
-      setIsLoading(true);
-      const res = await getAllBlueprintApi();
-      setBlueprints(
-        res.data.map((blueprint: any) => ({
-          id: blueprint._id,
-          name: blueprint.title,
-          created: blueprint.createdAt,
-          modified: blueprint.updatedAt,
-          status: "Active",
-        }))
-      );
-      console.log("res", res);
-    } catch (error: any) {
-      toast.error(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { blueprints, isLoading, fetchBlueprint } = useBlueprint();
 
   const totalPages = Math.ceil(blueprints.length / itemsPerPage);
 
@@ -81,7 +48,7 @@ const BlueprintPage: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = (blueprint: Blueprint) => {
+  const handleDeleteClick = (blueprint: BlueprintProps) => {
     setBlueprintToDelete(blueprint);
     setShowDeleteModal(true);
   };
@@ -90,7 +57,7 @@ const BlueprintPage: React.FC = () => {
     if (!blueprintToDelete) return;
 
     try {
-      await deleteBlueprintApi(blueprintToDelete.id);
+      await deleteBlueprintApi(blueprintToDelete._id);
       toast.success("Blueprint deleted successfully");
       fetchBlueprint();
     } catch (error: any) {
@@ -98,38 +65,39 @@ const BlueprintPage: React.FC = () => {
     }
   };
 
-  const BlueprintRow: React.FC<{ blueprint: Blueprint }> = ({ blueprint }) => {
+  const BlueprintRow: React.FC<{ blueprint: BlueprintProps }> = ({
+    blueprint,
+  }) => {
     return (
       <tr className="hover:bg-gray-50 border-b border-gray-100">
         <td className="px-6 py-4">
           <div
-            onClick={() => router.push(`/dashboard/blueprint/${blueprint.id}`)}
+            onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
             className="font-medium text-gray-900 capitalize hover:text-blue-600 cursor-pointer max-w-max"
           >
-            {blueprint.name}
+            {blueprint.title}
           </div>
         </td>
         <td className="px-6 py-4">
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-              blueprint.status
+              "Active"
             )}`}
           >
-            {blueprint.status}
+            Active
           </span>
         </td>
         <td className="px-6 py-4 text-sm text-gray-600">
-          {formatTableDate(blueprint.created)}
+          {formatTableDate(blueprint.createdAt)}
         </td>
         <td className="px-6 py-4 text-sm text-gray-600">
-          {formatTableDate(blueprint.modified)}
+          {formatTableDate(blueprint.updatedAt)}
         </td>
         <td className="px-6 py-4">
           <div className="flex items-center space-x-2">
-            
             <button
               onClick={() =>
-                router.push(`/dashboard/blueprint/${blueprint.id}`)
+                router.push(`/dashboard/blueprint/${blueprint._id}`)
               }
               className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors"
             >
@@ -141,7 +109,6 @@ const BlueprintPage: React.FC = () => {
             >
               <Trash2 size={16} />
             </button>
-         
           </div>
         </td>
       </tr>
@@ -149,7 +116,7 @@ const BlueprintPage: React.FC = () => {
   };
 
   const filteredBlueprints = blueprints.filter((blueprint) =>
-    blueprint.name.toLowerCase().includes(searchQuery.toLowerCase())
+    blueprint.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const paginatedBlueprints = filteredBlueprints.slice(
@@ -216,14 +183,8 @@ const BlueprintPage: React.FC = () => {
           {/* Stats */}
           <div className="flex items-center space-x-6 text-sm text-gray-600 mb-6">
             <span>{filteredBlueprints.length} total blueprints</span>
-            <span>
-              {filteredBlueprints.filter((b) => b.status === "Active").length}{" "}
-              active
-            </span>
-            <span>
-              {filteredBlueprints.filter((b) => b.status === "Draft").length}{" "}
-              drafts
-            </span>
+            <span>{filteredBlueprints.length} active</span>
+            <span>0 drafts</span>
           </div>
         </div>
 
@@ -263,7 +224,7 @@ const BlueprintPage: React.FC = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {paginatedBlueprints.map((blueprint) => (
-                <BlueprintRow key={blueprint.id} blueprint={blueprint} />
+                <BlueprintRow key={blueprint._id} blueprint={blueprint} />
               ))}
             </tbody>
           </table>
@@ -363,7 +324,7 @@ const BlueprintPage: React.FC = () => {
         }}
         onConfirm={handleDeleteConfirm}
         title="Delete Blueprint"
-        message={`Are you sure you want to delete "${blueprintToDelete?.name}"? This action cannot be undone.`}
+        message={`Are you sure you want to delete "${blueprintToDelete?.title}"? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
