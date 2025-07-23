@@ -7,12 +7,11 @@ interface ICategoryValue extends Document {
   isAiGeneratedContent: string;
   value: {
     key: string;
-    value: [string];
+    value: string[];
   }[];
 }
 
 const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
-
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Category",
@@ -22,7 +21,7 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Blueprint",
   },
-  
+
   project: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Project",
@@ -44,8 +43,7 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
         required: true,
       },
     },
-  ]
-
+  ],
 });
 
 export const CategoryValue = mongoose.model<ICategoryValue>(

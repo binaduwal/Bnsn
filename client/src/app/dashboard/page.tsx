@@ -21,16 +21,7 @@ import useProject from "@/hooks/useProject";
 import useBlueprint from "@/hooks/useBlueprint";
 import { Project } from "@/services/projectApi";
 import { BlueprintProps } from "@/services/blueprintApi";
-
-// interface Project {
-//   id: string;
-//   name: string;
-//   type: "project" | "blueprint";
-//   lastModified?: string;
-//   created?: string;
-//   status?: "Active" | "Draft" | "Archived";
-//   isStarred?: boolean;
-// }
+import { formatDate } from "@/utils/dateUtils";
 
 const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -66,7 +57,7 @@ const Dashboard: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium capitalize text-gray-900">
                 {project.name}
               </h3>
               {project.isStarred && (
@@ -96,7 +87,7 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center space-x-4 text-sm text-gray-500">
           <div className="flex items-center space-x-1">
             <Clock className="w-4 h-4" />
-            <span>Modified {project.updatedAt}</span>
+            <span>Modified {formatDate(project.updatedAt)}</span>
           </div>
         </div>
         <span
@@ -124,12 +115,9 @@ const Dashboard: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-medium text-gray-900">
+              <h3 className="text-lg font-medium capitalize text-gray-900">
                 {blueprint.title}
               </h3>
-              {/* {blueprint.isStarred && (
-                <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              )} */}
             </div>
             <p className="text-sm text-gray-500 capitalize">Blueprint</p>
           </div>
@@ -154,7 +142,7 @@ const Dashboard: React.FC = () => {
         <div className="flex items-center space-x-4 text-sm text-gray-500">
           <div className="flex items-center space-x-1">
             <Clock className="w-4 h-4" />
-            <span>Modified {blueprint.updatedAt}</span>
+            <span>Modified {formatDate(blueprint.updatedAt)}</span>
           </div>
         </div>
         <span
@@ -169,17 +157,9 @@ const Dashboard: React.FC = () => {
   );
 
   const allItems = [...projects, ...blueprints];
-  // const filteredItems = allItems.filter((item) => {
-  //   const matchesSearch = item.
-  //     .toLowerCase()
-  //     .includes(searchQuery.toLowerCase());
-  //   const matchesTab =
-  //     activeTab === "all" || item.type === activeTab.slice(0, -1);
-  //   return matchesSearch && matchesTab;
-  // });
 
   const activeProjects = projects.length;
-  // const draftProjects = projects.filter((p) => p.status === "Draft").length;
+
   const activeBlueprints = blueprints.length;
 
   return (

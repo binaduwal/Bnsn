@@ -26,7 +26,6 @@ import { Field } from "@/services/categoryApi";
 import toast from "react-hot-toast";
 import { updateCategoryValueApi } from "@/services/blueprintApi";
 
-
 export interface Campaign {
   id: string;
   title: string;
@@ -39,21 +38,17 @@ interface EmailCampaignUIProps {
   params: Promise<{ id: string }>;
 }
 
-const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
-
-
-
-  params,
-}) => {
-
+const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [currentCampaignName, setCurrentCampaignName] = useState('Promotional Email Generator');
+  const [currentCampaignName, setCurrentCampaignName] = useState(
+    "Promotional Email Generator"
+  );
 
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [streamingAiContent, setStreamingAiContent] = useState<string>("");
   const [isAiStreaming, setIsAiStreaming] = useState<boolean>(false);
-  const stats = { wordsLeft: 97340, totalWords: 100000 }
+  const stats = { wordsLeft: 97340, totalWords: 100000 };
 
   // New streaming states
   const [streamingProgress, setStreamingProgress] = useState(0);
@@ -63,7 +58,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     fieldValue?: any[];
     aiContent?: string;
   }>({});
-
 
   const handleNameEdit = () => {
     setIsEditing(true);
@@ -90,7 +84,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
 
   const id = use(params).id;
 
-
   useEffect(() => {
     fetchSingleProject();
   }, [id]);
@@ -98,18 +91,16 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   useEffect(() => {
     const fieldValue = getFieldValue();
 
-    console.log("fieldValue",fieldValue)
+    console.log("fieldValue", fieldValue);
 
-    const values = fieldValue?.value.forEach((item:any)=>{
-      setFieldValues((prev)=>({...prev,[item.key]:item.value[0]}))
-    })
-
-    
+    const values = fieldValue?.value.forEach((item: any) => {
+      setFieldValues((prev) => ({ ...prev, [item.key]: item.value[0] }));
+    });
 
     if (fieldValue) {
       setGeneratedContent({
         ...generatedContent,
-        aiContent: fieldValue.isAiGeneratedContent
+        aiContent: fieldValue.isAiGeneratedContent,
       });
     }
   }, [selectedCategory, categories]);
@@ -117,9 +108,13 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   const fetchSingleProject = async () => {
     const response = await singleProjectApi(id);
     setCategories(response.data.categoryId);
-    setSelectedCategory(response.data?.categoryId[0]?.subCategories[0]?.thirdCategories[0]?._id)
-    setSelectedCampaign(response.data?.categoryId[0]?.subCategories[0]?.title)
-    setMainTitle(response.data?.categoryId[0]?.title)
+    setSelectedCategory(
+      response.data?.categoryId[0]?.subCategories[0]?.thirdCategories[0]?._id
+    );
+    setSelectedCampaign(response.data?.categoryId[0]?.subCategories[0]?.title);
+    setMainTitle(response.data?.categoryId[0]?.title);
+
+    setCurrentCampaignName(response.data?.categoryId[0]?.title);
 
     setBlueprintId(response?.data?.blueprintId._id);
     console.log("first", response);
@@ -136,15 +131,11 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   };
 
   const handleCampaignUpdate = (oldTitle: string, newTitle: string) => {
-
-
     // Update selectedCampaign if it was the one being edited
     if (selectedCampaign === oldTitle) {
       setSelectedCampaign(newTitle);
     }
   };
-
-
 
   const progressPercentage =
     ((stats.totalWords - stats.wordsLeft) / stats.totalWords) * 100;
@@ -184,7 +175,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         break;
 
       case "data":
-
         if (data.key === "blueprintValues") {
           setGeneratedContent((prev) => ({
             ...prev,
@@ -241,7 +231,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     setStreamingMessage("Starting generation...");
     setGeneratedContent({});
 
-
     try {
       const response = await generateProjectStreamApi({
         category: categories[0]._id,
@@ -256,7 +245,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         throw new Error("Response body is not available for streaming");
       }
 
-      const reader = response.body.getReader(); 
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
@@ -309,14 +298,15 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
 
   const renderAiContent = () => {
     // Show streaming content if AI is currently streaming
-    const contentToShow = isAiStreaming ? streamingAiContent : generatedContent.aiContent;
+    const contentToShow = isAiStreaming
+      ? streamingAiContent
+      : generatedContent.aiContent;
 
     if (!contentToShow && !isAiStreaming) return null;
 
     return (
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-         
           {isAiStreaming && (
             <div className="flex items-center gap-1 text-blue-600">
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
@@ -342,7 +332,9 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     );
   };
 
-  const StreamingEmailPreview: React.FC<{ content: string }> = ({ content }) => {
+  const StreamingEmailPreview: React.FC<{ content: string }> = ({
+    content,
+  }) => {
     if (!content.trim()) {
       return (
         <div className="border border-gray-200 rounded-lg p-6 shadow">
@@ -364,7 +356,10 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     return (
       <>
         {partialEmails.map((email, idx) => (
-          <div key={idx} className="border border-gray-200 rounded-lg p-6 shadow">
+          <div
+            key={idx}
+            className="border border-gray-200 rounded-lg p-6 shadow"
+          >
             <div className="flex items-center gap-2 mb-2">
               <h2 className="text-xl font-semibold ">Email {idx + 1}</h2>
               <div className="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -386,7 +381,11 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
               <div className="prose max-w-none">
                 <div
                   dangerouslySetInnerHTML={{
-                    __html: email.body + (idx === partialEmails.length - 1 ? '<span class="animate-pulse">|</span>' : '')
+                    __html:
+                      email.body +
+                      (idx === partialEmails.length - 1
+                        ? '<span class="animate-pulse">|</span>'
+                        : ""),
                   }}
                 />
               </div>
@@ -408,7 +407,10 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   };
 
   // Component for final email cards
-  const EmailCard: React.FC<{ email: any; index: number }> = ({ email, index }) => (
+  const EmailCard: React.FC<{ email: any; index: number }> = ({
+    email,
+    index,
+  }) => (
     <div className="border relative border-gray-200 flex flex-col gap-1 rounded-lg p-6 shadow">
       <div className="absolute top-0 right-0">
         <button
@@ -422,22 +424,26 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
           <Copy className="w-4 h-4" />
         </button>
       </div>
-        {email.title && <h2 className="text-xl  font-semibold mb-2">
-          {email.title}
-        </h2>}
+      {email.title && (
+        <h2 className="text-xl  font-semibold mb-2">{email.title}</h2>
+      )}
 
-     {email.subject && <p className="text-base text-gray-600 mb-1">
-        <strong>Subject:</strong> {email.subject}
-      </p>}
+      {email.subject && (
+        <p className="text-base text-gray-600 mb-1">
+          <strong>Subject:</strong> {email.subject}
+        </p>
+      )}
 
-      {email.preheader && <p className="text-sm text-gray-600 mb-4">
-        <strong>Preheader:</strong> {email.preheader}
-      </p>}
+      {email.preheader && (
+        <p className="text-sm text-gray-600 mb-4">
+          <strong>Preheader:</strong> {email.preheader}
+        </p>
+      )}
 
       <InlineTextEditor
         className="p-0"
         initialContent={email.body}
-        onChange={(value) => { }}
+        onChange={(value) => {}}
       />
     </div>
   );
@@ -447,36 +453,44 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     const emails: ParsedEmail[] = [];
 
     // Look for subject lines
-    const subjectMatches = content.match(/<!--\s*Subject:\s*([^>]+)\s*-->/gi) || [];
+    const subjectMatches =
+      content.match(/<!--\s*Subject:\s*([^>]+)\s*-->/gi) || [];
 
     // Look for preheader
-    const preheaderMatches = content.match(/<!--\s*Preheader:\s*([^>]+)\s*-->/gi) || [];
+    const preheaderMatches =
+      content.match(/<!--\s*Preheader:\s*([^>]+)\s*-->/gi) || [];
 
     // Look for email separators
     const emailSeparators = content.match(/<!--\s*Email\s*\d+\s*-->/gi) || [];
 
-    if (subjectMatches.length > 0 || preheaderMatches.length > 0 || emailSeparators.length > 0) {
+    if (
+      subjectMatches.length > 0 ||
+      preheaderMatches.length > 0 ||
+      emailSeparators.length > 0
+    ) {
       // Try to extract structured email data
       const emailParts = content.split(/<!--\s*Email\s*\d+\s*-->/gi);
 
       emailParts.forEach((part, idx) => {
         if (part.trim()) {
           const subjectMatch = part.match(/<!--\s*Subject:\s*([^>]+)\s*-->/i);
-          const preheaderMatch = part.match(/<!--\s*Preheader:\s*([^>]+)\s*-->/i);
+          const preheaderMatch = part.match(
+            /<!--\s*Preheader:\s*([^>]+)\s*-->/i
+          );
 
           // Extract body content (everything after preheader or subject)
           let bodyContent = part;
           if (preheaderMatch) {
-            bodyContent = part.split(preheaderMatch[0])[1] || '';
+            bodyContent = part.split(preheaderMatch[0])[1] || "";
           } else if (subjectMatch) {
-            bodyContent = part.split(subjectMatch[0])[1] || '';
+            bodyContent = part.split(subjectMatch[0])[1] || "";
           }
 
           emails.push({
-            subject: subjectMatch ? subjectMatch[1].trim() : '',
-            preheader: preheaderMatch ? preheaderMatch[1].trim() : '',
+            subject: subjectMatch ? subjectMatch[1].trim() : "",
+            preheader: preheaderMatch ? preheaderMatch[1].trim() : "",
             body: bodyContent.trim(),
-            title: `Streaming Email ${idx + 1}`
+            title: `Streaming Email ${idx + 1}`,
           });
         }
       });
@@ -485,14 +499,11 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     return emails;
   };
 
-
-
   const handleSave = async () => {
-
     try {
       const response = await updateCategoryValueApi({
-        id:selectedCategory || "",
-        isAiGeneratedContent: generatedContent.aiContent
+        id: selectedCategory || "",
+        isAiGeneratedContent: generatedContent.aiContent,
       });
 
       console.log(response);
@@ -501,7 +512,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
       toast.error(error.message || "Failed to save");
     }
     console.log("save");
-  }
+  };
 
   interface ParsedEmail {
     title: string | undefined;
@@ -527,8 +538,11 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
       };
     });
 
-    console.log("emails",emails.filter(email => email.body ))
-    return emails.filter(email => email.body );
+    console.log(
+      "emails",
+      emails.filter((email) => email.body)
+    );
+    return emails.filter((email) => email.body);
   }
 
   const handleFieldChange = (fieldId: string, value: string) => {
@@ -538,9 +552,9 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
     }));
   };
 
-  const getFieldValue = ()=>{
-    if(!selectedCategory) return undefined;
-    if(categories.length === 0) return undefined;
+  const getFieldValue = () => {
+    if (!selectedCategory) return undefined;
+    if (categories.length === 0) return undefined;
 
     for (const category of categories) {
       if (category.subCategories) {
@@ -555,10 +569,8 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
         }
       }
     }
-    return undefined; 
-  }
-
-  
+    return undefined;
+  };
 
   const parse = (html: string) => {
     const parser = new DOMParser();
@@ -567,11 +579,9 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
   };
 
   const campaignFields = getSelectedCampaignFields();
-  
 
   return (
     <div className="bg-gray-50 flex">
-     
       {/* Left Sidebar */}
       <aside className="w-80 min-h-[calc(100vh-120px)]  bg-white border-r border-gray-200 flex flex-col shadow-sm">
         {/* Sidebar Header */}
@@ -603,9 +613,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
               <Eye className="w-4 h-4 inline mr-2" />
               View All
             </button>
-            <button
-              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-            >
+            <button className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
               <Plus className="w-4 h-4 inline mr-2" />
               Add
             </button>
@@ -642,7 +650,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                   {/* Breadcrumb and Title */}
                   <div className="flex items-center space-x-3">
                     <nav className="flex items-center space-x-2 text-sm text-gray-500">
-                      <span>Promotional Emails</span>
+                      <span>{currentCampaignName}</span>
                       <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
                     </nav>
                     {/* campaign name */}
@@ -677,7 +685,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                       </button>
 
                       <button
-
                         className="p-1 rounded hover:bg-gray-100 transition-colors"
                         title="Preview email"
                       >
@@ -718,9 +725,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
 
             {/* Main Content */}
             <main className="flex-1  min-h-[calc(100vh-320px)] overflow-y-auto">
-          
-           
-
               {campaignFields.length > 0 ? (
                 <div className="max-w-4xl mx-auto p-3">
                   {campaignFields.map((field, index) => (
@@ -743,15 +747,14 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
 
                         {/* Input Field */}
                         <div className="relative">
-                   
                           {field.fieldType === "text" && (
                             <div className="relative">
                               <input
                                 type="text"
                                 value={
-                                  fieldValues?.[
-                                  field.fieldName
-                                  ] || getFieldValue()?.value[0]?.value[0] || ""
+                                  fieldValues?.[field.fieldName] ||
+                                  getFieldValue()?.value[0]?.value[0] ||
+                                  ""
                                 }
                                 onChange={(e) =>
                                   handleFieldChange(
@@ -759,7 +762,6 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                                     e.target.value
                                   )
                                 }
-
                                 placeholder={`Enter ${field.fieldName.toLowerCase()}`}
                                 className={`w-full px-4 py-3 border-2 rounded-lg text-gray-700 placeholder-gray-400 
                           transition-all duration-200 focus:outline-none focus:ring-0
@@ -810,19 +812,66 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                   {/* Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
+                    <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
+                      <h2 className="text-xl font-bold mb-4 text-gray-800">
+                        Generated Content
+                      </h2>
+
+                      {/* AI Generated Content */}
+
+                      {(streamingAiContent || generatedContent.aiContent) &&
+                        renderAiContent()}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="min-h-[60vh] flex flex-col   justify-center items-center">
+                  <div className="flex  justify-center items-center">
+                    <button
+                      disabled={isGenerating}
+                      onClick={handleGenerateProject}
+                      className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isGenerating ? (
+                        <div className="flex items-center gap-3">
+                          <span>Generating</span>
+                          <Loader className="size-5 animate-spin" />
+                        </div>
+                      ) : (
+                        "Click Magic Button"
+                      )}
+                    </button>
+                  </div>
+                  <div className="flex flex-col">
+                    {isGenerating && (
+                      <div className="w-full max-w-md">
+                        <div className="flex justify-between text-sm text-gray-600 mb-2">
+                          <span>{streamingMessage}</span>
+                          <span>{streamingProgress}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
+                            style={{ width: `${streamingProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {(generatedContent.aiContent ||
+                      generatedContent.blueprintValues) && (
                       <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
                         <h2 className="text-xl font-bold mb-4 text-gray-800">
                           Generated Content
                         </h2>
 
                         {/* AI Generated Content */}
-                    
-                        {(streamingAiContent || generatedContent.aiContent) && renderAiContent()}
+
+                        {(streamingAiContent || generatedContent.aiContent) &&
+                          renderAiContent()}
                       </div>
                     )}
+                  </div>
                 </div>
-              ) : (
-                <ContentGenerationSection />
               )}
             </main>
 
@@ -832,19 +881,12 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={handleSave}
-
                     className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save</span>
                   </button>
-
-
-
-
                 </div>
-
-
               </div>
             </footer>
           </div>
