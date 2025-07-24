@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { use, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useState } from "react";
 import {
   ChevronDown,
   Settings,
@@ -12,6 +12,9 @@ import {
   Copy,
   Plus,
   Loader,
+  Sparkles,
+  Zap,
+  CheckCircle,
 } from "lucide-react";
 import InlineTextEditor from "@/components/ui/InlineTextEditor";
 import {
@@ -21,7 +24,6 @@ import {
 } from "@/services/projectApi";
 import CampaignAccordion from "@/components/CampainAccordion";
 import EditableTitle from "@/components/ui/EditableTitle";
-import ContentGenerationSection from "@/components/ContentGenerationSection";
 import { Field } from "@/services/categoryApi";
 import toast from "react-hot-toast";
 import { updateCategoryValueApi } from "@/services/blueprintApi";
@@ -89,6 +91,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   }, [id]);
 
   useEffect(() => {
+    setFieldValues({})
     const fieldValue = getFieldValue();
 
     console.log("fieldValue", fieldValue);
@@ -97,12 +100,10 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
       setFieldValues((prev) => ({ ...prev, [item.key]: item.value[0] }));
     });
 
-    if (fieldValue) {
-      setGeneratedContent({
-        ...generatedContent,
-        aiContent: fieldValue.isAiGeneratedContent,
-      });
-    }
+    setGeneratedContent({
+      ...generatedContent,
+      aiContent: fieldValue ? fieldValue.isAiGeneratedContent : "",
+    });
   }, [selectedCategory, categories]);
 
   const fetchSingleProject = async () => {
@@ -298,9 +299,11 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
   const renderAiContent = () => {
     // Show streaming content if AI is currently streaming
-    const contentToShow = isAiStreaming
-      ? streamingAiContent
-      : generatedContent.aiContent;
+    const contentToShow = () => {
+      return isAiStreaming
+        ? streamingAiContent
+        : generatedContent.aiContent;
+    }
 
     if (!contentToShow && !isAiStreaming) return null;
 
@@ -322,7 +325,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
               <StreamingEmailPreview content={streamingAiContent} />
             ) : (
               // Show final parsed emails
-              parseMultipleEmails(contentToShow || "").map((email, idx) => (
+              parseMultipleEmails(contentToShow() || "").map((email, idx) => (
                 <EmailCard key={idx} email={email} index={idx} />
               ))
             )}
@@ -351,39 +354,35 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     }
 
     // Try to parse partial emails for better preview
-    const partialEmails = parseStreamingEmails(content);
+    const partialContent = parseStreamingContent(content);
 
     return (
       <>
-        {partialEmails.map((email, idx) => (
+        {partialContent.map((content, idx) => (
           <div
             key={idx}
             className="border border-gray-200 rounded-lg p-6 shadow"
           >
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-xl font-semibold ">Email {idx + 1}</h2>
-              <div className="animate-pulse w-2 h-2 bg-blue-500 rounded-full"></div>
-            </div>
 
-            {email.subject && (
+            {content.subject && (
               <p className="text-base text-gray-600 mb-1">
-                <strong>Subject:</strong> {email.subject}
+                <strong>Subject:</strong> {content.subject}
               </p>
             )}
 
-            {email.preheader && (
+            {content.preheader && (
               <p className="text-sm text-gray-600 mb-4">
-                <strong>Preheader:</strong> {email.preheader}
+                <strong>Preheader:</strong> {content.preheader}
               </p>
             )}
 
-            {email.body && (
+            {content.body && (
               <div className="prose max-w-none">
                 <div
                   dangerouslySetInnerHTML={{
                     __html:
-                      email.body +
-                      (idx === partialEmails.length - 1
+                      content.body +
+                      (idx === partialContent.length - 1
                         ? '<span class="animate-pulse">|</span>'
                         : ""),
                   }}
@@ -394,7 +393,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
         ))}
 
         {/* Show raw streaming content if no emails parsed yet */}
-        {partialEmails.length === 0 && (
+        {partialContent.length === 0 && (
           <div className="border border-gray-200 rounded-lg p-6 shadow">
             <div className="text-sm text-gray-600 font-mono whitespace-pre-wrap">
               {content}
@@ -413,7 +412,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   }) => (
     <div className="border relative border-gray-200 flex flex-col gap-1 rounded-lg p-6 shadow">
       <div className="absolute top-0 right-0">
-        <button
+        <button 
           onClick={() => {
             const parsedHtml = parse(email.body);
             navigator.clipboard.writeText(parsedHtml);
@@ -443,61 +442,45 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
       <InlineTextEditor
         className="p-0"
         initialContent={email.body}
-        onChange={(value) => {}}
+        onChange={(value) => { }}
       />
     </div>
   );
 
   // Helper function to parse streaming emails (partial content)
-  const parseStreamingEmails = (content: string) => {
-    const emails: ParsedEmail[] = [];
+ const parseStreamingContent = (content: string) => {
+  const emails: ParsedEmail[] = [];
 
-    // Look for subject lines
-    const subjectMatches =
-      content.match(/<!--\s*Subject:\s*([^>]+)\s*-->/gi) || [];
+  const isHTML = /<html[^>]*>/i.test(content);
 
-    // Look for preheader
-    const preheaderMatches =
-      content.match(/<!--\s*Preheader:\s*([^>]+)\s*-->/gi) || [];
+  if (isHTML) {
+    // Extract <title>
+    const titleMatch = content.match(/<title[^>]*>(.*?)<\/title>/i);
+    const title = titleMatch ? titleMatch[1].trim() : "Website Page";
 
-    // Look for email separators
-    const emailSeparators = content.match(/<!--\s*Email\s*\d+\s*-->/gi) || [];
+    // Extract <h1> as subject
+    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
+    const subject = h1Match ? h1Match[1].trim() : "Web Page Content";
 
-    if (
-      subjectMatches.length > 0 ||
-      preheaderMatches.length > 0 ||
-      emailSeparators.length > 0
-    ) {
-      // Try to extract structured email data
-      const emailParts = content.split(/<!--\s*Email\s*\d+\s*-->/gi);
+    // Try extracting hero text <p> directly below <h1>
+    const preheaderMatch = content.match(/<h1[^>]*>.*?<\/h1>\s*<p[^>]*>(.*?)<\/p>/i);
+    const preheader = preheaderMatch ? preheaderMatch[1].trim() : "";
 
-      emailParts.forEach((part, idx) => {
-        if (part.trim()) {
-          const subjectMatch = part.match(/<!--\s*Subject:\s*([^>]+)\s*-->/i);
-          const preheaderMatch = part.match(
-            /<!--\s*Preheader:\s*([^>]+)\s*-->/i
-          );
+    // The entire body as fallback "body"
+    const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const body = bodyMatch ? bodyMatch[1].trim() : content.trim();
 
-          // Extract body content (everything after preheader or subject)
-          let bodyContent = part;
-          if (preheaderMatch) {
-            bodyContent = part.split(preheaderMatch[0])[1] || "";
-          } else if (subjectMatch) {
-            bodyContent = part.split(subjectMatch[0])[1] || "";
-          }
+    emails.push({
+      title,
+      subject,
+      preheader,
+      body,
+    });
+  }
 
-          emails.push({
-            subject: subjectMatch ? subjectMatch[1].trim() : "",
-            preheader: preheaderMatch ? preheaderMatch[1].trim() : "",
-            body: bodyContent.trim(),
-            title: `Streaming Email ${idx + 1}`,
-          });
-        }
-      });
-    }
+  return emails;
+};
 
-    return emails;
-  };
 
   const handleSave = async () => {
     try {
@@ -521,7 +504,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     body: string | undefined;
   }
 
-  function parseMultipleEmails(rawHtml: string): ParsedEmail[] {
+  const parseMultipleEmails = useCallback((rawHtml: string): ParsedEmail[] => {
     const emailBlocks = rawHtml.split(/<\/html>/gi).filter(Boolean); // Split by </html>
 
     const emails: ParsedEmail[] = emailBlocks.map((block, index) => {
@@ -543,7 +526,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
       emails.filter((email) => email.body)
     );
     return emails.filter((email) => email.body);
-  }
+  }, [generatedContent.aiContent])
 
   const handleFieldChange = (fieldId: string, value: string) => {
     setFieldValues((prev) => ({
@@ -726,7 +709,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
             {/* Main Content */}
             <main className="flex-1  min-h-[calc(100vh-320px)] overflow-y-auto">
               {campaignFields.length > 0 ? (
-                <div className="max-w-4xl mx-auto p-3">
+                <div className="max-w-4xl space-y-3 mx-auto p-3">
                   {campaignFields.map((field, index) => (
                     <div
                       key={field._id}
@@ -793,72 +776,33 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
                     )}
 
                     {/* Generate Button */}
-                    <button
-                      disabled={isGenerating}
-                      onClick={handleGenerateProject}
-                      className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isGenerating ? (
+                    <div className="relative mb-8">
+
+                      <button
+                        disabled={isGenerating}
+                        onClick={handleGenerateProject}
+                        className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
                         <div className="flex items-center gap-3">
-                          <span>Generating</span>
-                          <Loader className="size-5 animate-spin" />
+                          {isGenerating ? (
+                            <>
+                              <Loader className="w-6 h-6 animate-spin" />
+                              <span className="text-lg">Generating Magic...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+                              <span className="text-lg">Click Magic Button</span>
+                            </>
+                          )}
                         </div>
-                      ) : (
-                        "Click Magic Button"
-                      )}
-                    </button>
+                      </button>
+                    </div>
                   </div>
 
                   {/* Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
-                    <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
-                      <h2 className="text-xl font-bold mb-4 text-gray-800">
-                        Generated Content
-                      </h2>
-
-                      {/* AI Generated Content */}
-
-                      {(streamingAiContent || generatedContent.aiContent) &&
-                        renderAiContent()}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="min-h-[60vh] flex flex-col   justify-center items-center">
-                  <div className="flex  justify-center items-center">
-                    <button
-                      disabled={isGenerating}
-                      onClick={handleGenerateProject}
-                      className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isGenerating ? (
-                        <div className="flex items-center gap-3">
-                          <span>Generating</span>
-                          <Loader className="size-5 animate-spin" />
-                        </div>
-                      ) : (
-                        "Click Magic Button"
-                      )}
-                    </button>
-                  </div>
-                  <div className="flex flex-col">
-                    {isGenerating && (
-                      <div className="w-full max-w-md">
-                        <div className="flex justify-between text-sm text-gray-600 mb-2">
-                          <span>{streamingMessage}</span>
-                          <span>{streamingProgress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
-                            style={{ width: `${streamingProgress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                    {(generatedContent.aiContent ||
-                      generatedContent.blueprintValues) && (
                       <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
                         <h2 className="text-xl font-bold mb-4 text-gray-800">
                           Generated Content
@@ -870,13 +814,90 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
                           renderAiContent()}
                       </div>
                     )}
+                </div>
+              ) : (
+                <div className="min-h-[70vh]  flex flex-col justify-center items-center p-8">
+
+
+                  {/* Magic Button */}
+                  <div className="relative mb-8">
+
+                    <button
+                      disabled={isGenerating}
+                      onClick={handleGenerateProject}
+                      className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <div className="flex items-center gap-3">
+                        {isGenerating ? (
+                          <>
+                            <Loader className="w-6 h-6 animate-spin" />
+                            <span className="text-lg">Generating Magic...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+                            <span className="text-lg">Click Magic Button</span>
+                          </>
+                        )}
+                      </div>
+                    </button>
                   </div>
+
+                  {/* Progress Section */}
+                  {isGenerating && (
+                    <div className="w-full max-w-md">
+                      <div className="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>{streamingMessage}</span>
+                        <span>{streamingProgress}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
+                          style={{ width: `${streamingProgress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Generated Content */}
+                  {(generatedContent.aiContent || generatedContent.blueprintValues) && (
+                    <div className="w-full max-w-4xl mx-auto">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8  border border-white/20 transform animate-fadeIn">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="p-2 bg-gradient-to-r from-green-400 to-teal-500 rounded-lg">
+                            <CheckCircle className="w-6 h-6 text-white" />
+                          </div>
+                          <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                            Generated Content
+                          </h2>
+                        </div>
+
+                        {(streamingAiContent || generatedContent.aiContent) && renderAiContent()}
+                      </div>
+                    </div>
+                  )}
+
+                  <style jsx>{`
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.6s ease-out;
+        }
+      `}</style>
                 </div>
               )}
             </main>
 
             {/* Footer Actions */}
-            <footer className="bg-white  border-t border-gray-200 px-6 py-4">
+            <footer className="bg-white sticky bottom-0   border-t border-gray-200 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <button

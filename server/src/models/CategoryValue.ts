@@ -44,6 +44,8 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
       },
     },
   ],
+}, {
+  timestamps: true
 });
 
 export const CategoryValue = mongoose.model<ICategoryValue>(

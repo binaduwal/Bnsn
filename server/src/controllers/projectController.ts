@@ -2,10 +2,9 @@ import { NextFunction, Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import { catchAsync, createError } from "../middleware/errorHandler";
 import mongoose from "mongoose";
-
-import { Category, IProject, Project } from "../models";
+import { Category, Project } from "../models";
 import { CategoryValue } from "../models/CategoryValue";
-import { deepSeekService } from "../services/deepseek";
+import { generatedContent } from "../helper/projectGeneratorSwitch";
 
 export const createProject = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -146,115 +145,12 @@ export const generateProject = catchAsync(
         }) + "\n"
       );
 
-      const categoryData = await Category.findById(category).lean();
+      const categoryData = await Category.findById(currentCategory).lean();
 
-      let aiGeneratedContent = "";
       console.log("categoryData", categoryData?.title);
+      
+      let aiGeneratedContent: string | null = await generatedContent({ blueprintValues, fieldValue, res, title: categoryData?.title || '' });
 
-      switch (categoryData?.title) {
-        case "Email":
-          // Use streaming version with progress callback
-          aiGeneratedContent = await deepSeekService.generateEmailStream(
-            blueprintValues,
-            fieldValue,
-            (chunk: string) => {
-              // Stream AI content chunks as they arrive
-              res.write(
-                JSON.stringify({
-                  type: "ai_chunk",
-                  content: chunk,
-                  progress: 85,
-                }) + "\n"
-              );
-            }
-          );
-          break;
-
-        case "Articles":
-          aiGeneratedContent = await deepSeekService.generateArticleStream(
-            blueprintValues,
-            fieldValue,
-            (chunk: string) => {
-              // Stream AI content chunks as they arrive
-              res.write(
-                JSON.stringify({
-                  type: "ai_chunk",
-                  content: chunk,
-                  progress: 85,
-                }) + "\n"
-              );
-            }
-          );
-          break;
-        case "Landing Pages":
-          aiGeneratedContent = await deepSeekService.generateLandingPageStream(
-            blueprintValues,
-            fieldValue,
-            (chunk: string) => {
-              // Stream AI content chunks as they arrive
-              res.write(
-                JSON.stringify({
-                  type: "ai_chunk",
-                  content: chunk,
-                  progress: 85,
-                }) + "\n"
-              );
-            }
-          );
-          break;
-
-        case "Thank You Pages":
-          aiGeneratedContent = await deepSeekService.generateThankYouPageStream(
-            blueprintValues,
-            fieldValue,
-            (chunk: string) => {
-              // Stream AI content chunks as they arrive
-              res.write(
-                JSON.stringify({
-                  type: "ai_chunk",
-                  content: chunk,
-                  progress: 85,
-                }) + "\n"
-              );
-            }
-          );
-          break;
-
-        case "VSLs (Long Form)":
-          aiGeneratedContent = await deepSeekService.generateVSLScriptStream(
-            blueprintValues,
-            fieldValue,
-            (chunk: string) => {
-              // Stream AI content chunks as they arrive
-              res.write(
-                JSON.stringify({
-                  type: "ai_chunk",
-                  content: chunk,
-                  progress: 85,
-                }) + "\n"
-              );
-            }
-          );
-          break;
-        case "Ads":
-          aiGeneratedContent = await deepSeekService.generateAdCopyStream(
-            blueprintValues,
-            fieldValue,
-            (chunk: string) => {
-              // Stream AI content chunks as they arrive
-              res.write(
-                JSON.stringify({
-                  type: "ai_chunk",
-                  content: chunk,
-                  progress: 85,
-                }) + "\n"
-              );
-            }
-          );
-          break;
-        default:
-          break;
-      }
 
       if (!aiGeneratedContent) {
         res.write(

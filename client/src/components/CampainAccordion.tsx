@@ -174,13 +174,13 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
 
           {/* Accordion Content */}
           <div
-            className={`overflow-hidden  transition-all duration-300 ease-in-out  ${
+            className={`overflow-hidden   transition-all duration-300 ease-in-out  ${
               isOpen(campaign.title)
-                ? "max-h-32 opacity-100"
+                ? "max-h-max opacity-100"
                 : "max-h-0 opacity-0"
             }`}
           >
-            <div className="px-4  pb-4">
+            <div className="px-4 space-y-1.5 pb-4">
               {campaign.thirdCategories.map((third, i) => (
                 <button
                   key={i}
@@ -188,11 +188,11 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                   className={`w-full  ${selectedCategory === third._id ? "bg-blue-100 border border-blue-200" : " border border-gray-200 hover:bg-blue-50"}  rounded-lg  p-3  transition-colors group`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={`text-sm font-medium ${selectedCategory === third._id ? "text-blue-900" : "text-gray-800"}`}>
+                    <span className={`text-sm text-left font-medium ${selectedCategory === third._id ? "text-blue-900" : "text-gray-800"}`}>
                       {third.title}
                     </span>
-                   <div className={`w-4 h-4 ${selectedCategory === third._id ? "bg-blue-600" : "bg-gray-400"} rounded-full flex items-center justify-center  transition-colors`}>
-                      <div className="w-2 h-2 bg-white rounded-full"></div>
+                   <div className={` min-w-4 min-h-4  ${selectedCategory === third._id ? "bg-blue-600" : "bg-gray-400"} rounded-full flex items-center justify-center  transition-colors`}>
+                      <div className=" size-2 bg-white rounded-full"></div>
                     </div>
                   </div>
                 </button>
