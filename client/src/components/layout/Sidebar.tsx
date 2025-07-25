@@ -100,23 +100,7 @@ function Sidebar() {
         </div>
       </nav>
 
-      {/* Footer */}
-      <div className="p-4 mt-auto border-t border-gray-200/50">
-        <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-4 border border-purple-200/50">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-lg flex items-center justify-center">
-              <LucideWand2 className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900 text-sm">Pro Tips</h3>
-              <p className="text-xs text-gray-600">Shortcuts & features</p>
-            </div>
-          </div>
-          <button className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-sm py-2 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
-            Learn More
-          </button>
-        </div>
-      </div>
+      
     </div>
   );
 }

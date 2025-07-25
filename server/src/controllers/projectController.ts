@@ -76,148 +76,138 @@ export const generateProject = catchAsync(
       "Access-Control-Allow-Headers": "Cache-Control",
     });
 
-    try {
-      // Stream initial progress
-      res.write(
-        JSON.stringify({
-          type: "progress",
-          message: "Processing field values...",
-          progress: 10,
-        }) + "\n"
-      );
 
-      const fieldValue = Object.keys(values).map((key) => {
-        return {
-          key: key?.split("-")[0] || "",
-          value:
-            typeof values[key] === "string"
-              ? [values[key]]
-              : values[key] || [""],
-        };
-      });
+    // Stream initial progress
+    res.write(
+      JSON.stringify({
+        type: "progress",
+        message: "Processing field values...",
+        progress: 10,
+      }) + "\n"
+    );
 
-      let isExistedValue = await CategoryValue.findOne({
-        project,
+    const fieldValue = Object.keys(values).map((key) => {
+      return {
+        key: key?.split("-")[0] || "",
+        value:
+          typeof values[key] === "string"
+            ? [values[key]]
+            : values[key] || [""],
+      };
+    });
+
+    let isExistedValue = await CategoryValue.findOne({
+      project,
+      category: currentCategory,
+    });
+
+    if (isExistedValue) {
+      isExistedValue.value = fieldValue;
+    } else {
+      isExistedValue = new CategoryValue({
         category: currentCategory,
+        project,
+        value: fieldValue,
       });
+    }
 
-      if (isExistedValue) {
-        isExistedValue.value = fieldValue;
-      } else {
-        isExistedValue = new CategoryValue({
-          category: currentCategory,
-          project,
-          value: fieldValue,
-        });
-      }
+    // Stream progress update
+    res.write(
+      JSON.stringify({
+        type: "progress",
+        message: "Fetching blueprint values...",
+        progress: 30,
+      }) + "\n"
+    );
 
-      // Stream progress update
-      res.write(
-        JSON.stringify({
-          type: "progress",
-          message: "Fetching blueprint values...",
-          progress: 30,
-        }) + "\n"
-      );
+    const blueprintValues = (
+      (await CategoryValue.find({ blueprint: blueprintId })
+        .populate("category")
+        .lean()) as any[]
+    ).map((blue) => ({ title: blue.category.title, values: blue.value }));
 
-      const blueprintValues = (
-        (await CategoryValue.find({ blueprint: blueprintId })
-          .populate("category")
-          .lean()) as any[]
-      ).map((blue) => ({ title: blue.category.title, values: blue.value }));
+    // Stream blueprint values
+    res.write(
+      JSON.stringify({
+        type: "data",
+        key: "blueprintValues",
+        value: blueprintValues,
+        progress: 50,
+      }) + "\n"
+    );
 
-      // Stream blueprint values
-      res.write(
-        JSON.stringify({
-          type: "data",
-          key: "blueprintValues",
-          value: blueprintValues,
-          progress: 50,
-        }) + "\n"
-      );
+    // Stream progress update
+    res.write(
+      JSON.stringify({
+        type: "progress",
+        message: "Generating AI content...",
+        progress: 70,
+      }) + "\n"
+    );
 
-      // Stream progress update
-      res.write(
-        JSON.stringify({
-          type: "progress",
-          message: "Generating AI content...",
-          progress: 70,
-        }) + "\n"
-      );
+    const categoryData = await Category.findById(currentCategory).lean();
 
-      const categoryData = await Category.findById(currentCategory).lean();
+    console.log("categoryData", categoryData?.title);
 
-      console.log("categoryData", categoryData?.title);
-      
-      let aiGeneratedContent: string | null = await generatedContent({ blueprintValues, fieldValue, res, title: categoryData?.title || '' });
+    let aiGeneratedContent: string | null = await generatedContent({ blueprintValues, fieldValue, res, title: categoryData?.title || '' });
 
 
-      if (!aiGeneratedContent) {
-        res.write(
-          JSON.stringify({
-            type: "error",
-            message: "Failed to generate project",
-          }) + "\n"
-        );
-        return res.end();
-      }
-
-      // Stream final AI generated content
-      res.write(
-        JSON.stringify({
-          type: "data",
-          key: "aiContent",
-          value: aiGeneratedContent,
-          progress: 90,
-        }) + "\n"
-      );
-
-      // Stream field values
-      res.write(
-        JSON.stringify({
-          type: "data",
-          key: "fieldValue",
-          value: fieldValue,
-          progress: 95,
-        }) + "\n"
-      );
-
-      // Stream completion
-      res.write(
-        JSON.stringify({
-          type: "complete",
-          message: "Project generation completed successfully",
-          progress: 100,
-          data: {
-            success: true,
-            blueprintValues,
-            fieldValue,
-            aiContent: aiGeneratedContent,
-          },
-        }) + "\n"
-      );
-
-      isExistedValue.isAiGeneratedContent = aiGeneratedContent;
-      await isExistedValue.save();
-      res.status(200).json({
-        success: true,
-        data: {
-          success: true,
-          categoryValueId: isExistedValue._id,
-        },
-      });
-
-      res.end();
-    } catch (error: any) {
-      console.log("error", error);
+    if (!aiGeneratedContent) {
       res.write(
         JSON.stringify({
           type: "error",
-          message: error.message || "An error occurred during generation",
+          message: "Failed to generate project",
         }) + "\n"
       );
-      res.end();
+      return res.end();
     }
+
+    // Stream final AI generated content
+    res.write(
+      JSON.stringify({
+        type: "data",
+        key: "aiContent",
+        value: aiGeneratedContent,
+        progress: 90,
+      }) + "\n"
+    );
+
+    // Stream field values
+    res.write(
+      JSON.stringify({
+        type: "data",
+        key: "fieldValue",
+        value: fieldValue,
+        progress: 95,
+      }) + "\n"
+    );
+
+    // Stream completion
+    res.write(
+      JSON.stringify({
+        type: "complete",
+        message: "Project generation completed successfully",
+        progress: 100,
+        data: {
+          success: true,
+          blueprintValues,
+          fieldValue,
+          aiContent: aiGeneratedContent,
+        },
+      }) + "\n"
+    );
+
+    isExistedValue.isAiGeneratedContent = aiGeneratedContent;
+    await isExistedValue.save();
+    res.end();
+    res.status(200).json({
+      success: true,
+      data: {
+        success: true,
+        categoryValueId: isExistedValue._id,
+      },
+    });
+
   }
 );
 
@@ -228,11 +218,11 @@ export const singleProject = catchAsync(
     }
 
     const { id } = req.params;
-
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return next(createError("Invalid project ID", 400));
     }
 
+    // Fetch project with populated fields
     const project = (await Project.findOne({ _id: id, userId: req.user.id })
       .populate("categoryId")
       .populate("blueprintId", "_id title")
@@ -242,73 +232,91 @@ export const singleProject = catchAsync(
       return next(createError("Project not found", 404));
     }
 
-    // Build nested category structure
-    const buildCategoryTree = async (categories: any[]) => {
-      const categoryTree = [];
+    // Extract all category IDs for batch processing
+    const rootCategoryIds = project.categoryId.map((cat: any) => cat._id);
 
-      for (const category of categories) {
-        // Get subcategories for this category
-        const subCategories = await Category.find({
-          parentId: category._id,
-          type: "project",
-        }).lean();
+    // Batch fetch all categories in the hierarchy
+    const [allSubCategories, allThirdCategories, allCategoryValues] = await Promise.all([
+      // Get all subcategories for root categories
+      Category.find({
+        parentId: { $in: rootCategoryIds },
+        type: "project",
+      }).lean(),
 
-        const categoryValue = await CategoryValue.findOne({
-          category: category._id,
-          project: id,
-        }).lean();
+      // Get all third-level categories (we'll filter by subcategory IDs after)
+      Category.find({
+        type: "project",
+        parentId: { $exists: true, $ne: null }
+      }).lean(),
 
-        // Build the category object with nested structure
+      // Get all category values for this project
+      CategoryValue.find({
+        project: id,
+      }).lean()
+    ]);
+
+    // Get subcategory IDs for third-level category filtering
+    const subCategoryIds = allSubCategories.map(sub => sub._id);
+
+    // Filter third-level categories to only those belonging to our subcategories
+    const thirdCategories = allThirdCategories.filter(third =>
+      subCategoryIds.some(subId => subId.toString() === third.parentId?.toString())
+    );
+
+    // Create lookup maps for O(1) access
+    const categoryValueMap = new Map();
+    allCategoryValues.forEach(cv => {
+      categoryValueMap.set(cv.category.toString(), cv);
+    });
+
+    const subCategoryMap = new Map();
+    allSubCategories.forEach(sub => {
+      const parentId = sub?.parentId?.toString();
+      if (!subCategoryMap.has(parentId)) {
+        subCategoryMap.set(parentId, []);
+      }
+      subCategoryMap.get(parentId).push(sub);
+    });
+
+    const thirdCategoryMap = new Map();
+    thirdCategories.forEach(third => {
+      const parentId = third?.parentId?.toString();
+      if (!thirdCategoryMap.has(parentId)) {
+        thirdCategoryMap.set(parentId, []);
+      }
+      thirdCategoryMap.get(parentId).push(third);
+    });
+
+    // Build nested category structure using maps
+    const buildCategoryTree = (categories: any[]) => {
+      return categories.map(category => {
+        const categoryId = category._id.toString();
+        const subCategories = subCategoryMap.get(categoryId) || [];
+
         const categoryWithChildren = {
           ...category,
-          subCategories: [],
-          fieldValue: categoryValue,
+          subCategories: subCategories.map((subCategory: any) => {
+            const subCategoryId = subCategory._id.toString();
+            const thirdCategoriesForSub = thirdCategoryMap.get(subCategoryId) || [];
+
+            return {
+              ...subCategory,
+              thirdCategories: thirdCategoriesForSub.map((thirdCategory: any) => ({
+                ...thirdCategory,
+                fieldValue: categoryValueMap.get(thirdCategory._id.toString()) || null,
+              })),
+              fieldValue: categoryValueMap.get(subCategoryId) || null,
+            };
+          }),
+          fieldValue: categoryValueMap.get(categoryId) || null,
         };
 
-        // Process each subcategory
-        for (const subCategory of subCategories) {
-          // Get third level categories for this subcategory
-          const thirdCategories = await Category.find({
-            parentId: subCategory._id,
-            type: "project",
-          }).lean();
-
-          const subCategoryValue = await CategoryValue.findOne({
-            category: subCategory._id,
-            project: id,
-          }).lean();
-
-          // Process third-level categories and get their values
-          const thirdCategoriesWithValues = [];
-          for (const thirdCategory of thirdCategories) {
-            const thirdCategoryValue = await CategoryValue.findOne({
-              category: thirdCategory._id,
-              project: id,
-            }).lean();
-
-            thirdCategoriesWithValues.push({
-              ...thirdCategory,
-              fieldValue: thirdCategoryValue,
-            });
-          }
-
-          // Add subcategory with its children
-          categoryWithChildren.subCategories.push({
-            ...subCategory,
-            thirdCategories: thirdCategoriesWithValues,
-            fieldValue: subCategoryValue,
-          });
-        }
-
-        categoryTree.push(categoryWithChildren);
-      }
-
-      return categoryTree;
+        return categoryWithChildren;
+      });
     };
 
     // Build the nested category structure
-    const nestedCategories = await buildCategoryTree(project.categoryId);
-    console.log("nestedCategories", project.categoryId);
+    const nestedCategories = buildCategoryTree(project.categoryId);
 
     res.json({
       success: true,

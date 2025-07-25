@@ -118,7 +118,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     setCurrentCampaignName(response.data?.categoryId[0]?.title);
 
     setBlueprintId(response?.data?.blueprintId._id);
-    console.log("first", response);
+   
   };
 
   const handleCampaignSelect = (campaignTitle: string) => {
@@ -318,7 +318,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
           )}
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg">
+        <div onClick={()=>console.log('data',parseMultipleEmails(contentToShow() || ""))} className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
           <div className="space-y-10">
             {isAiStreaming ? (
               // Show streaming content in real-time
@@ -512,7 +512,10 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
       const subjectMatch = block.match(/<!--\s*Subject:\s*(.*?)\s*-->/i);
       const preheaderMatch = block.match(/<!--\s*Preheader:\s*(.*?)\s*-->/i);
       const bodyMatch = block.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-
+    console.log(
+      "body",
+      block
+    );
       return {
         title: titleMatch?.[1]?.trim() || undefined,
         subject: subjectMatch?.[1]?.trim() || undefined,
@@ -523,7 +526,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
     console.log(
       "emails",
-      emails.filter((email) => email.body)
+      emails
     );
     return emails.filter((email) => email.body);
   }, [generatedContent.aiContent])

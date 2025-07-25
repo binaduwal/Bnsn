@@ -39,6 +39,9 @@ export const createBlueprint = catchAsync(
 
       console.log("AI Generated Content:", JSON.stringify(aiGeneratedContent));
 
+      if (!aiGeneratedContent) {
+        return next(createError("DeepSeek API is unreachable", 503));
+      }
 
       if (Array.isArray(aiGeneratedContent) && aiGeneratedContent.length > 0) {
         for (const aiCategory of aiGeneratedContent) {
@@ -122,7 +125,7 @@ export const getSingleBlueprint = catchAsync(
 
     console.log('blueprint category', blueprints.categories)
 
-   
+
     const categoryValues: any[] = []
 
     for (const category of blueprints.categories) {
@@ -131,7 +134,7 @@ export const getSingleBlueprint = catchAsync(
       categoryValues.push(categoryData)
     }
 
-  
+
     console.log('category values', categoryValues)
 
     res.status(200).json({

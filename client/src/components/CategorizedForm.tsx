@@ -98,9 +98,9 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
               fieldValues =
                 typeof matchedField.value === "string"
                   ? matchedField.value
-                      .split(",")
-                      .map((v: string) => v.trim())
-                      .filter(Boolean)
+                    .split(",")
+                    .map((v: string) => v.trim())
+                    .filter(Boolean)
                   : matchedField.value;
             }
 
@@ -212,9 +212,8 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
       // Validate each value
       values.forEach((value, index) => {
         if (!value || (typeof value === "string" && value.trim() === "")) {
-          newErrors[field._id] = `${field.fieldName} value ${
-            index + 1
-          } is required`;
+          newErrors[field._id] = `${field.fieldName} value ${index + 1
+            } is required`;
         }
 
         if (field.fieldType === "email" && value) {
@@ -348,11 +347,11 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
         const fieldValues = categoryData[field._id] || [];
         return {
           key: field.fieldName,
-          value: fieldValues, 
+          value: fieldValues,
         };
       });
 
-      await updateCategoryValueApi({id: categoryValue._id, value: valueArray});
+      await updateCategoryValueApi({ id: categoryValue._id, value: valueArray });
       toast.success("Category updated successfully");
 
       // Optionally refresh the data
@@ -375,33 +374,32 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
     const inlineEditing = inlineEditingState[category._id]?.[field._id];
     const isLoading = loadingStates[category._id];
 
-    const baseInputClasses = `w-full px-3 py-2 border-l-4 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all duration-200 ${
-      hasError ? "border-l-red-500 bg-red-50" : "border-l-purple-500 hover:border-l-purple-600"
-    }`;
+    const baseInputClasses = `w-[80%] border border-purple-500 px-3 py-2 border-l-4 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500 transition-all duration-200 ${hasError ? "border-l-red-500 bg-red-50" : "border-l-purple-500 hover:border-l-purple-600"
+      }`;
 
     return (
       <div className="space-y-3">
         {/* Field Values Container */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 z-50 rounded-lg p-4 border border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-base font-semibold text-gray-800">
               {field.fieldName}
               <span className="text-red-500 ml-1">*</span>
             </h3>
-           
+
           </div>
 
           {/* Values Grid */}
-          <div className="grid  items-center grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid  items-center grid-cols-1 md:grid-cols-2  lg:grid-cols-3 gap-3">
             {values.map((value, index) => (
               <div key={index} className="relative group ">
                 {inlineEditing?.isEditing &&
-                inlineEditing.editingIndex === index ? (
-                  <div    className="relative">
-                    <input
-                      type="text"
+                  inlineEditing.editingIndex === index ? (
+                  <div className="relative ">
+                    <textarea
+                      // type="text"
                       value={inlineEditing.tempValue}
-                    
+
                       onChange={(e) =>
                         handleInlineValueChange(
                           category._id,
@@ -432,16 +430,16 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
                         </svg>
                       </button>
                     </div>
-                    
+
                   </div>
                 ) : (
-                  <div onClick={()=>handleInlineEdit(category._id, field._id, index, value)} className="relative bg-white rounded-md border border-gray-200 px-3 py-2 hover:border-purple-300 transition-colors group-hover:shadow-sm">
+                  <div onClick={() => handleInlineEdit(category._id, field._id, index, value)} className="relative bg-white rounded-md border border-gray-200 px-3 py-2 hover:border-purple-300 transition-colors group-hover:shadow-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-gray-700 font-medium truncate pr-6">
                         {value}
                       </span>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      
+
                         <button
                           onClick={() =>
                             handleRemoveValue(category._id, field._id, index)
@@ -459,11 +457,11 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
                 )}
               </div>
             ))}
-            
+
 
             {/* Add New Value Input */}
             {isEditing && (
-              <div className="relative ">
+              <div className="relative  ">
                 <input
                   type="text"
                   value={tempValue}
@@ -503,7 +501,7 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-             
+
             </button>}
           </div>
 
@@ -598,11 +596,10 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
                     <button
                       onClick={() => handleUpdateCategoryValue(category._id)}
                       disabled={loadingStates[category._id]}
-                      className={`px-6 py-3 rounded-lg font-bold text-base transition-all duration-200 shadow-md ${
-                        loadingStates[category._id]
+                      className={`px-6 py-3 rounded-lg font-bold text-base transition-all duration-200 shadow-md ${loadingStates[category._id]
                           ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
                           : "bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 hover:shadow-lg transform hover:scale-105"
-                      }`}
+                        }`}
                     >
                       {loadingStates[category._id] ? (
                         <div className="flex items-center gap-2">

@@ -48,6 +48,9 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
   timestamps: true
 });
 
+
+CategoryValueSchema.index({ project: 1, category: 1 })
+
 export const CategoryValue = mongoose.model<ICategoryValue>(
   "CategoryValue",
   CategoryValueSchema

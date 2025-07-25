@@ -65,5 +65,5 @@ const CategorySchema: Schema = new Schema<ICategory>(
   }
 );
 
-CategorySchema.index({ title: 1, createdAt: -1 });
+CategorySchema.index({ title: 1, parentId: 1, type: 1  });
 export const Category = mongoose.model<ICategory>("Category", CategorySchema);

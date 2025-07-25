@@ -61,7 +61,7 @@ export class DeepSeekService {
     offerType: string,
     categories: ICategory[]
   ): Promise<any> {
-    const categoryList = categories.map((cat) => ({
+    const categoryList = categories.slice(0, 1).map((cat) => ({
       title: cat.title,
       description: cat.description,
       fields: cat.fields.map((f) => ({
@@ -93,8 +93,9 @@ export class DeepSeekService {
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 2000,
+      max_tokens: 3000,
       temperature: 0.7,
+      // stream:true
     };
 
     const response = await this.makeRequest(request);
@@ -103,8 +104,12 @@ export class DeepSeekService {
     // Clean the response to extract JSON
     content = this.cleanJsonResponse(content);
 
+    // console.log(request)
+
     try {
       return JSON.parse(content);
+
+      // return this.makeStreamingRequest(request);
     } catch (error) {
       console.error("Failed to parse AI response:", error);
       console.error("Raw AI response:", response.choices[0]?.message?.content);
