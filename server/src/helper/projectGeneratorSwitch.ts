@@ -1,15 +1,20 @@
 import { deepSeekService } from "../services/deepseek";
+import { advertorialService } from "../services/projectService/advertorialService";
 import { articleService } from "../services/projectService/articleService";
 import { bigideaService } from "../services/projectService/bigideaService";
 import { bonusCreaterService } from "../services/projectService/bonusCreaterService";
-import { booksIdeaService } from "../services/projectService/booksIdeaService";
+import { bookService } from "../services/projectService/bookService";
+import { brandGeneratorService } from "../services/projectService/brandService";
 import { emailService } from "../services/projectService/emailService";
 import { landingPageService } from "../services/projectService/landingPageService";
 import { linkedInProfileService } from "../services/projectService/linkedInProfileService";
 import { optInPageService } from "../services/projectService/optInPageService";
+import { orderBumpsService } from "../services/projectService/orderBumps";
 import { pressReleaseService } from "../services/projectService/pressReleaseService";
 import { salesFunnelService } from "../services/projectService/salesFunnelService";
+import { upsellService } from "../services/projectService/upsellService";
 import { vslPageService } from "../services/projectService/vslService";
+import { webinarService } from "../services/projectService/webinarService";
 import { webPageService } from "../services/projectService/webPageService";
 import { Response } from "express";
 
@@ -136,6 +141,12 @@ export const generatedContent = async ({ blueprintValues, fieldValue, res, title
             break;
 
         case "Ad Generator":
+        case "Ad 1":
+        case "Ad 2":
+        case "Ad 3":
+        case "Ad 4":
+        case "Ad 5":
+
             aiGeneratedContent = await deepSeekService.generateAdCopyStream(
                 blueprintValues,
                 fieldValue,
@@ -693,7 +704,24 @@ export const generatedContent = async ({ blueprintValues, fieldValue, res, title
             break;
 
         case "Book Idea Generator":
-            aiGeneratedContent = await booksIdeaService.generateBookIdeasStream(
+            aiGeneratedContent = await bookService.generateBookIdeasStream(
+                blueprintValues,
+                fieldValue,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+
+        case "Outline":
+            aiGeneratedContent = await bookService.generateBookBuilderOutlineStream(
                 blueprintValues,
                 fieldValue,
                 (chunk: string) => {
@@ -724,7 +752,7 @@ export const generatedContent = async ({ blueprintValues, fieldValue, res, title
             );
             break;
 
-              case "Bonus Creator Advanced":
+        case "Bonus Creator Advanced":
             aiGeneratedContent = await bonusCreaterService.generateAdvancedBonusIdeasStream(
                 blueprintValues,
                 fieldValue,
@@ -739,6 +767,172 @@ export const generatedContent = async ({ blueprintValues, fieldValue, res, title
                 }
             );
             break;
+
+
+
+
+        case "Book Description":
+            aiGeneratedContent = await bookService.generateBookDescriptionStream(
+                blueprintValues,
+                fieldValue,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+        case "Email 1":
+        case "Email 2":
+        case "Email 3":
+        case "Email 4":
+        case "Email 5":
+        case "Email 6":
+        case "Email 7":
+
+            aiGeneratedContent = await bookService.generateBookSalesEmailStream(
+                blueprintValues,
+                fieldValue,
+                title,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+        case "Brand Generator":
+
+            aiGeneratedContent = await brandGeneratorService.generateBrandIdentityStream(
+                blueprintValues,
+                fieldValue,
+                title,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+        case "Upsell Generator":
+
+            aiGeneratedContent = await upsellService.generateUpsellIdeasStream(
+                blueprintValues,
+                fieldValue,
+
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+        case "The 3 Things":
+        case "Webinar Testimonials":
+        case "Overcoming Objections":
+        case "Interest Is Sky-High":
+        case "Bad Ideas":
+        case "Everything Changes Today":
+        case "Webinar Promises":
+        case "Why You Should Listen":
+        case "Why Do This?":
+
+
+            aiGeneratedContent = await webinarService.generateWebinarContentStream(
+                title,
+                blueprintValues,
+                fieldValue,
+
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+
+        case "Advertorial 1 (Short)":
+        case "Advertorial 2 (Short)":
+        case "Advertorial 3 (Short)":
+        case "Advertorial 4 (Short)":
+
+
+            aiGeneratedContent = await advertorialService.generateAdvertorialsStream(
+                blueprintValues,
+                fieldValue,
+                title,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+        case "Advertorial 5 (Long)":
+        case "Advertorial 6 (Long)":
+            aiGeneratedContent = await advertorialService.generateLongFormAdvertorialStream(
+                blueprintValues,
+                fieldValue,
+                title,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
+
+        case "Order Bump Generator":
+            aiGeneratedContent = await orderBumpsService.generateOrderBumpCopyStream(
+                blueprintValues,
+                fieldValue,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
 
         default:
             aiGeneratedContent = null
