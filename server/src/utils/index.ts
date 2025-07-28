@@ -303,3 +303,42 @@ Use these styling patterns to maintain visual consistency:
 Apply these styles consistently throughout the page to match the homepage design.
 `;
 };
+
+/**
+ * Get current date information for AI prompts
+ * @returns Object with current date information
+ */
+export const getCurrentDateInfo = () => {
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.toLocaleString('en-US', { month: 'long' });
+  const currentDate = now.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  });
+  
+  return {
+    currentYear,
+    currentMonth,
+    currentDate,
+    isCurrentYear: currentYear >= 2024,
+    yearRange: '2024-2025'
+  };
+};
+
+/**
+ * Generate current date context for AI prompts
+ * @returns Formatted string with current date information
+ */
+export const generateCurrentDateContext = () => {
+  const dateInfo = getCurrentDateInfo();
+  return `
+## 📅 Current Date Context
+- Current Year: ${dateInfo.currentYear}
+- Current Date: ${dateInfo.currentDate}
+- Use current information and trends from ${dateInfo.yearRange}
+- Do not reference outdated data or events from before 2024
+- Reference current market conditions, technologies, and industry trends
+`;
+};

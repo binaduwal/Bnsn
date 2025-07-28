@@ -172,7 +172,7 @@ export const generateProject = catchAsync(
         mainCategory = currentCategory.title;
       }
 
-      // Fetch homepage reference for website pages
+      // Fetch homepage reference only for website pages (excluding homepage generators)
       let homepageReference = '';
       if (mainCategory === 'Website Pages' && 
           categoryData?.title !== 'Simple Home Page' && 
