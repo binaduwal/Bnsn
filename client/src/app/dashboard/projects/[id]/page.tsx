@@ -20,6 +20,7 @@ import InlineTextEditor from "@/components/ui/InlineTextEditor";
 import {
   Category,
   generateProjectStreamApi,
+  generateProjectApi,
   singleProjectApi,
 } from "@/services/projectApi";
 import CampaignAccordion from "@/components/CampainAccordion";
@@ -27,6 +28,8 @@ import EditableTitle from "@/components/ui/EditableTitle";
 import { Field } from "@/services/categoryApi";
 import toast from "react-hot-toast";
 import { updateCategoryValueApi } from "@/services/blueprintApi";
+import { getWordCountApi } from "@/services/authApi";
+import { marked } from "marked";
 
 export interface Campaign {
   id: string;
@@ -36,25 +39,27 @@ export interface Campaign {
   isActive?: boolean;
 }
 
-interface EmailCampaignUIProps {
+interface ContentGeneratorUIProps {
   params: Promise<{ id: string }>;
 }
 
-const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
+const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [currentCampaignName, setCurrentCampaignName] = useState(
-    "Promotional Email Generator"
+    "Content Generator"
   );
 
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [streamingAiContent, setStreamingAiContent] = useState<string>("");
   const [isAiStreaming, setIsAiStreaming] = useState<boolean>(false);
-  const stats = { wordsLeft: 97340, totalWords: 100000 };
+  const [stats, setStats] = useState({ wordsLeft: 100000, totalWords: 100000 });
 
   // New streaming states
   const [streamingProgress, setStreamingProgress] = useState(0);
   const [streamingMessage, setStreamingMessage] = useState("");
+  const [currentEmailIndex, setCurrentEmailIndex] = useState(0);
+  const [totalEmails, setTotalEmails] = useState(0);
   const [generatedContent, setGeneratedContent] = useState<{
     blueprintValues?: any[];
     fieldValue?: any[];
@@ -76,7 +81,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   };
 
   const [selectedCampaign, setSelectedCampaign] = useState<string | null>(
-    "Promotional Emails"
+    "Content Campaign"
   );
   const [selectedCategory, setSelectedCategory] = useState<string | null>("");
   const [mainTitle, setMainTitle] = useState("");
@@ -88,7 +93,20 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
   useEffect(() => {
     fetchSingleProject();
+    fetchWordCount();
   }, [id]);
+
+  const fetchWordCount = async () => {
+    try {
+      const response = await getWordCountApi();
+      setStats({
+        wordsLeft: response.data.wordsLeft,
+        totalWords: response.data.totalWords,
+      });
+    } catch (error) {
+      console.error("Error fetching word count:", error);
+    }
+  };
 
   useEffect(() => {
     setFieldValues({})
@@ -106,6 +124,18 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     });
   }, [selectedCategory, categories]);
 
+  // Cleanup effect for streaming states
+  useEffect(() => {
+    return () => {
+      // Cleanup streaming states when component unmounts
+      setIsGenerating(false);
+      setIsAiStreaming(false);
+      setStreamingAiContent("");
+      setStreamingProgress(0);
+      setStreamingMessage("");
+    };
+  }, []);
+
   const fetchSingleProject = async () => {
     const response = await singleProjectApi(id);
     setCategories(response.data.categoryId);
@@ -118,7 +148,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     setCurrentCampaignName(response.data?.categoryId[0]?.title);
 
     setBlueprintId(response?.data?.blueprintId._id);
-   
+
   };
 
   const handleCampaignSelect = (campaignTitle: string) => {
@@ -161,9 +191,61 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     return targetThirdCategory?.fields || [];
   };
 
+  // Function to determine if current category is email-related
+  const isEmailCategory = (): boolean => {
+    if (!selectedCategory || !categories?.length) return false;
+
+    // Find the selected category
+    for (const category of categories) {
+      if (category.subCategories) {
+        for (const subCategory of category.subCategories) {
+          if (subCategory.thirdCategories) {
+            for (const thirdCategory of subCategory.thirdCategories) {
+              if (thirdCategory._id === selectedCategory) {
+                const title = thirdCategory.title?.toLowerCase() || '';
+                // Check if the category title contains email-related keywords
+                return title.includes('email') || 
+                       title.includes('promotional') || 
+                       title.includes('content email') ||
+                       title.includes('email generator');
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  };
+
+  // Function to get the current category title
+  const getCurrentCategoryTitle = (): string => {
+    if (!selectedCategory || !categories?.length) return '';
+
+    for (const category of categories) {
+      if (category.subCategories) {
+        for (const subCategory of category.subCategories) {
+          if (subCategory.thirdCategories) {
+            for (const thirdCategory of subCategory.thirdCategories) {
+              if (thirdCategory._id === selectedCategory) {
+                return thirdCategory.title || '';
+              }
+            }
+          }
+        }
+      }
+    }
+    return '';
+  };
+
   // Handle streaming data from backend
   const handleStreamData = (data: any) => {
+    console.log("Received stream data:", data); // Debug log
+
     switch (data.type) {
+      case "test":
+        console.log("Streaming test successful:", data);
+        break;
+
       case "progress":
         setStreamingProgress(data.progress || 0);
         setStreamingMessage(data.message || "Processing...");
@@ -172,6 +254,12 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
         if (data.message?.includes("Generating AI content")) {
           setIsAiStreaming(true);
           setStreamingAiContent(""); // Reset streaming content
+          
+          // Set email-specific tracking only for email categories
+          if (isEmailCategory()) {
+            setCurrentEmailIndex(0); // Start from 0, will be updated when first email separator is found
+            setTotalEmails(10); // We're generating 10 emails
+          }
         }
         break;
 
@@ -196,7 +284,42 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
       // NEW: Handle real-time AI content chunks
       case "ai_chunk":
-        setStreamingAiContent((prev) => prev + data.content);
+        // Use functional update to prevent stale state issues
+        setStreamingAiContent((prev) => {
+          const newContent = prev + data.content;
+
+          // Track progress based on category type
+          if (isEmailCategory()) {
+            // Track email progress by looking for email separators and extracting the actual email number
+            const emailMatches = newContent.match(/<!-- Email (\d+) -->/g);
+            if (emailMatches) {
+              // Extract the highest email number found
+              const emailNumbers = emailMatches.map(match => {
+                const numberMatch = match.match(/<!-- Email (\d+) -->/);
+                return numberMatch ? parseInt(numberMatch[1]) : 0;
+              });
+
+              const currentEmail = Math.max(...emailNumbers);
+              setCurrentEmailIndex(currentEmail);
+              setStreamingMessage(`Generating email ${currentEmail} of 10...`);
+            } else {
+              // Fallback: detect if we're in the middle of generating content
+              const htmlBlocks = newContent.match(/<html[^>]*>/gi);
+              if (htmlBlocks && htmlBlocks.length > 0) {
+                const estimatedEmail = Math.min(htmlBlocks.length, 10);
+                setCurrentEmailIndex(estimatedEmail);
+                setStreamingMessage(`Generating email ${estimatedEmail} of 10...`);
+              }
+            }
+          } else {
+            // For non-email categories, show generic progress
+            const categoryTitle = getCurrentCategoryTitle();
+            setStreamingMessage(`Generating ${categoryTitle}...`);
+          }
+
+          return newContent;
+        });
+
         if (data.progress) {
           setStreamingProgress(data.progress);
         }
@@ -206,9 +329,18 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
         setStreamingProgress(100);
         setStreamingMessage("Generation completed successfully!");
         setIsAiStreaming(false); // Ensure streaming mode is off
+        setStreamingAiContent(""); // Clear streaming content
 
         if (data.data) {
           setGeneratedContent(data.data);
+          
+          // Update word count if provided
+          if (data.data.wordCount) {
+            setStats({
+              wordsLeft: data.data.wordCount.wordsLeft,
+              totalWords: stats.totalWords, // Keep the same total
+            });
+          }
         }
         toast.success("Project generated successfully!");
         break;
@@ -225,13 +357,9 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     }
   };
 
-  // Updated streaming generate function
-  const handleGenerateProject = async () => {
-    setIsGenerating(true);
-    setStreamingProgress(0);
-    setStreamingMessage("Starting generation...");
-    setGeneratedContent({});
-
+  // Simple debug function to log all raw data
+  const debugStreaming = async () => {
+    console.log("=== DEBUGGING STREAMING ===");
     try {
       const response = await generateProjectStreamApi({
         category: categories[0]._id,
@@ -241,71 +369,234 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
         blueprintId,
       });
 
-      // Check if response body exists
+      console.log("Response:", response);
+      console.log("Response status:", response.status);
+      console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+
       if (!response.body) {
-        throw new Error("Response body is not available for streaming");
+        console.error("No response body");
+        return;
       }
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
-      let buffer = "";
+      let totalData = "";
 
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) {
-          // Process any remaining data in buffer
-          if (buffer.trim()) {
-            try {
-              const data = JSON.parse(buffer);
-              handleStreamData(data);
-            } catch (e) {
-              console.warn("Error parsing final buffer:", e, "Buffer:", buffer);
-            }
-          }
+          console.log("=== STREAM ENDED ===");
+          console.log("Total data received:", totalData);
           break;
         }
 
-        // Decode the chunk and add to buffer
-        buffer += decoder.decode(value, { stream: true });
+        const chunk = decoder.decode(value, { stream: true });
+        totalData += chunk;
+        console.log("Raw chunk:", chunk);
+        console.log("Chunk length:", chunk.length);
+        console.log("Chunk bytes:", Array.from(value).map(b => b.toString(16).padStart(2, '0')).join(' '));
+      }
+    } catch (error) {
+      console.error("Debug streaming failed:", error);
+    }
+  };
 
-        // Split by newlines to process complete JSON objects
-        const lines = buffer.split("\n");
 
-        // Keep the last incomplete line in buffer
-        buffer = lines.pop() || "";
+  // Updated streaming generate function
+  const handleGenerateProject = async () => {
+    setIsGenerating(true);
+    setStreamingProgress(0);
+    setStreamingMessage("Starting generation...");
+    setGeneratedContent({});
+    setStreamingAiContent(""); // Reset streaming content
 
-        // Process each complete line
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (trimmedLine) {
-            try {
-              const data = JSON.parse(trimmedLine);
-              handleStreamData(data);
-            } catch (e) {
-              console.error("Error parsing JSON:", e, "Line:", trimmedLine);
+    // Add timeout for streaming - increased to 5 minutes
+    const timeoutId = setTimeout(() => {
+      console.warn("Streaming timeout reached");
+      setIsGenerating(false);
+      setIsAiStreaming(false);
+      setStreamingMessage("Generation timed out");
+      toast.error("Generation timed out. Please try again.");
+    }, 300000); // 5 minutes timeout
+
+    let retryCount = 0;
+    const maxRetries = 2;
+
+    const attemptStreaming = async (): Promise<void> => {
+      try {
+        const response = await generateProjectStreamApi({
+          category: categories[0]._id,
+          currentCategory: selectedCategory || "",
+          project: id,
+          values: fieldValues,
+          blueprintId,
+        });
+
+        // Check if response body exists
+        if (!response.body) {
+          throw new Error("Response body is not available for streaming");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let lastUpdateTime = Date.now();
+        let totalChunks = 0;
+        let lastActivityTime = Date.now();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          totalChunks++;
+          lastActivityTime = Date.now(); // Update activity time
+
+          if (done) {
+            console.log("Stream completed after", totalChunks, "chunks");
+            // Process any remaining data in buffer
+            if (buffer.trim()) {
+              try {
+                const data = JSON.parse(buffer);
+                handleStreamData(data);
+              } catch (e) {
+                console.warn("Error parsing final buffer:", e, "Buffer:", buffer);
+              }
+            }
+            break;
+          }
+
+          // Decode the chunk and add to buffer
+          const chunk = decoder.decode(value, { stream: true });
+          buffer += chunk;
+          
+          // Throttle UI updates to prevent freezing - only log every 10 chunks
+          const now = Date.now();
+          if (now - lastUpdateTime > 100 && totalChunks % 10 === 0) { // Update every 100ms and every 10 chunks
+            console.log(`Chunk ${totalChunks}: ${chunk.length} chars`);
+            lastUpdateTime = now;
+          }
+
+          // Process complete lines more efficiently
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+          // Process each complete line
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (trimmedLine && trimmedLine.startsWith("data: ")) {
+              try {
+                const jsonData = trimmedLine.slice(6); // Remove "data: " prefix
+                const data = JSON.parse(jsonData);
+                handleStreamData(data);
+              } catch (e) {
+                // Only log parsing errors for non-empty lines
+                if (trimmedLine.length > 10) {
+                  console.error("Error parsing SSE data:", e, "Line:", trimmedLine);
+                }
+              }
+            } else if (trimmedLine && trimmedLine !== "") {
+              // Try to parse as regular JSON in case it's not SSE format
+              try {
+                const data = JSON.parse(trimmedLine);
+                handleStreamData(data);
+              } catch (e) {
+                // Not JSON, ignore silently
+              }
             }
           }
+
+          // Prevent memory buildup by limiting buffer size
+          if (buffer.length > 10000) {
+            console.warn("Buffer too large, truncating");
+            buffer = buffer.slice(-5000); // Keep last 5000 chars
+          }
+
+          // Check for inactivity timeout (30 seconds without data)
+          if (Date.now() - lastActivityTime > 30000) {
+            console.warn("No data received for 30 seconds, checking connection...");
+            setStreamingMessage("Checking connection...");
+          }
         }
+      } catch (error: any) {
+        console.error("Streaming error:", error);
+        
+        // Retry logic for connection issues
+        if (retryCount < maxRetries && (
+          error.message?.includes('timeout') || 
+          error.message?.includes('network') ||
+          error.message?.includes('connection')
+        )) {
+          retryCount++;
+          setStreamingMessage(`Connection failed, retrying (${retryCount}/${maxRetries})...`);
+          console.log(`Retrying streaming attempt ${retryCount}/${maxRetries}`);
+          
+          // Wait 2 seconds before retrying
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return attemptStreaming();
+        }
+        
+        throw error; // Re-throw if max retries reached or different error
       }
+    };
+
+    try {
+      await attemptStreaming();
     } catch (error: any) {
-      console.error("Streaming error:", error);
-      toast.error(error.message || "Generation failed");
-      setStreamingMessage("Generation failed");
+      console.error("All streaming attempts failed:", error);
+      
+      // Try fallback to non-streaming API
+      try {
+        setStreamingMessage("Streaming failed, trying fallback...");
+        const fallbackResponse = await generateProjectApi({
+          category: categories[0]._id,
+          project: id,
+          values: fieldValues,
+          blueprintId: blueprintId || "",
+        });
+        
+        setGeneratedContent(fallbackResponse);
+        setStreamingProgress(100);
+        setStreamingMessage("Generation completed successfully!");
+        toast.success("Project generated successfully!");
+      } catch (fallbackError: any) {
+        console.error("Fallback also failed:", fallbackError);
+        toast.error(error.message || "Generation failed");
+        setStreamingMessage("Generation failed");
+      }
     } finally {
+      clearTimeout(timeoutId);
       setIsGenerating(false);
+      setIsAiStreaming(false);
     }
   };
 
   const renderAiContent = () => {
     // Show streaming content if AI is currently streaming
-    const contentToShow = () => {
-      return isAiStreaming
-        ? streamingAiContent
-        : generatedContent.aiContent;
-    }
+    const contentToShow = isAiStreaming
+      ? streamingAiContent
+      : generatedContent.aiContent;
 
     if (!contentToShow && !isAiStreaming) return null;
+
+    const isEmail = isEmailCategory();
+
+    // Debug logging
+    console.log("Content to show:", contentToShow);
+    console.log("Is email category:", isEmail);
+    console.log("Content length:", contentToShow?.length);
+
+    // Check if content is empty or just contains empty HTML tags
+    const cleanContent = contentToShow?.replace(/<[^>]*>/g, '').trim();
+    if (!cleanContent && !isAiStreaming) {
+      return (
+        <div className="mb-6">
+          <div className="bg-gray-50 border-gray-200 rounded-lg p-6">
+            <div className="text-center text-gray-500">
+              <p>No content generated yet. Please try generating again.</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="mb-6">
@@ -318,16 +609,24 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
           )}
         </div>
 
-        <div onClick={()=>console.log('data',parseMultipleEmails(contentToShow() || ""))} className="bg-gray-50 p-4 border border-gray-200 rounded-lg">
+        <div className="bg-gray-50 border-gray-200 rounded-lg">
           <div className="space-y-10">
             {isAiStreaming ? (
               // Show streaming content in real-time
-              <StreamingEmailPreview content={streamingAiContent} />
+              isEmail ? (
+                <StreamingEmailPreview content={streamingAiContent} />
+              ) : (
+                <StreamingContentPreview content={streamingAiContent} />
+              )
             ) : (
-              // Show final parsed emails
-              parseMultipleEmails(contentToShow() || "").map((email, idx) => (
-                <EmailCard key={idx} email={email} index={idx} />
-              ))
+              // Show final parsed content
+              isEmail ? (
+                parseMultipleEmails(contentToShow || "").map((email, idx) => (
+                  <EmailCard key={idx} email={email} index={idx} />
+                ))
+              ) : (
+                <ContentCard content={contentToShow || ""} />
+              )
             )}
           </div>
         </div>
@@ -356,52 +655,62 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
     // Try to parse partial emails for better preview
     const partialContent = parseStreamingContent(content);
 
-    return (
-      <>
-        {partialContent.map((content, idx) => (
-          <div
-            key={idx}
-            className="border border-gray-200 rounded-lg p-6 shadow"
-          >
+    if (partialContent.length > 0) {
+      return (
+        <>
+          {partialContent.map((email, idx) => (
+            <div
+              key={idx}
+              className="border border-gray-200 rounded-lg p-6 shadow"
+            >
+              {email.title && (
+                <h2 className="text-xl font-semibold mb-2">{email.title}</h2>
+              )}
 
-            {content.subject && (
-              <p className="text-base text-gray-600 mb-1">
-                <strong>Subject:</strong> {content.subject}
-              </p>
-            )}
+              {email.subject && (
+                <p className="text-base text-gray-600 mb-1">
+                  <strong>Subject:</strong> {email.subject}
+                </p>
+              )}
 
-            {content.preheader && (
-              <p className="text-sm text-gray-600 mb-4">
-                <strong>Preheader:</strong> {content.preheader}
-              </p>
-            )}
+              {email.preheader && (
+                <p className="text-sm text-gray-600 mb-4">
+                  <strong>Preheader:</strong> {email.preheader}
+                </p>
+              )}
 
-            {content.body && (
-              <div className="prose max-w-none">
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      content.body +
-                      (idx === partialContent.length - 1
-                        ? '<span class="animate-pulse">|</span>'
-                        : ""),
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        ))}
-
-        {/* Show raw streaming content if no emails parsed yet */}
-        {partialContent.length === 0 && (
-          <div className="border border-gray-200 rounded-lg p-6 shadow">
-            <div className="text-sm text-gray-600 font-mono whitespace-pre-wrap">
-              {content}
-              <span className="animate-pulse">|</span>
+              {email.body && (
+                <div className="prose max-w-none">
+                  <div
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        email.body +
+                        (idx === partialContent.length - 1
+                          ? '<span class="animate-pulse">|</span>'
+                          : ""),
+                    }}
+                  />
+                </div>
+              )}
             </div>
-          </div>
-        )}
-      </>
+          ))}
+        </>
+      );
+    }
+
+    // If no emails parsed, show as generic content
+    const cleanContent = cleanHtmlContent(content);
+
+    return (
+      <div className="border border-gray-200 rounded-lg p-6 shadow">
+        <div className="prose max-w-none">
+          <div
+            dangerouslySetInnerHTML={{
+              __html: cleanContent + '<span class="animate-pulse">|</span>',
+            }}
+          />
+        </div>
+      </div>
     );
   };
 
@@ -412,11 +721,16 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   }) => (
     <div className="border relative border-gray-200 flex flex-col gap-1 rounded-lg p-6 shadow">
       <div className="absolute top-0 right-0">
-        <button 
+        <button
           onClick={() => {
-            const parsedHtml = parse(email.body);
-            navigator.clipboard.writeText(parsedHtml);
-            toast.success("Copied to clipboard");
+            try {
+              const parsedHtml = parse(email.body || "");
+              navigator.clipboard.writeText(parsedHtml);
+              toast.success("Copied to clipboard");
+            } catch (error) {
+              console.error("Error copying to clipboard:", error);
+              toast.error("Failed to copy to clipboard");
+            }
           }}
           className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
         >
@@ -441,45 +755,186 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
       <InlineTextEditor
         className="p-0"
-        initialContent={email.body}
+        initialContent={email.body || ""}
         onChange={(value) => { }}
       />
     </div>
   );
 
+  // Component for streaming non-email content
+  // Unified content cleaning function for consistency
+  const cleanHtmlContent = (content: string): string => {
+    // First, clean any HTML document structure if present
+    let cleanedContent = content
+      // Remove markdown code blocks and backticks
+      .replace(/```html\s*/gi, '')
+      .replace(/```\s*/gi, '')
+      .replace(/`/g, '')
+      // Remove HTML document structure
+      .replace(/<html[^>]*>/gi, '')
+      .replace(/<\/html>/gi, '')
+      .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
+      .replace(/<body[^>]*>/gi, '')
+      .replace(/<\/body>/gi, '')
+      // Remove any leading/trailing whitespace and newlines
+      .trim();
+
+    // Check if content looks like markdown (starts with # or contains markdown patterns)
+    const isMarkdown = /^#\s|^\*\s|^-\s|^>\s|^\d+\.\s/.test(cleanedContent) || 
+                      /\*\*.*\*\*|\*.*\*|\[.*\]\(.*\)/.test(cleanedContent);
+
+    if (isMarkdown) {
+      try {
+        // Convert markdown to HTML - handle both sync and async versions
+        const result = marked(cleanedContent);
+        return typeof result === 'string' ? result : cleanedContent;
+      } catch (error) {
+        console.error("Error converting markdown to HTML:", error);
+        return cleanedContent; // Return original if conversion fails
+      }
+    }
+
+    return cleanedContent;
+  };
+
+  const StreamingContentPreview: React.FC<{ content: string }> = ({
+    content,
+  }) => {
+    if (!content.trim()) {
+      return (
+        <div className="border border-gray-200 rounded-lg p-6 shadow">
+          <div className="animate-pulse">
+            <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+            <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="space-y-2">
+              <div className="h-3 bg-gray-200 rounded"></div>
+              <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Use unified cleaning function
+    const cleanContent = cleanHtmlContent(content);
+
+    return (
+      <div className="border border-gray-200 rounded-lg p-6 shadow">
+        <div className="prose max-w-none">
+          <div
+            dangerouslySetInnerHTML={{
+              __html: cleanContent + '<span class="animate-pulse">|</span>',
+            }}
+          />
+        </div>
+      </div>
+    );
+  };
+
+  // Component for final non-email content
+  const ContentCard: React.FC<{ content: string }> = ({ content }) => {
+    // Use unified cleaning function for consistency
+    const cleanContent = cleanHtmlContent(content);
+
+    return (
+      <div className="border relative border-gray-200 flex flex-col gap-1 rounded-lg p-6 shadow">
+        <div className="absolute top-0 right-0">
+          <button
+            onClick={() => {
+              try {
+                const parsedHtml = parse(cleanContent || "");
+                navigator.clipboard.writeText(parsedHtml);
+                toast.success("Copied to clipboard");
+              } catch (error) {
+                console.error("Error copying to clipboard:", error);
+                toast.error("Failed to copy to clipboard");
+              }
+            }}
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            <Copy className="w-4 h-4" />
+          </button>
+        </div>
+
+        <InlineTextEditor
+          className="p-0"
+          initialContent={cleanContent || ""}
+          onChange={(value) => { }}
+        />
+      </div>
+    );
+  };
+
   // Helper function to parse streaming emails (partial content)
- const parseStreamingContent = (content: string) => {
-  const emails: ParsedEmail[] = [];
+  const parseStreamingContent = (content: string) => {
+    const emails: ParsedEmail[] = [];
 
-  const isHTML = /<html[^>]*>/i.test(content);
+    // Check if content contains HTML structure
+    const hasHtmlStructure = /<html[^>]*>/i.test(content) || /<body[^>]*>/i.test(content);
 
-  if (isHTML) {
-    // Extract <title>
-    const titleMatch = content.match(/<title[^>]*>(.*?)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].trim() : "Website Page";
+    if (!hasHtmlStructure) {
+      // If no HTML structure, treat as plain text
+      return [{
+        title: "",
+        subject: "",
+        preheader: "",
+        body: content
+      }];
+    }
 
-    // Extract <h1> as subject
-    const h1Match = content.match(/<h1[^>]*>(.*?)<\/h1>/i);
-    const subject = h1Match ? h1Match[1].trim() : "Web Page Content";
+    // Split by potential email separators or HTML blocks
+    const emailBlocks = content.split(/(?=<!-- Email \d+ -->|<\/html>|<\/body>)/gi).filter(block => block.trim());
 
-    // Try extracting hero text <p> directly below <h1>
-    const preheaderMatch = content.match(/<h1[^>]*>.*?<\/h1>\s*<p[^>]*>(.*?)<\/p>/i);
-    const preheader = preheaderMatch ? preheaderMatch[1].trim() : "";
+    emailBlocks.forEach((block, index) => {
+      // Extract email number from separator if present
+      const emailNumberMatch = block.match(/<!-- Email (\d+) -->/);
+      const emailNumber = emailNumberMatch ? parseInt(emailNumberMatch[1]) : index + 1;
 
-    // The entire body as fallback "body"
-    const bodyMatch = content.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    const body = bodyMatch ? bodyMatch[1].trim() : content.trim();
+      // Extract title
+      const titleMatch = block.match(/<title[^>]*>(.*?)<\/title>/i);
+      const title = titleMatch ? titleMatch[1].trim() : `Email ${emailNumber}`;
 
-    emails.push({
-      title,
-      subject,
-      preheader,
-      body,
+      // Extract subject from comments
+      const subjectMatch = block.match(/<!--\s*Subject:\s*(.*?)\s*-->/i);
+      const subject = subjectMatch ? subjectMatch[1].trim() : "Email Subject";
+
+      // Extract preheader from comments
+      const preheaderMatch = block.match(/<!--\s*Preheader:\s*(.*?)\s*-->/i);
+      const preheader = preheaderMatch ? preheaderMatch[1].trim() : "";
+
+      // Extract body content - be more flexible
+      let body = "";
+      const bodyMatch = block.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+      if (bodyMatch) {
+        body = bodyMatch[1].trim();
+      } else {
+        // If no body tag, try to extract content from the block
+        // Use unified cleaning function for consistency
+        body = cleanHtmlContent(block);
+      }
+
+      if (body && body.length > 10) { // Only add if there's meaningful content
+        emails.push({
+          title,
+          subject,
+          preheader,
+          body,
+        });
+      }
     });
-  }
 
-  return emails;
-};
+    // If no emails were parsed, return the content as a single item
+    if (emails.length === 0 && content.trim()) {
+      return [{
+        title: "Generated Content",
+        subject: "",
+        preheader: "",
+        body: content
+      }];
+    }
+
+    return emails;
+  };
 
 
   const handleSave = async () => {
@@ -505,31 +960,64 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   }
 
   const parseMultipleEmails = useCallback((rawHtml: string): ParsedEmail[] => {
-    const emailBlocks = rawHtml.split(/<\/html>/gi).filter(Boolean); // Split by </html>
+    if (!rawHtml || rawHtml.trim() === "") {
+      return [];
+    }
+
+    // Split by email separators or complete HTML blocks
+    const emailBlocks = rawHtml.split(/(?=<!-- Email \d+ -->|<\/html>)/gi).filter(block => block.trim());
 
     const emails: ParsedEmail[] = emailBlocks.map((block, index) => {
-      const titleMatch = block.match(/<title>(.*?)<\/title>/i);
+      // Extract email number from separator if present
+      const emailNumberMatch = block.match(/<!-- Email (\d+) -->/);
+      const emailNumber = emailNumberMatch ? parseInt(emailNumberMatch[1]) : index + 1;
+
+      // Extract title
+      const titleMatch = block.match(/<title[^>]*>(.*?)<\/title>/i);
+      const title = titleMatch ? titleMatch[1].trim() : `Email ${emailNumber}`;
+
+      // Extract subject from comments
       const subjectMatch = block.match(/<!--\s*Subject:\s*(.*?)\s*-->/i);
+      const subject = subjectMatch ? subjectMatch[1].trim() : "Email Subject";
+
+      // Extract preheader from comments
       const preheaderMatch = block.match(/<!--\s*Preheader:\s*(.*?)\s*-->/i);
+      const preheader = preheaderMatch ? preheaderMatch[1].trim() : "";
+
+      // Extract body content - use the same approach as streaming
+      let body = "";
       const bodyMatch = block.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-    console.log(
-      "body",
-      block
-    );
+      if (bodyMatch) {
+        body = bodyMatch[1].trim();
+      } else {
+        // If no body tag, try to extract content from the block
+        // Use unified cleaning function for consistency
+        body = cleanHtmlContent(block);
+      }
+
       return {
-        title: titleMatch?.[1]?.trim() || undefined,
-        subject: subjectMatch?.[1]?.trim() || undefined,
-        preheader: preheaderMatch?.[1]?.trim() || undefined,
-        body: bodyMatch?.[1]?.trim() || undefined,
+        title,
+        subject,
+        preheader,
+        body,
       };
     });
 
-    console.log(
-      "emails",
-      emails
-    );
-    return emails.filter((email) => email.body);
-  }, [generatedContent.aiContent])
+    // Filter out emails without meaningful body content
+    const filteredEmails = emails.filter((email) => email.body && email.body.length > 10);
+    
+    // If no emails were parsed, return the content as a single item
+    if (filteredEmails.length === 0 && rawHtml.trim()) {
+      return [{
+        title: "Generated Content",
+        subject: "",
+        preheader: "",
+        body: rawHtml
+      }];
+    }
+
+    return filteredEmails;
+  }, []);
 
   const handleFieldChange = (fieldId: string, value: string) => {
     setFieldValues((prev) => ({
@@ -559,9 +1047,18 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   };
 
   const parse = (html: string) => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    return doc.body.textContent || doc.body.innerText || "";
+    if (!html || typeof html !== 'string') {
+      return "";
+    }
+
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(html, "text/html");
+      return doc.body.textContent || doc.body.innerText || html;
+    } catch (error) {
+      console.error("Error parsing HTML:", error);
+      return html; // Return original content if parsing fails
+    }
   };
 
   const campaignFields = getSelectedCampaignFields();
@@ -672,7 +1169,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
                       <button
                         className="p-1 rounded hover:bg-gray-100 transition-colors"
-                        title="Preview email"
+                        title={isEmailCategory() ? "Preview email" : "Preview content"}
                       >
                         <Eye className="w-4 h-4 text-gray-400" />
                       </button>
@@ -711,8 +1208,8 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
             {/* Main Content */}
             <main className="flex-1  min-h-[calc(100vh-320px)] overflow-y-auto">
-              {campaignFields.length > 0 ? (
-                <div className="max-w-4xl space-y-3 mx-auto p-3">
+              {campaignFields.length > 0  ? (
+                <div className="max-w-7xl space-y-3 mx-auto p-3">
                   {campaignFields.map((field, index) => (
                     <div
                       key={field._id}
@@ -775,11 +1272,16 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
                             style={{ width: `${streamingProgress}%` }}
                           />
                         </div>
+                        {isEmailCategory() && currentEmailIndex > 0 && totalEmails > 0 && (
+                          <div className="mt-2 text-xs text-gray-500 text-center">
+                            Email {currentEmailIndex} of {totalEmails}
+                          </div>
+                        )}
                       </div>
                     )}
 
                     {/* Generate Button */}
-                    <div className="relative mb-8">
+                    <div className="relative mb-8 flex gap-4">
 
                       <button
                         disabled={isGenerating}
@@ -790,23 +1292,27 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
                           {isGenerating ? (
                             <>
                               <Loader className="w-6 h-6 animate-spin" />
-                              <span className="text-lg">Generating Magic...</span>
+                              <span className="text-lg">
+                                {isEmailCategory() ? "Generating Emails..." : "Generating Content..."}
+                              </span>
                             </>
                           ) : (
                             <>
                               <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                              <span className="text-lg">Click Magic Button</span>
+                              <span className="text-lg">Generate Content</span>
                             </>
                           )}
                         </div>
                       </button>
+
+
                     </div>
                   </div>
 
                   {/* Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
-                      <div className="w-full max-w-4xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
+                      <div className="w-full max-w-7xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
                         <h2 className="text-xl font-bold mb-4 text-gray-800">
                           Generated Content
                         </h2>
@@ -822,8 +1328,7 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
                 <div className="min-h-[70vh]  flex flex-col justify-center items-center p-8">
 
 
-                  {/* Magic Button */}
-                  <div className="relative mb-8">
+                  {campaignFields.length == 0  && <div className="relative mb-8 flex gap-4">
 
                     <button
                       disabled={isGenerating}
@@ -831,23 +1336,20 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
                       className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center gap-3">
-                        {isGenerating ? (
-                          <>
-                            <Loader className="w-6 h-6 animate-spin" />
-                            <span className="text-lg">Generating Magic...</span>
-                          </>
-                        ) : (
+                       
                           <>
                             <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                            <span className="text-lg">Click Magic Button</span>
+                            <span className="text-lg">Generate Content</span>
                           </>
-                        )}
+                      
                       </div>
                     </button>
-                  </div>
+
+
+                  </div>}
 
                   {/* Progress Section */}
-                  {isGenerating && (
+                  {generatedContent.aiContent?.length == 0 && isGenerating && (
                     <div className="w-full max-w-md">
                       <div className="flex justify-between text-sm text-gray-600 mb-2">
                         <span>{streamingMessage}</span>
@@ -864,16 +1366,16 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
 
                   {/* Generated Content */}
                   {(generatedContent.aiContent || generatedContent.blueprintValues) && (
-                    <div className="w-full max-w-4xl mx-auto">
-                      <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-8  border border-white/20 transform animate-fadeIn">
-                        <div className="flex items-center gap-3 mb-6">
+                    <div className="w-full max-w-7xl mx-auto">
+                      <div className=" backdrop-blur-sm rounded-2xl transform animate-fadeIn">
+                        {/* <div className="flex items-center gap-3 mb-6">
                           <div className="p-2 bg-gradient-to-r from-green-400 to-teal-500 rounded-lg">
                             <CheckCircle className="w-6 h-6 text-white" />
                           </div>
                           <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                             Generated Content
                           </h2>
-                        </div>
+                        </div> */}
 
                         {(streamingAiContent || generatedContent.aiContent) && renderAiContent()}
                       </div>
@@ -920,4 +1422,4 @@ const EmailCampaignUI: React.FC<EmailCampaignUIProps> = ({ params }) => {
   );
 };
 
-export default EmailCampaignUI;
+export default ContentGeneratorUI;

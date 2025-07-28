@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { ChevronDown, Loader2, Wand2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { createBlueprint } from "@/services/blueprintApi";
+import { createBlueprintStream } from "@/services/blueprintApi";
 import { useRouter } from "next/navigation";
 
 const CreateBlueprint: React.FC = () => {
@@ -11,6 +11,8 @@ const CreateBlueprint: React.FC = () => {
   const [selectedOfferType, setSelectedOfferType] = useState<string>("");
   const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [streamingProgress, setStreamingProgress] = useState<string>("");
+  const [isStreaming, setIsStreaming] = useState<boolean>(false);
 
   const wordCount = feedBnsn
     .trim()
@@ -32,18 +34,36 @@ const CreateBlueprint: React.FC = () => {
   const handleSubmitBlueprint = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setIsStreaming(true);
+    setStreamingProgress("");
+
     try {
-      const res = await createBlueprint({
-        description: feedBnsn,
-        title: blueprintName,
-        offerType: selectedOfferType,
-      });
-      console.log("res", res);
-      router.push(`/dashboard/blueprint/${res.data._id}`);
+      await createBlueprintStream(
+        {
+          description: feedBnsn,
+          title: blueprintName,
+          offerType: selectedOfferType,
+        },
+        (chunk: string) => {
+          // Handle progress updates
+          setStreamingProgress(prev => prev + chunk);
+        },
+        (data: any) => {
+          // Handle completion
+          console.log("Blueprint created:", data);
+          router.push(`/dashboard/blueprint/${data._id}`);
+        },
+        (error: string) => {
+          // Handle errors
+          toast.error(error);
+          setIsStreaming(false);
+        }
+      );
     } catch (error: any) {
       toast.error(error.message);
     } finally {
       setIsLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -132,11 +152,24 @@ const CreateBlueprint: React.FC = () => {
           </div>
         </div>
 
+        {/* Streaming Progress */}
+        {isStreaming && (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="flex items-center gap-2 mb-2">
+              <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
+              <span className="text-sm font-medium text-blue-800">
+                Generating your blueprint...
+              </span>
+            </div>
+            
+          </div>
+        )}
+
         {/* Create Magically Button */}
         <div className="text-center">
           <button
             onClick={handleSubmitBlueprint}
-            className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium inline-flex items-center gap-2"
+            className="bg-blue-600 text-white px-8 py-3 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             disabled={isLoading}
           >
             {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Wand2 className="h-5 w-5" />}

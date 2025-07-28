@@ -204,4 +204,29 @@ router.put('/profile', authenticateToken, validateBody(updateProfileSchema), asy
   }
 });
 
+// Get user word count
+router.get('/word-count', authenticateToken, async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user) {
+      return next(createError('User not found in request', 401));
+    }
+
+    const user = await User.findById(req.user.id).select('totalWords wordsUsed wordsLeft').lean();
+    if (!user) {
+      return next(createError('User not found', 404));
+    }
+
+    res.json({
+      success: true,
+      data: {
+        totalWords: user.totalWords,
+        wordsUsed: user.wordsUsed,
+        wordsLeft: user.wordsLeft
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default router;

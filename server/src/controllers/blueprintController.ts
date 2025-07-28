@@ -30,26 +30,45 @@ export const createBlueprint = catchAsync(
       return next(createError("No blueprint categories found", 404));
     }
 
+    // Set up SSE headers for streaming
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control',
+    });
+
     try {
       const aiGeneratedContent = await deepSeekService.generateBlueprint(
         description,
         offerType,
-        allCategories
+        allCategories,
+        (chunk: string) => {
+          // Send progress chunk to client
+          res.write(`data: ${JSON.stringify({ type: 'progress', content: chunk })}\n\n`);
+        }
       );
 
-      console.log("AI Generated Content:", JSON.stringify(aiGeneratedContent));
+      console.log("AI Generated Content:", JSON.stringify(aiGeneratedContent, null, 2));
 
       if (!aiGeneratedContent) {
-        return next(createError("DeepSeek API is unreachable", 503));
+        res.write(`data: ${JSON.stringify({ type: 'error', message: 'DeepSeek API is unreachable' })}\n\n`);
+        res.end();
+        return;
       }
 
       if (Array.isArray(aiGeneratedContent) && aiGeneratedContent.length > 0) {
+        console.log(`Processing ${aiGeneratedContent.length} categories...`);
+        
         for (const aiCategory of aiGeneratedContent) {
           const {
             title: categoryTitle,
             description: categoryDescription,
             fields,
           } = aiCategory;
+
+          console.log(`Processing category: ${categoryTitle} with ${fields?.length || 0} fields`);
 
           // Find existing category (don't create new ones)
           const category = await Category.findOne({
@@ -74,24 +93,50 @@ export const createBlueprint = catchAsync(
             })),
           });
 
+          console.log(`Saving category value for ${categoryTitle} with ${fields.length} fields`);
           await categoryValue.save();
         }
       } else {
         console.warn("Invalid or empty AI response format for categories.");
+        console.log("AI Response:", aiGeneratedContent);
       }
+
+      // Update blueprint with used category IDs
+      blueprint.categories = usedCategoryIds;
+      await blueprint.save();
+
+      // Log summary of generated data
+      console.log(`\n=== BLUEPRINT GENERATION SUMMARY ===`);
+      console.log(`Blueprint ID: ${blueprint._id}`);
+      console.log(`Categories processed: ${usedCategoryIds.length}`);
+      console.log(`Total categories available: ${allCategories.length}`);
+      
+      // Count total fields with data
+      let totalFieldsWithData = 0;
+      for (const aiCategory of aiGeneratedContent || []) {
+        if (aiCategory.fields && Array.isArray(aiCategory.fields)) {
+          totalFieldsWithData += aiCategory.fields.length;
+        }
+      }
+      console.log(`Total fields with data: ${totalFieldsWithData}`);
+      console.log(`=====================================\n`);
+
+      // Send final success response
+      res.write(`data: ${JSON.stringify({ 
+        type: 'complete', 
+        data: blueprint,
+        success: true 
+      })}\n\n`);
+      res.end();
+
     } catch (aiError) {
       console.error("Error during AI content generation:", aiError);
-      // Continue with empty categories rather than failing
+      res.write(`data: ${JSON.stringify({ 
+        type: 'error', 
+        message: 'Error during AI content generation' 
+      })}\n\n`);
+      res.end();
     }
-
-    // Update blueprint with used category IDs
-    blueprint.categories = usedCategoryIds;
-    await blueprint.save();
-
-    res.status(201).json({
-      success: true,
-      data: blueprint,
-    });
   }
 );
 export const getAllBlueprint = catchAsync(

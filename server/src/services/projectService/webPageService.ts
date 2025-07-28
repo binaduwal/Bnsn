@@ -9,7 +9,8 @@ class WebPageService extends DeepSeekService {
 async generateHomePageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
-  onProgress?: (chunk: string) => void
+  onProgress?: (chunk: string) => void,
+  homepageReference?: string
 ): Promise<string> {
   const systemPrompt = `You are a senior website UX/copywriting expert specializing in building complete home pages for modern websites. You write SEO-friendly, emotionally engaging, navigational HTML pages. The page must be structured like a real home page — introducing the brand, summarizing offerings, and guiding users to other pages. Your output must be valid inline-styled HTML, starting with <html> and ending with </html> and content must be inside <body> tag.`;
 
@@ -83,7 +84,8 @@ async generateHomePageStream(
 async generateAboutCeoPageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
-  onProgress?: (chunk: string) => void
+  onProgress?: (chunk: string) => void,
+  homepageReference?: string
 ): Promise<string> {
   const systemPrompt = `You are a professional web copywriter with expertise in writing engaging and credible "About the CEO" pages for modern brands. You specialize in SEO-optimized, emotionally engaging storytelling that builds connection and trust with visitors. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and all the content must be inside <body> tag.`;
 
@@ -99,6 +101,12 @@ async generateAboutCeoPageStream(
   const formattedCategoryInputs = projectCategoryValue
     .map((item) => `- ${item.key}: ${item.value}`)
     .join("\n");
+
+  // Add homepage styling reference if available
+  const stylingReference = homepageReference ? 
+    `\n## 🎨 Styling Reference from Homepage
+Use the styling patterns from the homepage to maintain visual consistency:
+${homepageReference.substring(0, 500)}...` : '';
 
   const userPrompt = [
     `You are assigned to write a well-structured, SEO-optimized **About the CEO** page using valid HTML.`,
@@ -134,6 +142,7 @@ async generateAboutCeoPageStream(
 
     `### Blueprint Details`,
     `${formattedBlueprint}`,
+    stylingReference,
 
     `---`,
     `Now generate a fully inline-styled HTML page that introduces the CEO with trust-building copy and structure.`
@@ -156,7 +165,8 @@ async generateAboutCeoPageStream(
 async generateFeaturesPageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
-  onProgress?: (chunk: string) => void
+  onProgress?: (chunk: string) => void,
+  homepageReference?: string
 ): Promise<string> {
   const systemPrompt = `You are a senior UX/copy expert specialized in creating Features pages for modern websites. You clearly communicate what makes a product or service powerful, valuable, and unique. You use concise benefit-driven language, avoid jargon, and format for easy reading. Output only valid inline-styled HTML, starting with <html> and ending with </html> and content must be inside <body> tag.`;
 
@@ -229,7 +239,8 @@ async generateFeaturesPageStream(
 async generateServicePageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
-  onProgress?: (chunk: string) => void
+  onProgress?: (chunk: string) => void,
+  homepageReference?: string
 ): Promise<string> {
   const systemPrompt = `You are an expert web copywriter specializing in creating SEO-optimized, customer-focused service pages for modern websites. Your job is to explain the service clearly, highlight benefits, and encourage action. Use inline-styled valid HTML only. Your response must begin with <html> and end with </html> and content must be inside <body> tag.`;
 

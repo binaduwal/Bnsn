@@ -59,9 +59,11 @@ export class DeepSeekService {
   async generateBlueprint(
     feedBnsn: string,
     offerType: string,
-    categories: ICategory[]
+    categories: ICategory[],
+    onProgress?: (chunk: string) => void
   ): Promise<any> {
-    const categoryList = categories.slice(0, 1).map((cat) => ({
+    // Optimized prompt structure to reduce size and improve DeepSeek response reliability
+    const categoryList = categories.map((cat) => ({
       title: cat.title,
       description: cat.description,
       fields: cat.fields.map((f) => ({
@@ -70,22 +72,34 @@ export class DeepSeekService {
       })),
     }));
 
-    const systemPrompt = `You are an expert business strategist. You must respond with a JSON array of category objects. Each category object must have:
-  - title: string (must match one of the provided categories)
-  - description: string
-  - fields: array of objects with fieldName and value (which is array of string cause there would be multiple answer of same field) properties
-  
-  Available categories: ${JSON.stringify(categoryList, null, 2)}
-  
-  CRITICAL: Return ONLY the JSON array without any markdown formatting, explanations, or code blocks. Start directly with [ and end with ].`;
+
+    // Optimize category data for prompt
+    const simplifiedCategories = categories.map((cat) => ({
+      title: cat.title,
+      fields: cat.fields.map((f) => f.fieldName),
+    }));
+
+    const systemPrompt = `You are a business strategist. Return a JSON array of category objects. Each object must have:
+- title: string (exact match from provided list)
+- description: string (brief, relevant)
+- fields: array of objects with fieldName and value (array of strings)
+
+Categories: ${JSON.stringify(simplifiedCategories)}
+
+CRITICAL: Return ONLY JSON array starting with [ and ending with ]. No markdown or explanations.`;
 
     const userPrompt = `Create a comprehensive business blueprint for:
-  Business Description: ${feedBnsn}
-  Offer Type: ${offerType}
-  
-  Return structured data using the provided categories. Each field should have meaningful content related to the business.
-  
-  IMPORTANT: Return pure JSON only - no markdown, no explanations, no code blocks.`;
+Business: ${feedBnsn}
+Offer: ${offerType}
+
+IMPORTANT: Fill each field with detailed, actionable content. Provide multiple values for each field where appropriate. Be specific and comprehensive. Include:
+- Specific examples and details
+- Multiple options/alternatives
+- Practical, actionable content
+- Industry-specific terminology
+- Real-world applications
+
+Return pure JSON only.`;
 
     const request: DeepSeekRequest = {
       model: this.defaultModel,
@@ -93,27 +107,41 @@ export class DeepSeekService {
         { role: "system", content: systemPrompt },
         { role: "user", content: userPrompt },
       ],
-      max_tokens: 3000,
+      max_tokens: 5000,
       temperature: 0.7,
-      // stream:true
+      stream: true,
     };
 
-    const response = await this.makeRequest(request);
-    let content = response.choices[0]?.message?.content || "";
+    // Use streaming if onProgress callback is provided
+    if (onProgress) {
+      const response = await this.makeStreamingRequest(request, onProgress);
+      let content = response;
+      
+      // Clean the response to extract JSON
+      content = this.cleanJsonResponse(content);
 
-    // Clean the response to extract JSON
-    content = this.cleanJsonResponse(content);
+      try {
+        return JSON.parse(content);
+      } catch (error) {
+        console.error("Failed to parse AI response:", error);
+        console.error("Raw AI response:", response);
+        return [];
+      }
+    } else {
+      // Fallback to non-streaming request
+      const response = await this.makeRequest(request);
+      let content = response.choices[0]?.message?.content || "";
 
-    // console.log(request)
+      // Clean the response to extract JSON
+      content = this.cleanJsonResponse(content);
 
-    try {
-      return JSON.parse(content);
-
-      // return this.makeStreamingRequest(request);
-    } catch (error) {
-      console.error("Failed to parse AI response:", error);
-      console.error("Raw AI response:", response.choices[0]?.message?.content);
-      return [];
+      try {
+        return JSON.parse(content);
+      } catch (error) {
+        console.error("Failed to parse AI response:", error);
+        console.error("Raw AI response:", response.choices[0]?.message?.content);
+        return [];
+      }
     }
   }
 
@@ -144,9 +172,10 @@ export class DeepSeekService {
   async generateThankYouPageStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
-    onProgress?: (chunk: string) => void
+    onProgress?: (chunk: string) => void,
+    homepageReference?: string
   ): Promise<string> {
-    const systemPrompt = `You are a senior-level CRO and persuasive copywriting expert. Write fully structured, emotionally engaging, high-converting Thank You pages in pure HTML. These pages should build gratitude, trust, and inspire the next user action (e.g. sharing, repurchasing, referring, engaging). Output must be strictly in HTML — no explanations, markdown, or commentary.`;
+    const systemPrompt = `You are a CRO expert. Write high-converting Thank You pages in pure HTML with inline styles only. Build gratitude, trust, and inspire next actions. Output must be HTML only - no explanations or markdown.`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {
@@ -161,31 +190,31 @@ export class DeepSeekService {
       .map((item) => `- ${item.key}: ${item.value}`)
       .join("\n");
 
+    // Add homepage styling reference if available
+    const stylingReference = homepageReference ? 
+      `\n## 🎨 Styling Reference from Homepage
+Use the styling patterns from the homepage to maintain visual consistency:
+${homepageReference.substring(0, 500)}...` : '';
+
     const userPrompt = [
-      `Write a complete, visually compelling HTML Thank You Page.`,
+      `Write a complete HTML Thank You Page.`,
       ``,
-      `## 🎯 Purpose`,
-      `Display after user takes a successful action (purchase, subscription, etc).`,
+      `## Guidelines`,
+      `- Start with <html> and end with </html>`,
+      `- Use ONLY inline styles`,
+      `- No <style> tags, CSS classes, or external stylesheets`,
+      `- No markdown, comments, or intro text`,
+      `- Conversion-focused and mobile-responsive`,
+      `- Use <h1>, <h2>, <p>, <ul>, <a>, and CTA buttons`,
+      `- No <img> tags`,
+      `- Include follow-up CTA like "Refer a Friend", "Shop Again", or "Share Now"`,
+      `- Optionally include discount code, support link, or bonus`,
+      `- Inject trust and personalization from inputs`,
       ``,
-      `## 🔧 Guidelines`,
-      `- Start directly with <html> tag and end with </html>.`,
-      `- Use ONLY inline styles. DO NOT include <style> tags, CSS classes, or external stylesheets.`,
-      `- Do NOT include any markdown, comments, or intro text.`,
-      `- Must be conversion-focused, mobile-responsive, and visually structured.`,
-      `- Use <h1>, <h2>, <p>, <ul>, <a>, and CTA buttons for layout.`,
-      `- do not include any <img> tags`,
-      `- Include follow-up CTA like “Refer a Friend”, “Shop Again”, or “Share Now”.`,
-      `- Optionally include a discount code, support link, or bonus.`,
-      `- Inject trust (e.g. testimonials, stats) and personalization from inputs.`,
-      ``,
-      `## 📥 Input Data`,
-      `Use the following structured data to build the content, adjust tone, and insert appropriate values throughout the page.`,
-      ``,
-      `## ✍️ Context`,
-      `${formattedCategoryInputs}`,
-      ``,
-      `## 👤 Brand Voice`,
-      `${formattedBlueprint}`,
+      `## Input Data`,
+      `Context: ${formattedCategoryInputs}`,
+      `Brand Voice: ${formattedBlueprint}`,
+      stylingReference,
     ].join("\n");
 
     const request: DeepSeekRequest = {
@@ -207,7 +236,7 @@ export class DeepSeekService {
     projectCategoryValue: ProjectCategoryValue[],
     onProgress?: (chunk: string) => void
   ): Promise<string> {
-    const systemPrompt = `You are a senior-level ad copywriter and conversion strategist. You specialize in writing high-converting, emotionally compelling, platform-optimized ad content (Facebook, Instagram, YouTube, TikTok). Your output must be fully valid HTML using only inline styles—no <style> tags, CSS classes, or external stylesheets. Response must begin with <html> and end with </html>. Do not include any other explanation or comments.`;
+    const systemPrompt = `You are an ad copywriter. Write high-converting ad content for Facebook, Instagram, YouTube, TikTok in pure HTML with inline styles only. Response must begin with <html> and end with </html>. No explanations or comments.`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {
@@ -226,17 +255,17 @@ export class DeepSeekService {
         : undefined;
 
     const userPrompt = [
-      `You are tasked with generating high-converting ad copy inside a single HTML page using ONLY inline styles.`,
+      `Generate high-converting ad copy in HTML using ONLY inline styles.`,
       ``,
-      `## 📌 Output Rules`,
-      `- Output must begin with <html> and end with </html> and all of the content should be inside <body> tag.`,
-      `- Use only <div>, <p>, <h1>–<h3>, <strong>, <em>, <ul>, <li>, <a>, and <button> tags.`,
-      `- Use inline styles only—no CSS classes, <style> tags, or external links.`,
-      `- Do not include images.`,
-      `- Do not output anything other than the HTML document.`,
+      `## Output Rules`,
+      `- Begin with <html> and end with </html>`,
+      `- Use only <div>, <p>, <h1>–<h3>, <strong>, <em>, <ul>, <li>, <a>, and <button> tags`,
+      `- Use inline styles only—no CSS classes, <style> tags, or external links`,
+      `- Do not include images`,
+      `- Do not output anything other than the HTML document`,
       ``,
-      `## 🎯 Content to Include`,
-      `Create 4 separate sections within the HTML (each styled for separation and readability):`,
+      `## Content to Include`,
+      `Create 4 separate sections:`,
       ``,
       `1. Facebook/Instagram Ad`,
       `   - Hook (h2)`,
@@ -256,23 +285,19 @@ export class DeepSeekService {
       `   - CTA (strong or button)`,
       ``,
       `4. Final CTA Block`,
-      `   - Wrap up all platforms with urgency-driven CTA paragraph and link.`,
+      `   - Wrap up all platforms with urgency-driven CTA paragraph and link`,
       ``,
-      `## 🧠 Style & Tone`,
-      `- Friendly, emotional, benefit-driven.`,
-      `- Use storytelling and emotional resonance.`,
-      `- Highlight problem, transformation, urgency.`,
-      `- Make it clear, persuasive, and conversion-focused.`,
+      `## Style & Tone`,
+      `- Friendly, emotional, benefit-driven`,
+      `- Use storytelling and emotional resonance`,
+      `- Highlight problem, transformation, urgency`,
+      `- Make it clear, persuasive, and conversion-focused`,
       ``,
-      `## 🧾 Input Data`,
-      `### Category Inputs`,
-      `${formattedCategoryInputs || ""}`,
+      `## Input Data`,
+      `Category Inputs: ${formattedCategoryInputs || ""}`,
+      `Blueprint: ${formattedBlueprint}`,
       ``,
-      `### Blueprint`,
-      `${formattedBlueprint}`,
-      ``,
-      `---`,
-      `Now, generate a fully structured HTML document with inline styles. Begin the response ONLY with <html> and end with </html>.`,
+      `Generate a fully structured HTML document with inline styles. Begin with <html> and end with </html>.`,
     ].join("\n");
 
     const request: DeepSeekRequest = {

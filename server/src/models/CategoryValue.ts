@@ -5,6 +5,7 @@ interface ICategoryValue extends Document {
   blueprint: mongoose.Schema.Types.ObjectId;
   project: mongoose.Schema.Types.ObjectId;
   isAiGeneratedContent: string;
+  homepageReference?: string; // Store homepage content for styling reference
   value: {
     key: string;
     value: string[];
@@ -28,6 +29,11 @@ const CategoryValueSchema = new mongoose.Schema<ICategoryValue>({
   },
 
   isAiGeneratedContent: {
+    type: String,
+    default: "",
+  },
+
+  homepageReference: {
     type: String,
     default: "",
   },

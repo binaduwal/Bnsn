@@ -5,7 +5,15 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { Project } from '../models';
 import { createError } from '../middleware/errorHandler';
-import { allProject, createProject, deleteProject, generateProject, singleProject } from '../controllers/projectController';
+import { 
+  allProject, 
+  createProject, 
+  deleteProject, 
+  generateProject, 
+  generateContinuousProject,
+  getAvailableServices,
+  singleProject 
+} from '../controllers/projectController';
 
 const router = Router();
 
@@ -41,11 +49,25 @@ const projectQuerySchema = Joi.object({
   limit: Joi.number().min(1).max(100).default(20),
 });
 
+const continuousGenerationSchema = Joi.object({
+  tasks: Joi.array().items(
+    Joi.object({
+      title: Joi.string().required(),
+      category: Joi.string().required(),
+      values: Joi.object().required(),
+    })
+  ).min(1).required(),
+  blueprintId: Joi.string().required(),
+  parallel: Joi.boolean().default(false),
+  maxConcurrent: Joi.number().min(1).max(10).default(3),
+});
+
 router.get('/', authenticateToken, allProject);
 
 router.post('/', authenticateToken, createProject);
 router.post('/generate', authenticateToken, generateProject);
-
+router.post('/generate-continuous', authenticateToken, validateBody(continuousGenerationSchema), generateContinuousProject);
+router.get('/services', authenticateToken, getAvailableServices);
 
 
 router.get('/:id', authenticateToken, validateParams(projectParamsSchema), singleProject);

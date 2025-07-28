@@ -289,6 +289,113 @@ class BookService extends DeepSeekService {
   }
 
 
+  //book builder category
+  async generateBookBuilderStream(
+    blueprintValue: BlueprintValue[],
+    projectCategoryValue: ProjectCategoryValue[],
+    onProgress?: (chunk: string) => void
+  ): Promise<string> {
+    const systemPrompt = `You are a master book outliner who specializes in structuring content-rich, transformation-focused books. You break down abstract ideas into a concrete, easy-to-follow outline with clear parts, chapters, and subpoints. Your goal is to help the author organize their ideas into a professional-level book structure. The response must start directly from <html> and end with </html>, no intros, and all content must be inside <body>.`;
+
+    const formattedBlueprint = blueprintValue
+      .map((section) => {
+        const values = section.values
+          .map((val) => `- ${val.key}: ${val.value}`)
+          .join("\n");
+        return `### ${section.title}\n${values}`;
+      })
+      .join("\n\n");
+
+    const formattedCategoryInputs = projectCategoryValue
+      .map((item) => `- ${item.key}: ${item.value}`)
+      .join("\n");
+
+    const userPrompt = [
+      `You are tasked with outlining a complete book based on the provided blueprint and project inputs.`,
+      ``,
+      `## 📘 Your Goal`,
+      `Generate a professional, well-structured book outline that clearly defines each part, its chapters, and what will be covered.`,
+      ``,
+      `## 🧱 Output Structure`,
+      `Return the following:`,
+      `- Book Title`,
+      `- Genre`,
+      `- Book Premise (short paragraph)`,
+      `- Target Audience`,
+      `- Full Outline (3–5 Parts, each with 2–4 Chapters, each chapter with 1–2 bullet points of what it covers)`,
+      ``,
+      `## 🧩 Provided Inputs`,
+      `${formattedCategoryInputs}`,
+      ``,
+      `## 💡 Blueprint`,
+      `${formattedBlueprint}`,
+      ``,
+      `## ✅ Output Format`,
+      'if you use CSS, only use Inline CSS',
+      `<html>
+      <body>
+        <h1>[Book Title]</h1>
+        <p><strong>Genre:</strong> [Genre]</p>
+        <p><strong>Premise:</strong> [Brief overview of the book's purpose and theme]</p>
+        <p><strong>Target Audience:</strong> [Who will benefit from this book]</p>
+
+        <h2>Book Outline</h2>
+        <ol>
+          <li>
+            <h3>Part 1: [Part Title]</h3>
+            <ul>
+              <li>
+                <strong>Chapter 1: [Chapter Title]</strong>
+                <ul>
+                  <li>[Main idea or lesson covered]</li>
+                  <li>[Supporting idea or story]</li>
+                </ul>
+              </li>
+              <li>
+                <strong>Chapter 2: [Chapter Title]</strong>
+                <ul>
+                  <li>[Main idea or lesson covered]</li>
+                  <li>[Supporting idea or story]</li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <h3>Part 2: [Part Title]</h3>
+            <ul>
+              <li>
+                <strong>Chapter 1: [Chapter Title]</strong>
+                <ul>
+                  <li>[Main idea or lesson covered]</li>
+                  <li>[Supporting idea or story]</li>
+                </ul>
+              </li>
+              <!-- Continue as needed -->
+            </ul>
+          </li>
+        </ol>
+      </body>
+    </html>`,
+      ``,
+      `Only return pure HTML. No markdown or commentary.`,
+    ].join("\n");
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      stream: true,
+      temperature: 0.91,
+      max_tokens: 1600,
+    };
+
+    return await this.makeStreamingRequest(request, onProgress);
+  }
+
+
+
 }
 
 export const bookService = new BookService()
