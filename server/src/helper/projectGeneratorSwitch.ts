@@ -29,7 +29,7 @@ export const generatedContent = async ({ blueprintValues, fieldValue, res, title
     try {
         const progressCallback = createProgressCallback(sendSSE);
         
-        // Use the dynamic service execution with category ID and main category title
+        // Use the dynamic service execution with category ID and main category title   
         const result = await executeService(
             trimmedTitle,
             blueprintValues,

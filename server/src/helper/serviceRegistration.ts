@@ -180,7 +180,7 @@ export const registerAllServices = () => {
             service: deepSeekService,
             method: "generateAdCopyStream",
             category: "Advertising",
-            
+
             description: "Generate ad copy variant 4 for e-commerce"
         },
         {
@@ -727,6 +727,32 @@ export const registerAllServices = () => {
             category: "Order Bumps",
             description: "Generate order bump copy"
         }
+    ]);
+
+    //book builder 
+
+    serviceRegistryManager.registerBatch([
+        {
+            title: "1: Book Length",
+            service: bookService,
+            method: "generateBookBuilderStream",
+            category: "BookBuilder",
+            description: "Generate Book Builder outliner"
+        },
+        {
+            title: "2: About Your Book",
+            service: bookService,
+            method: "generateBookBuilderStream",
+            category: "BookBuilder",
+            description: "Generate About Your Book"
+        },
+        {
+            title: "3: Create Your Outline",
+            service: bookService,
+            method: "generateBookBuilderStream",
+            category: "BookBuilder",
+            description: "Generate Outline"
+        },
     ]);
 
     console.log(`Registered ${serviceRegistryManager.getCount()} services across ${serviceRegistryManager.getCategories().length} categories`);

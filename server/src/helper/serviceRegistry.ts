@@ -334,6 +334,7 @@ export const executeService = async (
       service,
       blueprintValues,
       fieldValue,
+      title,
       ...additionalParams,
       progressCallback,
       homepageReference

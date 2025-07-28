@@ -293,8 +293,10 @@ class BookService extends DeepSeekService {
   async generateBookBuilderStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
+    console.log('Book Builder method hitted, title is: ', title)
     const systemPrompt = `You are a master book outliner who specializes in structuring content-rich, transformation-focused books. You break down abstract ideas into a concrete, easy-to-follow outline with clear parts, chapters, and subpoints. Your goal is to help the author organize their ideas into a professional-level book structure. The response must start directly from <html> and end with </html>, no intros, and all content must be inside <body>.`;
 
     const formattedBlueprint = blueprintValue
@@ -311,10 +313,10 @@ class BookService extends DeepSeekService {
       .join("\n");
 
     const userPrompt = [
-      `You are tasked with outlining a complete book based on the provided blueprint and project inputs.`,
+      `You are tasked with outlining a complete book based on the provided blueprint and project inputs for this topic: ${title}.`,
       ``,
       `## 📘 Your Goal`,
-      `Generate a professional, well-structured book outline that clearly defines each part, its chapters, and what will be covered.`,
+      `Generate a professional, well-structured book outline for this topic: ${title}, that clearly defines each part, its chapters, and what will be covered.`,
       ``,
       `## 🧱 Output Structure`,
       `Return the following:`,
@@ -388,6 +390,167 @@ class BookService extends DeepSeekService {
       ],
       stream: true,
       temperature: 0.91,
+      max_tokens: 1600,
+    };
+
+    return await this.makeStreamingRequest(request, onProgress);
+  }
+
+  async generateAboutYourBookStream(
+    blueprintValue: BlueprintValue[],
+    projectCategoryValue: ProjectCategoryValue[],
+    onProgress?: (chunk: string) => void
+  ): Promise<string> {
+    const systemPrompt = `You are a professional book strategist who specializes in distilling the core essence of a book into compelling "About the Book" sections. You understand transformation-driven writing, author intention, and reader psychology. Your job is to write a clear, emotionally resonant overview that sets expectations and builds excitement. Response must start directly from <html> and end with </html>, and all content must be wrapped in <body>. No intros or markdown.`;
+
+    const formattedBlueprint = blueprintValue
+      .map((section) => {
+        const values = section.values
+          .map((val) => `- ${val.key}: ${val.value}`)
+          .join("\n");
+        return `### ${section.title}\n${values}`;
+      })
+      .join("\n\n");
+
+    const formattedCategoryInputs = projectCategoryValue
+      .map((item) => `- ${item.key}: ${item.value}`)
+      .join("\n");
+
+    const userPrompt = [
+      `You are tasked with writing the "About Your Book" section based on the user's creative blueprint.`,
+      ``,
+      `## 📘 Your Goal`,
+      `Write a powerful "About Your Book" section that clearly communicates the book's topic, purpose, target reader, tone, and the transformation it delivers.`,
+      ``,
+      `## 🎯 Output Must Include:`,
+      `- What this book is about`,
+      `- Who it is for (target reader)`,
+      `- Why it matters now (relevance)`,
+      `- What transformation or outcomes the reader will get`,
+      `- Tone and style of the book (conversational, motivational, instructional, etc.)`,
+      ``,
+      `## 🧩 Provided Inputs`,
+      `${formattedCategoryInputs}`,
+      ``,
+      `## 💡 Blueprint`,
+      `${formattedBlueprint}`,
+      ``,
+      `## ✅ Output Format`,
+      'if you use CSS, only use Inline CSS',
+      `<html>
+      <body>
+        <h1>About This Book</h1>
+        <p><strong>What It’s About:</strong> [Short paragraph clearly describing the book’s main topic or theme]</p>
+        <p><strong>Who It’s For:</strong> [Description of the ideal reader]</p>
+        <p><strong>Why It Matters Now:</strong> [Why this topic is timely or needed]</p>
+        <p><strong>Reader Transformation:</strong> [What the reader will gain or become after reading]</p>
+        <p><strong>Writing Style & Tone:</strong> [E.g. Empathetic, bold, inspiring, actionable, etc.]</p>
+      </body>
+    </html>`,
+      ``,
+      `Only return valid HTML. No markdown or commentary. No intro text.`,
+    ].join("\n");
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      stream: true,
+      temperature: 0.88,
+      max_tokens: 1000,
+    };
+
+    return await this.makeStreamingRequest(request, onProgress);
+  }
+
+  async generateCreateOutlineStream(
+    blueprintValue: BlueprintValue[],
+    projectCategoryValue: ProjectCategoryValue[],
+    title: string,
+    onProgress?: (chunk: string) => void
+  ): Promise<string> {
+
+    const systemPrompt = `You are a professional book outlining expert. You take a book concept and turn it into a full outline with clearly structured parts and chapters. Each chapter must serve a purpose and move the reader closer to the book's goal. Structure should be logical, progressive, and easy to follow. Response must start with <html> and end with </html>, with all content inside <body>. No intros or markdown.`;
+
+    const formattedBlueprint = blueprintValue
+      .map((section) => {
+        const values = section.values
+          .map((val) => `- ${val.key}: ${val.value}`)
+          .join("\n");
+        return `### ${section.title}\n${values}`;
+      })
+      .join("\n\n");
+
+    const formattedCategoryInputs = projectCategoryValue
+      .map((item) => `- ${item.key}: ${item.value}`)
+      .join("\n");
+
+    const userPrompt = [
+      `You are tasked with generating a complete book outline using the provided creative blueprint.`,
+      ``,
+      `## 📘 Your Goal`,
+      `Create a structured outline that helps the author begin writing the book with confidence.`,
+      ``,
+      `## 🧱 Output Must Include:`,
+      `- Book Title`,
+      `- Table of Contents structured by Parts`,
+      `- Each Part should have a clear purpose`,
+      `- Each Chapter should include a short 1-2 sentence description of what it covers`,
+      ``,
+      `## 🧩 Provided Inputs`,
+      `${formattedCategoryInputs}`,
+      ``,
+      `## 💡 Blueprint`,
+      `${formattedBlueprint}`,
+      ``,
+      `## ✅ Output Format`,
+      'only use Inline CSS',
+      `<html>
+      <body>
+        <h1>[Book Title]</h1>
+
+        <h2>Table of Contents</h2>
+        <ol>
+          <li>
+            <h3>Part 1: [Part Title]</h3>
+            <ul>
+              <li>
+                <strong>Chapter 1: [Chapter Title]</strong>
+                <p>[1–2 sentence summary of the chapter]</p>
+              </li>
+              <li>
+                <strong>Chapter 2: [Chapter Title]</strong>
+                <p>[1–2 sentence summary of the chapter]</p>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <h3>Part 2: [Part Title]</h3>
+            <ul>
+              <li>
+                <strong>Chapter 1: [Chapter Title]</strong>
+                <p>[1–2 sentence summary of the chapter]</p>
+              </li>
+              <!-- Repeat structure -->
+            </ul>
+          </li>
+        </ol>
+      </body>
+    </html>`,
+      ``,
+      `Only return HTML. Do not include markdown, notes, or commentary. No intro text`,
+    ].join("\n");
+
+    const request: DeepSeekRequest = {
+      model: this.defaultModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      stream: true,
+      temperature: 0.89,
       max_tokens: 1600,
     };
 
