@@ -933,6 +933,22 @@ export const generatedContent = async ({ blueprintValues, fieldValue, res, title
             );
             break;
 
+        case "Lead Generator":
+            aiGeneratedContent = await vslPageService.generateVslTslLeadStream(
+                blueprintValues,
+                fieldValue,
+                (chunk: string) => {
+                    res.write(
+                        JSON.stringify({
+                            type: "ai_chunk",
+                            content: chunk,
+                            progress: 85,
+                        }) + "\n"
+                    );
+                }
+            );
+            break;
+
 
         default:
             aiGeneratedContent = null
