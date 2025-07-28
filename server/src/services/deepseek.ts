@@ -172,10 +172,9 @@ Return pure JSON only.`;
   async generateThankYouPageStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
-    onProgress?: (chunk: string) => void,
-    homepageReference?: string
+    onProgress?: (chunk: string) => void
   ): Promise<string> {
-    const systemPrompt = `You are a CRO expert. Write high-converting Thank You pages in pure HTML with inline styles only. Build gratitude, trust, and inspire next actions. Output must be HTML only - no explanations or markdown.`;
+    const systemPrompt = `You are a CRO expert. Write high-converting Thank You pages in pure HTML with inline styles only. Build gratitude, trust, and inspire next actions. Output must be HTML only - no explanations or markdown. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {
@@ -189,12 +188,6 @@ Return pure JSON only.`;
     const formattedCategoryInputs = projectCategoryValue
       .map((item) => `- ${item.key}: ${item.value}`)
       .join("\n");
-
-    // Add homepage styling reference if available
-    const stylingReference = homepageReference ? 
-      `\n## 🎨 Styling Reference from Homepage
-Use the styling patterns from the homepage to maintain visual consistency:
-${homepageReference.substring(0, 500)}...` : '';
 
     const userPrompt = [
       `Write a complete HTML Thank You Page.`,
@@ -214,7 +207,6 @@ ${homepageReference.substring(0, 500)}...` : '';
       `## Input Data`,
       `Context: ${formattedCategoryInputs}`,
       `Brand Voice: ${formattedBlueprint}`,
-      stylingReference,
     ].join("\n");
 
     const request: DeepSeekRequest = {
@@ -236,7 +228,7 @@ ${homepageReference.substring(0, 500)}...` : '';
     projectCategoryValue: ProjectCategoryValue[],
     onProgress?: (chunk: string) => void
   ): Promise<string> {
-    const systemPrompt = `You are an ad copywriter. Write high-converting ad content for Facebook, Instagram, YouTube, TikTok in pure HTML with inline styles only. Response must begin with <html> and end with </html>. No explanations or comments.`;
+    const systemPrompt = `You are an ad copywriter. Write high-converting ad content for Facebook, Instagram, YouTube, TikTok in pure HTML with inline styles only. Response must begin with <html> and end with </html>. DO NOT include any metadata, special formatting, or instructions like [FREEZE FRAME], [PAUSE], or similar. Output ONLY clean HTML content. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {
@@ -257,11 +249,14 @@ ${homepageReference.substring(0, 500)}...` : '';
     const userPrompt = [
       `Generate high-converting ad copy in HTML using ONLY inline styles.`,
       ``,
-      `## Output Rules`,
+      `## CRITICAL OUTPUT RULES`,
       `- Begin with <html> and end with </html>`,
       `- Use only <div>, <p>, <h1>–<h3>, <strong>, <em>, <ul>, <li>, <a>, and <button> tags`,
       `- Use inline styles only—no CSS classes, <style> tags, or external links`,
       `- Do not include images`,
+      `- DO NOT include any metadata, special formatting, or instructions like [FREEZE FRAME], [PAUSE], [CUT TO], or similar`,
+      `- DO NOT include any video script directions or production notes`,
+      `- Output ONLY clean HTML content that can be directly used`,
       `- Do not output anything other than the HTML document`,
       ``,
       `## Content to Include`,
@@ -292,12 +287,14 @@ ${homepageReference.substring(0, 500)}...` : '';
       `- Use storytelling and emotional resonance`,
       `- Highlight problem, transformation, urgency`,
       `- Make it clear, persuasive, and conversion-focused`,
+      `- Write as finished ad copy, not as video script directions`,
+      `- Reference current trends, technologies, and market conditions from 2024-2025`,
       ``,
       `## Input Data`,
       `Category Inputs: ${formattedCategoryInputs || ""}`,
       `Blueprint: ${formattedBlueprint}`,
       ``,
-      `Generate a fully structured HTML document with inline styles. Begin with <html> and end with </html>.`,
+      `IMPORTANT: Generate ONLY clean HTML ad copy without any metadata or special formatting. Begin with <html> and end with </html>.`,
     ].join("\n");
 
     const request: DeepSeekRequest = {
@@ -311,7 +308,38 @@ ${homepageReference.substring(0, 500)}...` : '';
       temperature: 0.7,
     };
 
-    return await this.makeStreamingRequest(request, onProgress);
+    const result = await this.makeStreamingRequest(request, onProgress);
+    
+    // Clean any metadata that might have slipped through
+    if (result) {
+      return result
+        .replace(/\[FREEZE FRAME\]/gi, '')
+        .replace(/\[PAUSE\]/gi, '')
+        .replace(/\[CUT TO\]/gi, '')
+        .replace(/\[FADE IN\]/gi, '')
+        .replace(/\[FADE OUT\]/gi, '')
+        .replace(/\[ZOOM IN\]/gi, '')
+        .replace(/\[ZOOM OUT\]/gi, '')
+        .replace(/\[CLOSE UP\]/gi, '')
+        .replace(/\[WIDE SHOT\]/gi, '')
+        .replace(/\[SCENE\]/gi, '')
+        .replace(/\[ACTION\]/gi, '')
+        .replace(/\[DIALOGUE\]/gi, '')
+        .replace(/\[NARRATION\]/gi, '')
+        .replace(/\[MUSIC\]/gi, '')
+        .replace(/\[SFX\]/gi, '')
+        .replace(/\[GRAPHIC\]/gi, '')
+        .replace(/\[TEXT\]/gi, '')
+        .replace(/\[SUBTITLE\]/gi, '')
+        .replace(/\[CAPTION\]/gi, '')
+        .replace(/\[TITLE\]/gi, '')
+        .replace(/\[END\]/gi, '')
+        .replace(/\[FIN\]/gi, '')
+        .replace(/\[THE END\]/gi, '')
+        .trim();
+    }
+    
+    return result;
   }
 
   protected async makeStreamingRequest(

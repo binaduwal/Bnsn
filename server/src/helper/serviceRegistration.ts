@@ -44,7 +44,7 @@ export const registerAllServices = () => {
             title: "Article Generator",
             service: articleService,
             method: "generateArticleStream",
-            category: "Content",
+            category: "Articles",
             description: "Generate SEO-optimized articles"
         }
     ]);
@@ -95,129 +95,10 @@ export const registerAllServices = () => {
             title: "Ad Generator",
             service: deepSeekService,
             method: "generateAdCopyStream",
-            category: "Advertising",
+            category: "Ads",
             description: "Generate ad copy for e-commerce"
         },
-        {
-            title: "Ad Generator",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy for SaaS"
-        },
-        {
-            title: "Ad Generator",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate generic ad copy"
-        },
-        {
-            title: "Ad 1",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 1 for e-commerce"
-        },
-        {
-            title: "Ad 1",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 1 for SaaS"
-        },
-        {
-            title: "Ad 1",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate generic ad copy variant 1"
-        },
-        {
-            title: "Ad 2",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 2 for e-commerce"
-        },
-        {
-            title: "Ad 2",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 2 for SaaS"
-        },
-        {
-            title: "Ad 2",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate generic ad copy variant 2"
-        },
-        {
-            title: "Ad 3",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 3 for e-commerce"
-        },
-        {
-            title: "Ad 3",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 3 for SaaS"
-        },
-        {
-            title: "Ad 3",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate generic ad copy variant 3"
-        },
-        {
-            title: "Ad 4",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-
-            description: "Generate ad copy variant 4 for e-commerce"
-        },
-        {
-            title: "Ad 4",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 4 for SaaS"
-        },
-        {
-            title: "Ad 4",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate generic ad copy variant 4"
-        },
-        {
-            title: "Ad 5",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 5 for e-commerce"
-        },
-        {
-            title: "Ad 5",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate ad copy variant 5 for SaaS"
-        },
-        {
-            title: "Ad 5",
-            service: deepSeekService,
-            method: "generateAdCopyStream",
-            category: "Advertising",
-            description: "Generate generic ad copy variant 5"
-        }
+        
     ]);
 
     // Web Page Services
@@ -258,7 +139,7 @@ export const registerAllServices = () => {
             title: "Press Release Generator",
             service: pressReleaseService,
             method: "generatePressReleaseStream",
-            category: "PR",
+            category: "Press Releases",
             description: "Generate press releases"
         }
     ]);
@@ -269,56 +150,56 @@ export const registerAllServices = () => {
             title: "USP + Testimonials",
             service: linkedInProfileService,
             method: "generateLinkedInEntrepreneurProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate USP and testimonials for LinkedIn"
         },
         {
             title: "What We Do + Biggest Achievement",
             service: linkedInProfileService,
             method: "generateLinkedInWhatWeDoProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate what we do and achievements for LinkedIn"
         },
         {
             title: "Other Achievements",
             service: linkedInProfileService,
             method: "generateLinkedInOtherAchievementsProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate other achievements for LinkedIn"
         },
         {
             title: "Headline: Skills Based",
             service: linkedInProfileService,
             method: "generateLinkedInSkillsBasedProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate skills-based LinkedIn headlines"
         },
         {
             title: "Headline: Experience Based",
             service: linkedInProfileService,
             method: "generateLinkedInExperienceBasedProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate experience-based LinkedIn headlines"
         },
         {
             title: "Headline: Benefits Based",
             service: linkedInProfileService,
             method: "generateLinkedInBenefitsBasedProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate benefits-based LinkedIn headlines"
         },
         {
             title: "Personal Profile Generator",
             service: linkedInProfileService,
             method: "generatePersonalLinkedInProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate personal LinkedIn profiles"
         },
         {
             title: "General Profile Generator",
             service: linkedInProfileService,
             method: "generateLinkedInGeneralProfileStream",
-            category: "LinkedIn",
+            category: "LinkedIn Profiles",
             description: "Generate general LinkedIn profiles"
         }
     ]);
@@ -474,21 +355,21 @@ export const registerAllServices = () => {
             title: "Book Idea Generator",
             service: bookService,
             method: "generateBookIdeasStream",
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book ideas"
         },
         {
             title: "Outline",
             service: bookService,
             method: "generateBookBuilderOutlineStream",
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book outlines"
         },
         {
             title: "Book Description",
             service: bookService,
             method: "generateBookDescriptionStream",
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book descriptions"
         },
         {
@@ -496,7 +377,7 @@ export const registerAllServices = () => {
             service: bookService,
             method: "generateBookSalesEmailStream",
             additionalParams: ["Email 1"],
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book sales email 1"
         },
         {
@@ -504,7 +385,7 @@ export const registerAllServices = () => {
             service: bookService,
             method: "generateBookSalesEmailStream",
             additionalParams: ["Email 2"],
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book sales email 2"
         },
         {
@@ -512,7 +393,7 @@ export const registerAllServices = () => {
             service: bookService,
             method: "generateBookSalesEmailStream",
             additionalParams: ["Email 3"],
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book sales email 3"
         },
         {
@@ -520,7 +401,7 @@ export const registerAllServices = () => {
             service: bookService,
             method: "generateBookSalesEmailStream",
             additionalParams: ["Email 4"],
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book sales email 4"
         },
         {
@@ -528,7 +409,7 @@ export const registerAllServices = () => {
             service: bookService,
             method: "generateBookSalesEmailStream",
             additionalParams: ["Email 5"],
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book sales email 5"
         },
         {
@@ -536,7 +417,7 @@ export const registerAllServices = () => {
             service: bookService,
             method: "generateBookSalesEmailStream",
             additionalParams: ["Email 6"],
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book sales email 6"
         },
         {
@@ -544,8 +425,128 @@ export const registerAllServices = () => {
             service: bookService,
             method: "generateBookSalesEmailStream",
             additionalParams: ["Email 7"],
-            category: "Books",
+            category: "Books Sales Funnel",
             description: "Generate book sales email 7"
+        },
+        {
+            title: "Ad Generator",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy for SaaS"
+        },
+        {
+            title: "Ad Generator",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate generic ad copy"
+        },
+        {
+            title: "Ad 1",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 1 for e-commerce"
+        },
+        {
+            title: "Ad 1",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 1 for SaaS"
+        },
+        {
+            title: "Ad 1",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate generic ad copy variant 1"
+        },
+        {
+            title: "Ad 2",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 2 for e-commerce"
+        },
+        {
+            title: "Ad 2",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 2 for SaaS"
+        },
+        {
+            title: "Ad 2",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate generic ad copy variant 2"
+        },
+        {
+            title: "Ad 3",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 3 for e-commerce"
+        },
+        {
+            title: "Ad 3",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 3 for SaaS"
+        },
+        {
+            title: "Ad 3",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate generic ad copy variant 3"
+        },
+        {
+            title: "Ad 4",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            
+            description: "Generate ad copy variant 4 for e-commerce"
+        },
+        {
+            title: "Ad 4",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 4 for SaaS"
+        },
+        {
+            title: "Ad 4",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate generic ad copy variant 4"
+        },
+        {
+            title: "Ad 5",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 5 for e-commerce"
+        },
+        {
+            title: "Ad 5",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate ad copy variant 5 for SaaS"
+        },
+        {
+            title: "Ad 5",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Books Sales Funnel",
+            description: "Generate generic ad copy variant 5"
         }
     ]);
 

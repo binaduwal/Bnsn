@@ -12,7 +12,7 @@ async generateHomePageStream(
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {
-  const systemPrompt = `You are a senior website UX/copywriting expert specializing in building complete home pages for modern websites. You write SEO-friendly, emotionally engaging, navigational HTML pages. The page must be structured like a real home page — introducing the brand, summarizing offerings, and guiding users to other pages. Your output must be valid inline-styled HTML, starting with <html> and ending with </html> and content must be inside <body> tag.`;
+  const systemPrompt = `You are a senior website UX/copywriting expert specializing in building complete home pages for modern websites. You write SEO-friendly, emotionally engaging, navigational HTML pages. The page must be structured like a real home page — introducing the brand, summarizing offerings, and guiding users to other pages. Your output must be valid inline-styled HTML, starting with <html> and ending with </html> and content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
   const formattedBlueprint = blueprintValue
     .map((section) => {
@@ -55,6 +55,7 @@ async generateHomePageStream(
     `- Benefit-driven but informative.`,
     `- Use <strong>, <h1>–<h3>, <ul>, <p> for structure and emphasis.`,
     `- Use inline styling for layout, spacing, typography, and colors.`,
+    `- Reference current trends, technologies, and market conditions from 2024-2025.`,
 
     `## 📥 Provided Input`,
     `### Category Values`,
@@ -87,7 +88,7 @@ async generateAboutCeoPageStream(
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {
-  const systemPrompt = `You are a professional web copywriter with expertise in writing engaging and credible "About the CEO" pages for modern brands. You specialize in SEO-optimized, emotionally engaging storytelling that builds connection and trust with visitors. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and all the content must be inside <body> tag.`;
+  const systemPrompt = `You are a professional web copywriter with expertise in writing engaging and credible "About the CEO" pages for modern brands. You specialize in SEO-optimized, emotionally engaging storytelling that builds connection and trust with visitors. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and all the content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
   const formattedBlueprint = blueprintValue
     .map((section) => {
@@ -168,7 +169,7 @@ async generateFeaturesPageStream(
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {
-  const systemPrompt = `You are a senior UX/copy expert specialized in creating Features pages for modern websites. You clearly communicate what makes a product or service powerful, valuable, and unique. You use concise benefit-driven language, avoid jargon, and format for easy reading. Output only valid inline-styled HTML, starting with <html> and ending with </html> and content must be inside <body> tag.`;
+  const systemPrompt = `You are a senior UX/copy expert specialized in creating Features pages for modern websites. You clearly communicate what makes a product or service powerful, valuable, and unique. You use concise benefit-driven language, avoid jargon, and format for easy reading. Output only valid inline-styled HTML, starting with <html> and ending with </html> and content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
   const formattedBlueprint = blueprintValue
     .map((section) => {
@@ -242,7 +243,7 @@ async generateServicePageStream(
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {
-  const systemPrompt = `You are an expert web copywriter specializing in creating SEO-optimized, customer-focused service pages for modern websites. Your job is to explain the service clearly, highlight benefits, and encourage action. Use inline-styled valid HTML only. Your response must begin with <html> and end with </html> and content must be inside <body> tag.`;
+  const systemPrompt = `You are an expert web copywriter specializing in creating SEO-optimized, customer-focused service pages for modern websites. Your job is to explain the service clearly, highlight benefits, and encourage action. Use inline-styled valid HTML only. Your response must begin with <html> and end with </html> and content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
   const formattedBlueprint = blueprintValue
     .map((section) => {

@@ -292,60 +292,62 @@ export class ServiceRegistryManager {
 // Create a global instance
 export const serviceRegistryManager = new ServiceRegistryManager();
 
-// Helper function to execute a service
-export const executeService = async (
-  title: string,
-  blueprintValues: BlueprintValue[],
-  fieldValue: ProjectCategoryValue[],
-  mainCategory: string,
-  progressCallback?: (chunk: string) => void,
-  homepageReference?: string
-): Promise<string | null> => {
-  // Try category ID and main category title lookup first, then fall back to title-based lookup
-  let config = serviceRegistryManager.getByCategoryIdAndMainCategory(
-    title,
-    mainCategory
-  );
-
-  if (!config) {
-    console.warn(
-      `No service found for title: "${title}"${
-        mainCategory ? ` and main category: "${mainCategory}"` : ""
-      }`
-    );
-    return null;
-  }
-
-  const validation = serviceRegistryManager.validateService(
-    title,
-    mainCategory!
-  );
-  if (!validation.isValid) {
-    console.error(`Invalid service "${title}":`, validation.errors);
-    return null;
-  }
-
-  try {
-    const { service, method, additionalParams = [] } = config;
-    const methodFunction = service[method] as ServiceMethod;
-
-    // Call the method with appropriate parameters
-    const result = await methodFunction.call(
-      service,
-      blueprintValues,
-      fieldValue,
+  // Helper function to execute a service
+  export const executeService = async (
+    title: string,
+    blueprintValues: BlueprintValue[],
+    fieldValue: ProjectCategoryValue[],
+    mainCategory: string,
+    progressCallback?: (chunk: string) => void,
+    homepageReference?: string
+  ): Promise<string | null> => {
+    // Try category ID and main category title lookup first, then fall back to title-based lookup
+    let config = serviceRegistryManager.getByCategoryIdAndMainCategory(
       title,
-      ...additionalParams,
-      progressCallback,
-      homepageReference
+      mainCategory
     );
 
-    return result;
-  } catch (error) {
-    console.error(`Error executing service "${title}":`, error);
-    return null;
-  }
-};
+    if (!config) {
+      console.warn(
+        `No service found for title: "${title}"${
+          mainCategory ? ` and main category: "${mainCategory}"` : ""
+        }`
+      );
+      return null;
+    }
+
+    const validation = serviceRegistryManager.validateService(
+      title,
+      mainCategory!
+    );
+    if (!validation.isValid) {
+      console.error(`Invalid service "${title}":`, validation.errors);
+      return null;
+    }
+
+    try {
+      const { service, method, additionalParams = [] } = config;
+      const methodFunction = service[method] as ServiceMethod;
+
+      // Only pass homepageReference to Website Pages services
+      const shouldUseHomepageReference = mainCategory === 'Website Pages';
+      
+      // Call the method with appropriate parameters
+      const result = await methodFunction.call(
+        service,
+        blueprintValues,
+        fieldValue,
+        ...additionalParams,
+        progressCallback,
+        shouldUseHomepageReference ? homepageReference : undefined
+      );
+
+      return result;
+    } catch (error) {
+      console.error(`Error executing service "${title}":`, error);
+      return null;
+    }
+  };
 
 // Helper function to create progress callback
 export const createProgressCallback = (sendSSE: (data: any) => void) => {

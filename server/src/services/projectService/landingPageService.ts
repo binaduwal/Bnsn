@@ -10,7 +10,7 @@ import { DeepSeekService } from "../deepseek";
     onProgress?: (chunk: string) => void,
     homepageReference?: string
   ): Promise<string> {
-    const systemPrompt = `You are a senior-level copywriter and conversion expert specializing in high-converting landing page content. You create persuasive, emotionally compelling content that drives action. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and content must be inside <body> tag.`;
+    const systemPrompt = `You are a senior-level copywriter and conversion expert specializing in high-converting landing page content. You create persuasive, emotionally compelling content that drives action. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {

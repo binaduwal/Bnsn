@@ -1,6 +1,7 @@
 import { DeepSeekRequest } from "../../types";
 import { BlueprintValue, ProjectCategoryValue } from "../../types/project";
 import { DeepSeekService } from "../deepseek";
+import { generateCurrentDateContext } from "../../utils";
 
  class PressReleaseService extends DeepSeekService {
 
@@ -9,7 +10,7 @@ import { DeepSeekService } from "../deepseek";
        projectCategoryValue: ProjectCategoryValue[],
        onProgress?: (chunk: string) => void
      ): Promise<string> {
-       const systemPrompt = `You are a professional press release writer with expertise in media communication, journalism, public relations, and brand storytelling. You write authoritative, compelling, and newsworthy press releases that grab media attention, establish credibility, and drive traffic to businesses. Your tone is formal yet engaging, suitable for both media outlets and direct consumer readers. Your releases are structured to follow journalistic standards and include factual, benefit-driven messaging.`;
+       const systemPrompt = `You are a professional press release writer with expertise in media communication, journalism, public relations, and brand storytelling. You write authoritative, compelling, and newsworthy press releases that grab media attention, establish credibility, and drive traffic to businesses. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
      
        const formattedBlueprint = blueprintValue
          .map((section) => {
@@ -27,30 +28,45 @@ import { DeepSeekService } from "../deepseek";
        const userPrompt = [
          `You are tasked with writing a professional press release in valid HTML format.`,
          ``,
-         `## 📢 Press Release Objective`,
-         `The press release should be structured to attract media outlets, build credibility, and drive attention to a business initiative, launch, partnership, or announcement.`,
+         `## 🎯 Objective`,
+         `Create a professional press release that attracts media outlets, builds credibility, and drives attention to a business initiative, launch, partnership, or announcement.`,
          ``,
-         `## 🧩 Provided Inputs`,
-         `Below are the contextual values provided by the user. Use these to determine the angle, tone, and details to include in the press release.`,
+         `## 📌 Output Rules`,
+         `- Output ONLY valid HTML.`,
+         `- Use ONLY inline styles.`,
+         `- Do NOT use CSS classes, <style> tags, or external stylesheets.`,
+         `- Do NOT use <img> tags.`,
+         `- Output must start with <html> and end with </html>.`,
+         `- Make sure it's structured like a proper press release.`,
+         `- Use current date (2024-2025) in datelines and references.`,
+         `- Reference current trends, technologies, and market conditions.`,
+         generateCurrentDateContext(),
          ``,
+         `## 🧱 Press Release Structure`,
+         `1. <header> with company name and press release title.`,
+         `2. <section> Dateline with location and date.`,
+         `3. <section> Lead paragraph with main announcement.`,
+         `4. <section> Supporting paragraphs with details, quotes, and benefits.`,
+         `5. <section> Boilerplate "About [Company]" section.`,
+         `6. <section> Press contact information.`,
+         `7. <footer> with additional contact details.`,
+         ``,
+         `## ✍️ Tone & Style`,
+         `- Formal yet engaging, suitable for media outlets.`,
+         `- Authoritative and newsworthy.`,
+         `- Use <h1>–<h3>, <p>, <blockquote>, <ul> for structure.`,
+         `- Use <strong> and inline styles for emphasis.`,
+         `- Use inline styling for layout, spacing, typography, and colors.`,
+         ``,
+         `## 📥 Provided Input`,
+         `### Category Values`,
          `${formattedCategoryInputs}`,
          ``,
-         `## 👤 Author Information`,
+         `### Blueprint Details`,
          `${formattedBlueprint}`,
          ``,
          `---`,
-         ``,
-         `Please generate a full-length press release with these instructions:`,
-         ``,
-         `- Use <html>, <body>, <div>, <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <a> where appropriate.`,
-         `- The press release title should be in <h1> and contain a clear benefit or newsworthy announcement.`,
-        //  `- Start with a dateline (e.g., <p><strong>San Francisco, CA – July 24, 2025</strong></p>).`,
-         `- The lead paragraph should summarize the main announcement clearly and compellingly.`,
-         `- Follow with detailed supporting paragraphs, including quotes (from CEO or stakeholders), stats, background info, and relevant benefits.`,
-         `- Include a brief boilerplate ("About [Company]") section near the end.`,
-         `- Conclude with press contact information.`,
-         `- DO NOT include markdown or explanations. Output valid HTML only.`,
-         `- Separate multiple press releases using <!-- Press Release 1 --> if applicable.`,
+         `Now generate a complete inline-styled HTML document for the press release using the structure above.`,
        ].join("\n");
      
        const request: DeepSeekRequest = {
