@@ -6,6 +6,9 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   role: "admin" | "user";
+  totalWords: number;
+  wordsUsed: number;
+  wordsLeft: number;
 }
 
 const UserSchema: Schema = new Schema(
@@ -34,6 +37,18 @@ const UserSchema: Schema = new Schema(
       type: String,
       enum: ["admin", "user"],
       default: "user",
+    },
+    totalWords: {
+      type: Number,
+      default: 100000,
+    },
+    wordsUsed: {
+      type: Number,
+      default: 0,
+    },
+    wordsLeft: {
+      type: Number,
+      default: 100000,
     },
   },
   {

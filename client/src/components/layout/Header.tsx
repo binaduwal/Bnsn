@@ -3,7 +3,6 @@
 import { useAuthStore } from "@/store/authStore";
 import {
   ChevronDown,
-  Search,
   Bell,
   Settings,
   LogOut,
@@ -17,7 +16,7 @@ import React, { useState } from "react";
 
 function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  const {user} = useAuthStore();
   const { logout } = useAuthStore();
   const router = useRouter();
   const toggleProfile = () => {
@@ -47,27 +46,7 @@ function Header() {
         {/* Right Section */}
         <div className="flex items-center gap-4">
           {/* Search Bar */}
-          <div className="relative max-w-max  w-[280px]">
-            <div className="bg-white backdrop-blur-sm  border border-gray-700/80  rounded-full flex items-center w-full gap-3 px-4 py-2   focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-500/20 transition-all duration-200">
-              <Search className="w-5 h-5 min-w-max text-gray-400" />
-              <input
-                placeholder="Search tools, projects..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent outline-none text-black placeholder-gray-400 flex-1"
-              />
-              {searchQuery && (
-                <div className="  absolute top-1/2 right-1 -translate-y-1/2 ">
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    className="w-5 h-5  cursor-pointer flex items-center justify-center text-gray-400 hover:text-gray-300 transition-colors"
-                  >
-                    <X className="w-5 h-5 min-w-max text-gray-400" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+         
 
           {/* Notifications */}
           <div className="relative">
@@ -84,13 +63,13 @@ function Header() {
               className="flex items-center bg-gray-800/80 backdrop-blur-sm px-3 py-2 rounded-full gap-3 hover:bg-gray-700/80 transition-all duration-200 border border-gray-700/50"
             >
               <div className="w-8 h-8 bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 rounded-full flex justify-center items-center shadow-md">
-                <span className="font-semibold text-white text-sm">M</span>
+                <span className="font-semibold text-white text-sm">{user?.firstName.charAt(0)}</span>
               </div>
               <div className="text-left hidden sm:block">
                 <p className="text-white text-sm font-medium">
-                  Mukesh Bhattarai
+                  {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-gray-400 text-xs">Administrator</p>
+                <p className="text-gray-400 text-xs">{user?.role}</p>
               </div>
               <ChevronDown
                 className={`w-4 h-4 text-gray-300 transition-transform duration-200 ${
@@ -106,14 +85,14 @@ function Header() {
                 <div className="px-4 py-3 border-b border-gray-700/50">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-purple-500 to-indigo-600 rounded-full flex justify-center items-center shadow-md">
-                      <span className="font-semibold text-white">M</span>
+                      <span className="font-semibold text-white">{user?.firstName.charAt(0)}</span>
                     </div>
                     <div>
                       <p className="text-white font-semibold">
-                        Mukesh Bhattarai
+                        {user?.firstName} {user?.lastName}
                       </p>
                       <p className="text-gray-400 text-sm">
-                        mukesh@district.com
+                        {user?.email}
                       </p>
                     </div>
                   </div>

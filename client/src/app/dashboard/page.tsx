@@ -47,7 +47,7 @@ const Dashboard: React.FC = () => {
 
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <div
-      onClick={() => router.push(`/dashboard/projects/${project.name}`)}
+      onClick={() => router.push(`/dashboard/projects/${project._id}`)}
       className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
     >
       <div className="flex items-center justify-between mb-4">

@@ -61,6 +61,7 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
     {}
   );
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     const initialFormData: FormData = {};
@@ -322,6 +323,13 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
     }));
   };
 
+  const toggleCategoryExpansion = (categoryId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryId]: !prev[categoryId]
+    }));
+  };
+
   const handleUpdateCategoryValue = async (categoryId: string) => {
     const categoryValue = categoryValues.find(
       (cv) => cv.category === categoryId
@@ -505,17 +513,7 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
             </button>}
           </div>
 
-          {/* Empty State */}
-          {values.length === 0 && !isEditing && (
-            <div className="text-center py-6">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </div>
-              <p className="text-gray-500 text-sm">No values added yet</p>
-            </div>
-          )}
+          
         </div>
 
         {/* Error Message */}
@@ -563,101 +561,189 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
           </div>
         ) : !loading && categories.length > 0 ? (
           <div className="space-y-6">
-            {categories.map((category) => (
-              <div
-                key={category._id}
-                className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
-              >
-                {/* Category Header */}
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-lg flex items-center justify-center shadow-md">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                          {category.title}
-                        </h2>
-                        <div className="flex items-center gap-3 text-gray-600">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            {category.fields.length} field{category.fields.length !== 1 ? 's' : ''}
-                          </span>
+            {categories.map((category) => {
+              // Check if this category has any fields with data
+              const categoryData = formData[category._id] || {};
+              const hasData = category.fields.some(field => {
+                const values = categoryData[field._id] || [];
+                return values.length > 0;
+              });
+
+              const fieldsWithData = category.fields.filter(field => {
+                const values = categoryData[field._id] || [];
+                return values.length > 0;
+              });
+
+              const isExpanded = expandedCategories[category._id] || hasData;
+
+              return (
+                <div
+                  key={category._id}
+                  className={`bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 ${
+                    hasData 
+                      ? 'shadow-lg border-purple-200' 
+                      : 'shadow-sm border-gray-200 opacity-75 hover:opacity-100'
+                  }`}
+                >
+                  {/* Category Header */}
+                  <div className={`px-6 py-4 border-b border-gray-200 ${
+                    hasData ? 'bg-gradient-to-r from-purple-50 to-blue-50' : 'bg-gray-50'
+                  }`}>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-md ${
+                          hasData 
+                            ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+                            : 'bg-gray-300'
+                        }`}>
+                          <svg className={`w-6 h-6 ${hasData ? 'text-white' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                          </svg>
                         </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <h2 className={`text-2xl font-bold mb-1 ${
+                              hasData ? 'text-gray-900' : 'text-gray-600'
+                            }`}>
+                              {category.title}
+                            </h2>
+                            {!hasData && (
+                              <button
+                                onClick={() => toggleCategoryExpansion(category._id)}
+                                className="p-1 hover:bg-gray-200 rounded-md transition-colors"
+                                title={isExpanded ? "Collapse" : "Expand"}
+                              >
+                                <svg 
+                                  className={`w-5 h-5 text-gray-500 transition-transform duration-200 ${
+                                    isExpanded ? 'rotate-180' : ''
+                                  }`} 
+                                  fill="none" 
+                                  stroke="currentColor" 
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-gray-600">
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              {hasData 
+                                ? `${fieldsWithData.length} field${fieldsWithData.length !== 1 ? 's' : ''} with data`
+                                : `${category.fields.length} field${category.fields.length !== 1 ? 's' : ''} available`
+                              }
+                            </span>
+                            {!hasData && (
+                              <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-full">
+                                {isExpanded ? 'Expanded' : 'Collapsed'}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Update Button */}
+                      <button
+                        onClick={() => handleUpdateCategoryValue(category._id)}
+                        disabled={loadingStates[category._id]}
+                        className={`px-6 py-3 rounded-lg font-bold text-base transition-all duration-200 shadow-md ${
+                          loadingStates[category._id]
+                            ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+                            : hasData
+                              ? "bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 hover:shadow-lg transform hover:scale-105"
+                              : "bg-gray-200 text-gray-600 hover:bg-gray-300"
+                        }`}
+                      >
+                        {loadingStates[category._id] ? (
+                          <div className="flex items-center gap-2">
+                            <svg
+                              className="animate-spin h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            <span>Updating...</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                            <span>{hasData ? 'Update Category' : 'Add Content'}</span>
+                          </div>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Category Fields - Collapsible for empty categories */}
+                  {isExpanded && (
+                    <div className={`p-6 bg-white transition-all duration-300 ${
+                      !hasData ? 'opacity-75' : ''
+                    }`}>
+                      <div className="space-y-6">
+                        {category.fields.map((field) => (
+                          <div key={field._id}>
+                            {renderField(category, field)}
+                          </div>
+                        ))}
                       </div>
                     </div>
+                  )}
 
-                    {/* Update Button */}
-                    <button
-                      onClick={() => handleUpdateCategoryValue(category._id)}
-                      disabled={loadingStates[category._id]}
-                      className={`px-6 py-3 rounded-lg font-bold text-base transition-all duration-200 shadow-md ${loadingStates[category._id]
-                          ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
-                          : "bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800 hover:shadow-lg transform hover:scale-105"
-                        }`}
-                    >
-                      {loadingStates[category._id] ? (
-                        <div className="flex items-center gap-2">
-                          <svg
-                            className="animate-spin h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
+                  {/* Collapsed State Message for Empty Categories */}
+                  {!hasData && !isExpanded && (
+                    <div className="p-6 bg-gray-50 border-t border-gray-200">
+                      <div className="text-center py-4">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                           </svg>
-                          <span>Updating...</span>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <svg
-                            className="w-4 h-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 13l4 4L19 7"
-                            />
+                        <p className="text-gray-500 text-sm mb-3">
+                          Click the arrow to expand and add content to this category
+                        </p>
+                        <button
+                          onClick={() => toggleCategoryExpansion(category._id)}
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
-                          <span>Update Category</span>
-                        </div>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Category Fields */}
-                <div className="p-6 bg-white">
-                  <div className="space-y-6">
-                    {category.fields.map((field) => (
-                      <div key={field._id}>
-                        {renderField(category, field)}
+                          Expand Category
+                        </button>
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="flex justify-center items-center min-h-64">

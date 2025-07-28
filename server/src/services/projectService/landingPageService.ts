@@ -7,9 +7,10 @@ import { DeepSeekService } from "../deepseek";
   async generateLandingPageStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
-    onProgress?: (chunk: string) => void
+    onProgress?: (chunk: string) => void,
+    homepageReference?: string
   ): Promise<string> {
-    const systemPrompt = `You are a senior-level copywriter and conversion expert with deep knowledge of high-converting landing pages. You specialize in crafting SEO-optimized, emotionally compelling landing pages that drive action. Your writing is persuasive, concise, and structured to guide users toward a clear call-to-action (CTA). You understand the use of urgency, credibility, benefits, and storytelling in direct-response landing page copy. Your output should be clean, fully valid HTML. Response should be start directly from html tag < and end with > html tag, do not response other than HTML`;
+    const systemPrompt = `You are a senior-level copywriter and conversion expert specializing in high-converting landing page content. You create persuasive, emotionally compelling content that drives action. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and content must be inside <body> tag.`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {
@@ -25,38 +26,38 @@ import { DeepSeekService } from "../deepseek";
       .join("\n");
 
     const userPrompt = [
-      `You are tasked with writing a high-converting, SEO-optimized, long-form landing page in pure HTML. Response should be start directly from html tag < and end with > html tag, do not response other than that  `,
+      `You are tasked with creating high-converting, SEO-optimized landing page content in clean HTML format.`,
       ``,
       `## 🎯 Objective`,
-      `Create a persuasive, emotionally engaging landing page that is ready to deploy as-is. This page must be crafted for high conversion rates, strong SEO performance, and reader retention.`,
+      `Create persuasive, emotionally engaging landing page content that is ready to be embedded in web applications. This content must be crafted for high conversion rates, strong SEO performance, and reader retention.`,
       ``,
-      `## 📌 Output Guidelines`,
+      `## 📌 CRITICAL OUTPUT REQUIREMENTS`,
       `- Output ONLY valid HTML.`,
-      `- Do NOT include any markdown, comments, or intro text.`,
-      `- Use ONLY inline styles. DO NOT include <style> tags, CSS classes, or external stylesheets.`,
-      `- Structure the content into clearly defined sections:`,
-
-      `  1. <body> section with:`,
-      `     - <h1> main headline using a powerful hook and keyword.`,
-      `     - do not include any <img> tags`,
-      `     - <p> subheading with persuasive, benefit-driven intro.`,
-      `     - <ul> or <ol> listing at least 5 product/service benefits.`,
-      `     - A testimonial section using <blockquote> or styled <div> with full name and city.`,
-      `     - A 3-step consumption or usage guide.`,
-      `     - A highlighted offer section emphasizing discount and bonus.`,
-      `     - A long-form persuasive section elaborating on pain points, transformation, and credibility.`,
-      `     - Two strong <a> or <button>-styled CTA links.`,
-      `     - A final call-to-action paragraph.`,
+      `- Use ONLY inline styles.`,
+      `- Do NOT use CSS classes, <style> tags, or external stylesheets.`,
+      `- Do NOT use <img> tags.`,
+      `- Output must start with <html> and end with </html>.`,
+      `- Make sure it's structured like a proper landing page.`,
       ``,
-      `## ✍️ Tone & Writing Style`,
-      `- Copy should be friendly, conversational, yet authoritative.`,
-      `- Blend storytelling and benefits to make it emotionally resonant.`,
-      `- Use formatting like <strong>, inline <style>, spacing, and visual emphasis to guide the reader's attention.`,
-      `- Use natural keyword insertion for SEO.`,
+      `## 🧱 Landing Page Structure`,
+      `1. <header> with company name and simple navigation.`,
+      `2. <section> Hero section with powerful headline and subheadline.`,
+      `3. <section> Benefits overview (3-5 key benefits).`,
+      `4. <section> Testimonials section (1-2 trust quotes).`,
+      `5. <section> How it works (3-step process).`,
+      `6. <section> Offer details with bonuses and guarantees.`,
+      `7. <section> Persuasive content about pain points and transformation.`,
+      `8. <section> Multiple CTA buttons with urgency and benefits.`,
+      `9. <footer> with contact information and navigation.`,
       ``,
-      `## 📥 Input Data`,
-      `Use the following structured data to build the content, adjust tone, and insert appropriate values throughout the page.`,
+      `## ✍️ Tone & Style`,
+      `- Clear, persuasive, and emotionally engaging.`,
+      `- Benefit-driven with strong calls-to-action.`,
+      `- Use <h1>–<h3>, <p>, <ul>, <section> for structure.`,
+      `- Use <strong> and inline styles for emphasis.`,
+      `- Use inline styling for layout, spacing, typography, and colors.`,
       ``,
+      `## 📥 Provided Input`,
       `### Category Values`,
       `${formattedCategoryInputs}`,
       ``,
@@ -64,7 +65,7 @@ import { DeepSeekService } from "../deepseek";
       `${formattedBlueprint}`,
       ``,
       `---`,
-      `Generate one complete inline-styled HTML landing page with all the above requirements. Make the content rich, structured, and longer than average landing pages to improve quality and engagement.`,
+      `Now generate a complete inline-styled HTML document for the landing page using the structure above.`,
     ].join("\n");
 
     const request: DeepSeekRequest = {

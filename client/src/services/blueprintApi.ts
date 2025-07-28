@@ -1,5 +1,6 @@
 import { api, errorHandler } from "./api"
 import { Category } from "./categoryApi";
+import Cookies from "js-cookie";
 
 interface CreateBlueprintBody {
     title: string;
@@ -13,6 +14,91 @@ export const createBlueprint = async (body: CreateBlueprintBody) => {
         return res.data
     } catch (error) {
         throw errorHandler(error)
+    }
+}
+
+export const createBlueprintStream = async (
+    body: CreateBlueprintBody,
+    onProgress?: (chunk: string) => void,
+    onComplete?: (data: any) => void,
+    onError?: (error: string) => void
+) => {
+    try {
+        // Get the token from cookies (same as regular API)
+        const token = Cookies.get("token");
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
+
+        // Use the same base URL as the regular API
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+        const response = await fetch(`${baseURL}/blueprints`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const reader = response.body?.getReader();
+        if (!reader) {
+            throw new Error('No response body');
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            buffer += chunk;
+
+            // Process complete lines
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    try {
+                        const data = JSON.parse(line.slice(6));
+                        
+                        switch (data.type) {
+                            case 'progress':
+                                if (onProgress) {
+                                    onProgress(data.content);
+                                }
+                                break;
+                            case 'complete':
+                                if (onComplete) {
+                                    onComplete(data.data);
+                                }
+                                break;
+                            case 'error':
+                                if (onError) {
+                                    onError(data.message);
+                                }
+                                break;
+                        }
+                    } catch (parseError) {
+                        console.warn('Failed to parse SSE data:', parseError);
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        if (onError) {
+            onError(error instanceof Error ? error.message : 'Unknown error');
+        }
+        throw error;
     }
 }
 

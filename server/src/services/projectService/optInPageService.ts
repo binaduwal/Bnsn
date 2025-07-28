@@ -8,9 +8,10 @@ class OptInPageService extends DeepSeekService {
     async generateOptInPageV1Stream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
-        onProgress?: (chunk: string) => void
+        onProgress?: (chunk: string) => void,
+        homepageReference?: string
     ): Promise<string> {
-        const systemPrompt = `You are a top-tier direct response copywriter with deep expertise in writing high-converting opt-in pages. You know how to craft short, compelling landing pages that instantly communicate value, build trust, and get the lead. Your copywriting is simple, persuasive, and conversion-focused.`;
+        const systemPrompt = `You are a top-tier direct response copywriter with deep expertise in writing high-converting opt-in pages. You know how to craft short, compelling landing pages that instantly communicate value, build trust, and get the lead. Your copywriting is simple, persuasive, and conversion-focused. Response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>.`;
 
         const formattedBlueprint = blueprintValue
             .map((section) => {
@@ -44,19 +45,20 @@ class OptInPageService extends DeepSeekService {
             `${formattedBlueprint}`,
             ``,
             `## ✅ Output Format`,
-            `<html>
-          <body>
-            <h1>[Headline]</h1>
-            <p><strong>[Subheadline]</strong></p>
-            <form>
-              <input type="email" placeholder="Enter your email" />
-              <button>Get [Freebie/Resource/Access] Now</button>
-            </form>
-            <p class="trust">[Optional trust element or reassurance]</p>
-          </body>
-        </html>`,
+            `- Response must start with <html> and end with </html>`,
+            `- All content must be inside <body> tags`,
+            `- Use <h1>, <h2>, <p>, <strong>, <em>, <ul>, and <a> appropriately`,
+            `- Use only inline CSS`,
+            `- Do NOT include any intro text or explanations - start directly with <html>`,
             ``,
-            `Only return valid HTML. No markdown.`,
+            `## 📋 Requirements:`,
+            `- Generate exactly 1 complete opt-in page`,
+            `- Use Valid HTML Elements <html> <body>`,
+            `- Only use inline css`,
+            `- Use proper spacing and styling to make UI look better`,
+            `- Only return valid HTML. No markdown, no intro text, no explanations`,
+            ``,
+            `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
         ].join("\n");
 
         const request: DeepSeekRequest = {
@@ -77,9 +79,10 @@ class OptInPageService extends DeepSeekService {
     async generateOptInPageV2Stream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
-        onProgress?: (chunk: string) => void
+        onProgress?: (chunk: string) => void,
+        homepageReference?: string
     ): Promise<string> {
-        const systemPrompt = `You are a high-level conversion copywriter with expertise in crafting emotionally compelling, story-driven opt-in pages. You understand user psychology and write persuasive copy that builds trust, triggers curiosity, and motivates action.`;
+        const systemPrompt = `You are a high-level conversion copywriter with expertise in crafting emotionally compelling, story-driven opt-in pages. You understand user psychology and write persuasive copy that builds trust, triggers curiosity, and motivates action. Response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>.`;
 
         const formattedBlueprint = blueprintValue
             .map((section) => {
@@ -103,7 +106,7 @@ class OptInPageService extends DeepSeekService {
             `## 📘 Structure`,
             `1. Emotional Headline — Address pain, desire, or curiosity`,
             `2. Relatable Story or Pain Point — Pull them in with a few lines that feel personal`,
-            `3. Introduce the Solution/Freebie — What they’ll get & how it helps`,
+            `3. Introduce the Solution/Freebie — What they'll get & how it helps`,
             `4. CTA Section — Invite them to opt in`,
             `5. Trust Booster — Quick testimonial, success stat, or credibility proof`,
             ``,
@@ -114,20 +117,20 @@ class OptInPageService extends DeepSeekService {
             `${formattedBlueprint}`,
             ``,
             `## ✅ Output Format`,
-            `<html>
-      <body>
-        <h1>[Headline]</h1>
-        <p>[Story or Pain Point Introduction]</p>
-        <p>[Freebie/Solution Description]</p>
-        <form>
-          <input type="email" placeholder="Enter your email" />
-          <button>Yes, I Want This</button>
-        </form>
-        <p class="trust">[Trust booster]</p>
-      </body>
-    </html>`,
+            `- Response must start with <html> and end with </html>`,
+            `- All content must be inside <body> tags`,
+            `- Use <h1>, <h2>, <p>, <strong>, <em>, <ul>, and <a> appropriately`,
+            `- Use only inline CSS`,
+            `- Do NOT include any intro text or explanations - start directly with <html>`,
             ``,
-            `Only return valid HTML. No markdown.`,
+            `## 📋 Requirements:`,
+            `- Generate exactly 1 complete opt-in page`,
+            `- Use Valid HTML Elements <html> <body>`,
+            `- Only use inline css`,
+            `- Use proper spacing and styling to make UI look better`,
+            `- Only return valid HTML. No markdown, no intro text, no explanations`,
+            ``,
+            `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
         ].join("\n");
 
         const request: DeepSeekRequest = {

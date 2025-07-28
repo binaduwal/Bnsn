@@ -38,7 +38,7 @@ class EmailService extends DeepSeekService {
       ``,
       `---`,
       ``,
-      `Please generate 2 unique and compelling emails following these rules:`,
+      `Please generate 10 unique and compelling emails following these rules:`,
       ``,
       `- Each email must be in pure HTML format only. Use HTML tags like <html>, <head>, <body>, <h1>, <p>, <a>, <ul>, etc.`,
       `Do not use any kind of placeholder text or meta data. Use the information provided to create the email.`,
@@ -64,7 +64,7 @@ class EmailService extends DeepSeekService {
         { role: "user", content: userPrompt },
       ],
       stream: true, // Enable streaming
-      max_tokens: 4000,
+      max_tokens: 8000,
       temperature: 0.7,
     };
 
@@ -92,10 +92,10 @@ class EmailService extends DeepSeekService {
       .join("\n");
 
     const userPrompt = [
-      `You are writing a **promotional email** for a product or service.`,
+      `You are writing **10 promotional emails** for a product or service.`,
       ``,
       `## 🎯 Goal`,
-      `Write 2 persuasive email that highlights the main benefits, addresses pain points, and encourages the reader to take immediate action.`,
+      `Generate exactly 10 unique and persuasive promotional emails that highlight the main benefits, address pain points, and encourage the reader to take immediate action.`,
       ``,
       `## 🧩 Copy Strategy`,
       `- Start with a compelling subject line and opening sentence.`,
@@ -103,6 +103,7 @@ class EmailService extends DeepSeekService {
       `- Introduce the offer and its key benefits.`,
       `- Use clear and direct call-to-action (CTA).`,
       `- Keep tone friendly, conversational, and motivating.`,
+      `- Each email should be unique with different angles, hooks, and approaches.`,
       ``,
       `## 🔽 Provided Inputs details by user`,
       `${formattedCategoryInputs}`,
@@ -111,26 +112,34 @@ class EmailService extends DeepSeekService {
       `${formattedBlueprint}`,
       ``,
       `## ✅ Output Format`,
-      `- Use Valid HTML Elements  <html> <body>`,
-      `-  only use inline css`,
-      `- use proper gaping and styling and make UI looks better by using inline css`,
-
+      `- Generate exactly 10 emails`,
+      `- Use Valid HTML Elements <html> <body>`,
+      `- Only use inline css`,
+      `- Use proper spacing and styling to make UI look better`,
+      `- Separate each email with <!-- Email 1 -->, <!-- Email 2 -->, etc.`,
+      ``,
+      `## 📧 Email Structure (repeat for all 10 emails):`,
       `<html>
       <body>
-    <div>
-       <h1>Title: [Insert Subject Line]</h1>
-        <h2>Subject: [Insert Subject Line]</h2>
-        <p>Hi [Name],</p>
-        <p>[Engaging opening that connects emotionally]</p>
-        <p>[Introduce the product/service and its main benefits]</p>
-        <p>[Address pain points or objections]</p>
-        <p><strong>Don’t miss out — [Clear CTA with link or instructions]</strong></p>
-        <p>Best regards,<br/>[Your Name/Company]</p>
+        <div style="max-width: 600px; margin: 0 auto; padding: 20px; font-family: Arial, sans-serif;">
+          <h1 style="color: #333; font-size: 24px; margin-bottom: 10px;">[Subject Line]</h1>
+          <h2 style="color: #666; font-size: 18px; margin-bottom: 20px;">[Subject Line]</h2>
+          <p style="color: #333; line-height: 1.6; margin-bottom: 15px;">Hi [Name],</p>
+          <p style="color: #333; line-height: 1.6; margin-bottom: 15px;">[Engaging opening that connects emotionally]</p>
+          <p style="color: #333; line-height: 1.6; margin-bottom: 15px;">[Introduce the product/service and its main benefits]</p>
+          <p style="color: #333; line-height: 1.6; margin-bottom: 15px;">[Address pain points or objections]</p>
+          <p style="color: #333; line-height: 1.6; margin-bottom: 20px;"><strong>Don't miss out — [Clear CTA with link or instructions]</strong></p>
+          <p style="color: #333; line-height: 1.6;">Best regards,<br/>[Your Name/Company]</p>
         </div>
       </body>
     </html>`,
       ``,
-      `Only return valid HTML inside a <html> <body>. No markdown no intro text.`,
+      `## 📋 Requirements:`,
+      `- Generate exactly 10 unique emails`,
+      `- Each email must be complete HTML with proper structure`,
+      `- Use different subject lines, hooks, and approaches for each email`,
+      `- Only return valid HTML. No markdown, no intro text, no explanations`,
+      `- Separate emails with <!-- Email 1 -->, <!-- Email 2 -->, etc.`,
     ].join("\n");
 
     const request: DeepSeekRequest = {
@@ -141,7 +150,7 @@ class EmailService extends DeepSeekService {
       ],
       stream: true,
       temperature: 0.75,
-      max_tokens: 1200,
+      max_tokens: 8000,
     };
 
     return await this.makeStreamingRequest(request, onProgress);

@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Shield,
   CheckCircle,
-  AlertCircle,
   Loader,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
