@@ -8,6 +8,7 @@ import { DeepSeekService } from "../deepseek";
   async generateArticleStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are a senior-level SEO content writer with expertise in search engine optimization, storytelling, and audience engagement. You write in a human-like tone while ensuring the content is keyword-optimized, informative, and conversion-driven. Your writing balances clarity, depth, and flow, ideal for blogs, knowledge bases, landing pages, and marketing content. Your goal is to produce articles that rank well on Google while delivering genuine value to readers. Response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>.`;

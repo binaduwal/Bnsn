@@ -9,6 +9,7 @@ class WebPageService extends DeepSeekService {
 async generateHomePageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
+  _title:string,
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {
@@ -85,6 +86,7 @@ async generateHomePageStream(
 async generateAboutCeoPageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
+  _title:string,
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {
@@ -166,6 +168,7 @@ ${homepageReference.substring(0, 500)}...` : '';
 async generateFeaturesPageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
+  _title:string,
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {
@@ -240,6 +243,7 @@ async generateFeaturesPageStream(
 async generateServicePageStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
+  _title:string,
   onProgress?: (chunk: string) => void,
   homepageReference?: string
 ): Promise<string> {

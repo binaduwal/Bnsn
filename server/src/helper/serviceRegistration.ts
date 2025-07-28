@@ -55,7 +55,7 @@ export const registerAllServices = () => {
             title: "Landing Page Generator",
             service: landingPageService,
             method: "generateLandingPageStream",
-            category: "Website Pages",
+            category: "Landing Pages",
             description: "Generate high-converting landing pages"
         }
     ]);
@@ -86,7 +86,72 @@ export const registerAllServices = () => {
             method: "generateVSLScriptStream",
             category: "VSLs (Long Form)",
             description: "Generate VSL scripts"
-        }
+        },
+
+        //changes
+        {
+            title: "Problem",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        }, {
+            title: "Solution",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        }, {
+            title: "Offer",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        }, {
+            title: "Features",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        }, {
+            title: "Objections",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        }, {
+            title: "Testimonials",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        },
+        {
+            title: "Price",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        }, {
+            title: "Bonuses",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        }, {
+            title: "Guarantee",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        },
+        {
+            title: "Close",
+            service: vslPageService,
+            method: "generateVSLScriptStreamDynamic",
+            category: "VSLs (Long Form)",
+            description: "Generate VSL scripts"
+        },
     ]);
 
     // Ad Services - Example of category-specific services with category ID and main category title
@@ -98,7 +163,7 @@ export const registerAllServices = () => {
             category: "Ads",
             description: "Generate ad copy for e-commerce"
         },
-        
+
     ]);
 
     // Web Page Services
@@ -510,7 +575,7 @@ export const registerAllServices = () => {
             service: deepSeekService,
             method: "generateAdCopyStream",
             category: "Books Sales Funnel",
-            
+
             description: "Generate ad copy variant 4 for e-commerce"
         },
         {
@@ -754,6 +819,294 @@ export const registerAllServices = () => {
             category: "BookBuilder",
             description: "Generate Outline"
         },
+        //write part 1
+        {
+            title: "Book Introduction",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Book Introduction"
+        },
+        {
+            title: "About The Author",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Book Introduction"
+        },
+
+        // write part 1
+        {
+            title: "Part 1 Introduction",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 1 Introduction"
+        }, {
+            title: "Part 1 Explanation",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 1 Explanation"
+        },
+        {
+            title: "Part 1 Teaching Concept 1",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 1 Teaching Concept 1"
+        },
+        {
+            title: "Part 1 Teaching Concept 2",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 1 Teaching Concept 2"
+        },
+        {
+            title: "Part 1 Teaching Concept 3",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 1 Teaching Concept 3"
+        },
+        {
+            title: "Part 1 FAQ",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 1 FAQ"
+        },
+        {
+            title: "Part 1 Recap",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 1 Recap"
+        },
+
+        //write part 2
+        {
+            title: "Part 2 Introduction",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 2 Introduction"
+        }, {
+            title: "Part 2 Explanation",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 2 Explanation"
+        },
+        {
+            title: "Part 2 Teaching Concept 1",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 2 Teaching Concept 1"
+        },
+        {
+            title: "Part 2 Teaching Concept 2",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 2 Teaching Concept 2"
+        },
+        {
+            title: "Part 2 Teaching Concept 3",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 2 Teaching Concept 3"
+        },
+        {
+            title: "Part 2 FAQ",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 2 FAQ"
+        },
+        {
+            title: "Part 2 Recap",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 2 Recap"
+        },
+        //write part 3
+        {
+            title: "Part 3 Introduction",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 3 Introduction"
+        }, {
+            title: "Part 3 Explanation",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 3 Explanation"
+        },
+        {
+            title: "Part 3 Teaching Concept 1",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 3 Teaching Concept 1"
+        },
+        {
+            title: "Part 3 Teaching Concept 2",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 3 Teaching Concept 2"
+        },
+        {
+            title: "Part 3 Teaching Concept 3",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 3 Teaching Concept 3"
+        },
+        {
+            title: "Part 3 FAQ",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 3 FAQ"
+        },
+        {
+            title: "Part 3 Recap",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 3 Recap"
+        },
+        //write part 4
+        {
+            title: "Part 4 Introduction",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 4 Introduction"
+        }, {
+            title: "Part 4 Explanation",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 4 Explanation"
+        },
+        {
+            title: "Part 4 Teaching Concept 1",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 4 Teaching Concept 1"
+        },
+        {
+            title: "Part 4 Teaching Concept 2",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 4 Teaching Concept 2"
+        },
+        {
+            title: "Part 4 Teaching Concept 3",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 4 Teaching Concept 3"
+        },
+        {
+            title: "Part 4 FAQ",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 4 FAQ"
+        },
+        {
+            title: "Part 4 Recap",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 4 Recap"
+        },
+        //write part 5
+        {
+            title: "Part 5 Introduction",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 5 Introduction"
+        }, {
+            title: "Part 5 Explanation",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 5 Explanation"
+        },
+        {
+            title: "Part 5 Teaching Concept 1",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 5 Teaching Concept 1"
+        },
+        {
+            title: "Part 5 Teaching Concept 2",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 5 Teaching Concept 2"
+        },
+        {
+            title: "Part 5 Teaching Concept 3",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 5 Teaching Concept 3"
+        },
+        {
+            title: "Part 5 FAQ",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 5 FAQ"
+        },
+        {
+            title: "Part 5 Recap",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Part 5 Recap"
+        },
+        {
+            title: "Conclusion",
+            service: bookService,
+            method: "generateBookWritePartStream",
+            category: "BookBuilder",
+            description: "Generate Conclusion"
+        },
+
+        // final chapter offer
+        {
+            title: "Final Chapter Offer",
+            service: bookService,
+            method: "generateFinalChapterOfferStream",
+            category: "BookBuilder",
+            description: "Generate Final Chapter Offer"
+        },
+    ]);
+
+    serviceRegistryManager.registerBatch([
+        {
+            title: "Upsell Generator",
+            service: upsellService,
+            method: "generateBookFunnelUpsellStream",
+            category: "Book Funnel Upsells",
+            description: "Generate order bump copy"
+        }
     ]);
 
     console.log(`Registered ${serviceRegistryManager.getCount()} services across ${serviceRegistryManager.getCategories().length} categories`);

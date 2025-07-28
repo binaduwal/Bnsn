@@ -116,7 +116,7 @@ Return pure JSON only.`;
     if (onProgress) {
       const response = await this.makeStreamingRequest(request, onProgress);
       let content = response;
-      
+
       // Clean the response to extract JSON
       content = this.cleanJsonResponse(content);
 
@@ -172,6 +172,7 @@ Return pure JSON only.`;
   async generateThankYouPageStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are a CRO expert. Write high-converting Thank You pages in pure HTML with inline styles only. Build gratitude, trust, and inspire next actions. Output must be HTML only - no explanations or markdown. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
@@ -226,6 +227,7 @@ Return pure JSON only.`;
   async generateAdCopyStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are an ad copywriter. Write high-converting ad content for Facebook, Instagram, YouTube, TikTok in pure HTML with inline styles only. Response must begin with <html> and end with </html>. DO NOT include any metadata, special formatting, or instructions like [FREEZE FRAME], [PAUSE], or similar. Output ONLY clean HTML content. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
@@ -309,7 +311,7 @@ Return pure JSON only.`;
     };
 
     const result = await this.makeStreamingRequest(request, onProgress);
-    
+
     // Clean any metadata that might have slipped through
     if (result) {
       return result
@@ -338,7 +340,7 @@ Return pure JSON only.`;
         .replace(/\[THE END\]/gi, '')
         .trim();
     }
-    
+
     return result;
   }
 

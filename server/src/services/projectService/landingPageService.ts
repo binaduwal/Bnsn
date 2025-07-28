@@ -3,10 +3,11 @@ import { DeepSeekRequest } from "../../types";
 import { BlueprintValue, ProjectCategoryValue } from "../../types/project";
 import { DeepSeekService } from "../deepseek";
 
- class LandingPageService extends DeepSeekService {
+class LandingPageService extends DeepSeekService {
   async generateLandingPageStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void,
     homepageReference?: string
   ): Promise<string> {
@@ -65,7 +66,7 @@ import { DeepSeekService } from "../deepseek";
       `${formattedBlueprint}`,
       ``,
       `---`,
-      `Now generate a complete inline-styled HTML document for the landing page using the structure above.`,
+      `Now generate a complete inline-styled HTML document for the landing page using the structure above. No markdown, no intro text, only HTML`,
     ].join("\n");
 
     const request: DeepSeekRequest = {

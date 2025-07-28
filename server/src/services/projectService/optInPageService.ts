@@ -8,6 +8,7 @@ class OptInPageService extends DeepSeekService {
     async generateOptInPageV1Stream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void,
         homepageReference?: string
     ): Promise<string> {
@@ -79,6 +80,7 @@ class OptInPageService extends DeepSeekService {
     async generateOptInPageV2Stream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void,
         homepageReference?: string
     ): Promise<string> {

@@ -7,6 +7,7 @@ class LinkedInProfileService extends DeepSeekService {
     async generateLinkedInEntrepreneurProfileStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are an expert LinkedIn profile copywriter specializing in personal branding, lead generation, and storytelling for entrepreneurs and business owners. You craft compelling profiles that highlight an individual's unique strengths, expertise, business value proposition, and social proof. Your tone is confident, professional, human, and persuasive — designed to attract investors, clients, and collaborators. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body> `;
@@ -70,6 +71,7 @@ class LinkedInProfileService extends DeepSeekService {
     async generateLinkedInWhatWeDoProfileStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a professional LinkedIn copywriter skilled in personal branding, business storytelling, and lead generation for entrepreneurs. You write persuasive LinkedIn profiles that showcase what the entrepreneur or business does and highlight their biggest achievement to build authority and attract high-quality leads. Your tone is clear, confident, benefit-focused, and friendly. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -130,6 +132,7 @@ class LinkedInProfileService extends DeepSeekService {
     async generateLinkedInOtherAchievementsProfileStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a senior-level LinkedIn personal brand strategist and profile copywriter. You specialize in helping entrepreneurs build credibility, thought leadership, and trust by showcasing multiple professional achievements. Your tone is persuasive yet professional, and your structure is optimized for LinkedIn profile discovery, engagement, and inbound leads. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -191,6 +194,7 @@ class LinkedInProfileService extends DeepSeekService {
     async generateLinkedInSkillsBasedProfileStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a professional LinkedIn copywriter focused on building personal brands through a skills-first approach. You write profiles that highlight an entrepreneur’s top skills and show how those skills drive business value. Your writing is confident, benefit-oriented, and optimized to attract leads, collaborators, and recruiters.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -252,6 +256,7 @@ class LinkedInProfileService extends DeepSeekService {
     async generateLinkedInExperienceBasedProfileStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a professional LinkedIn copywriter who specializes in experience-based personal branding. You craft profiles that emphasize an entrepreneur’s years of work, industries served, leadership roles, and project journeys. Your writing builds trust and credibility by showcasing depth, adaptability, and long-term value. Your tone is formal yet warm, confident, and positioned for professional impact.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -311,6 +316,7 @@ class LinkedInProfileService extends DeepSeekService {
     async generateLinkedInBenefitsBasedProfileStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a professional LinkedIn profile copywriter focused on customer-first, benefits-driven storytelling. You specialize in writing personal brand profiles that clearly communicate the business outcomes and transformation a founder or entrepreneur helps deliver. Your tone is confident, compelling, and benefit-focused.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -371,6 +377,7 @@ class LinkedInProfileService extends DeepSeekService {
     async generateLinkedInGeneralProfileStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title:string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a highly skilled LinkedIn profile copywriter and personal brand strategist. You specialize in crafting well-rounded, compelling profiles that blend storytelling, credibility, expertise, and lead generation strategy. Your tone is professional yet approachable. You adapt to the user’s focus — whether they emphasize skills, achievements, experience, or transformation — and highlight their value in a clear, engaging format. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -433,6 +440,7 @@ class LinkedInProfileService extends DeepSeekService {
 async generatePersonalLinkedInProfileStream(
   blueprintValue: BlueprintValue[],
   projectCategoryValue: ProjectCategoryValue[],
+  _title:string,
   onProgress?: (chunk: string) => void
 ): Promise<string> {
   const systemPrompt = `You are a senior LinkedIn profile strategist and copywriter, skilled in crafting personal brand-driven profiles that resonate with authenticity, credibility, and clarity. You help professionals express their mission, personality, and unique value proposition in a way that builds trust and inspires action. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;

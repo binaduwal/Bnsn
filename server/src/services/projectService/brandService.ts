@@ -7,7 +7,7 @@ class BrandGeneratorService extends DeepSeekService {
     async generateBrandIdentityStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
-        topic: string,
+        _topic: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a brand strategist and identity architect. You create emotionally compelling, strategic brand identities that stand out in the market and align with the target audience’s psychology. Your work includes naming, taglines, tone of voice, values, and core positioning. Only return valid HTML starting with <html> and ending with </html>. All content must be inside <body>.`;

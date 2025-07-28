@@ -7,6 +7,7 @@ class BonusCreaterService extends DeepSeekService {
   async generateBasicBonusIdeasStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are a bonus offer strategist and marketing expert. You understand product positioning, digital/physical/service-based products, buyer psychology, and conversion tactics. You craft enticing, relevant bonus ideas that increase perceived value and motivate customers to buy. Response should start directly from <html> and end with </html>, no intro texts, and content must be inside <body>.`;
@@ -77,6 +78,7 @@ class BonusCreaterService extends DeepSeekService {
   async generateAdvancedBonusIdeasStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are a high-level conversion strategist and bonus architect. You design sophisticated, irresistible bonus stacks that increase perceived value, justify premium pricing, and drive urgency. You understand advanced buyer psychology, scarcity principles, and product-positioning tactics. Response must start directly with <html> and end with </html>. All content must be inside <body>, no external explanation, intro text or markdown.`;

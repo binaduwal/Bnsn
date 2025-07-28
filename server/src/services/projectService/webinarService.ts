@@ -5,9 +5,10 @@ import { DeepSeekService } from "../deepseek";
 class WebinarService extends DeepSeekService {
 
     async generateWebinarContentStream(
-      topic: string,
       blueprintValue: BlueprintValue[],
       projectCategoryValue: ProjectCategoryValue[],
+      topic: string,
+
       onProgress?: (chunk: string) => void
     ): Promise<string> {
       const systemPrompt = `You are a high-converting webinar strategist and persuasive messaging expert. You specialize in creating compelling webinar segments based on classic conversion frameworks such as testimonials, objection handling, authority building, big idea hooks, and value delivery. You understand audience psychology and design webinar scripts that engage, build trust, and convert. Response must start directly with <html> and end with </html>. All content must be inside <body>.`;

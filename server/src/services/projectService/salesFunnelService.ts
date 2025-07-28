@@ -7,6 +7,7 @@ class SalesFunnelService extends DeepSeekService {
     async generatePresellIntroStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a senior-level copywriter and marketing strategist. You specialize in creating high-converting presell content that grabs attention, builds curiosity, and pre-frames the reader to desire the solution being offered. Your tone is emotionally resonant, curiosity-driven, and subtly persuasive.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -66,6 +67,7 @@ class SalesFunnelService extends DeepSeekService {
     async generatePresellStepsStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a senior-level copywriter and marketing strategist. You specialize in crafting persuasive presell sequences that smoothly move the reader from curiosity to conversion. Your tone is emotionally resonant, curiosity-driven, and structured for high engagement.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -135,6 +137,7 @@ class SalesFunnelService extends DeepSeekService {
     async generatePresellTeaseStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a senior-level copywriter and persuasive marketing strategist. Your specialty is teasing irresistible offers without revealing everything upfront. You write in a style that builds anticipation, stirs desire, and leads the reader toward a powerful CTA. response should be little longer and also response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -194,6 +197,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateSalesFunnelLeadStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a high-converting direct response copywriter specializing in sales funnels. Your expertise lies in crafting irresistible opening leads that grab attention, create intrigue, and emotionally connect with the reader in the first few seconds. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -253,6 +257,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateFalseSolutionsStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a persuasive direct response copywriter who specializes in sales psychology and sales funnels. Your job is to write a False Solutions section — exposing ineffective or misleading methods people commonly try before they discover the real, proven offer. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -319,6 +324,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateRealSolutionStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a high-converting direct response copywriter who specializes in writing sales funnels. Your task is to write the Real Solution section — the breakthrough method or unique mechanism that actually delivers results. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -384,6 +390,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateSolutionStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a persuasive sales funnel copywriter. Your task is to clearly present the main solution that addresses the customer’s pain point. This solution should be explained in a way that builds trust, feels logical, and creates excitement about what's coming. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -449,6 +456,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateObjectionHandlerStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a high-level sales copywriter skilled at handling objections in sales funnels. Your job is to anticipate and answer buyer doubts with empathy, clarity, and confidence. Your copy should create trust, eliminate fear, and reinforce the value of the solution. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -516,6 +524,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateOfferIntroStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a high-converting sales copywriter specializing in offer introductions that transition from emotional tension to confident action. Your goal is to introduce the solution (offer) in a way that feels natural, valuable, and exciting without being overly salesy.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -582,6 +591,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateTestimonialsStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a high-converting sales copywriter who specializes in writing believable, emotionally resonant, and persuasive testimonials. You write realistic customer feedback that builds trust, addresses objections, and proves that the product or service delivers on its promise.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -653,6 +663,7 @@ class SalesFunnelService extends DeepSeekService {
     async generatePriceAndGuaranteeStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a senior-level sales funnel copywriter with a focus on pricing psychology and risk reversal. You write compelling offer pricing paired with iron-clad, believable guarantees to reduce buyer friction and increase conversions. You balance urgency, clarity, and value perception. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -730,6 +741,7 @@ class SalesFunnelService extends DeepSeekService {
     async generateBonusesStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a senior-level sales copywriter with expertise in crafting irresistible bonus offers that amplify perceived value and drive urgency. Your writing combines persuasive storytelling with conversion psychology to make bonuses feel exclusive, relevant, and essential.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -806,70 +818,71 @@ class SalesFunnelService extends DeepSeekService {
 
 
     async generateCloseStream(
-  blueprintValue: BlueprintValue[],
-  projectCategoryValue: ProjectCategoryValue[],
-  onProgress?: (chunk: string) => void
-): Promise<string> {
-  const systemPrompt = `You are a top-tier direct response copywriter focused on closing sales with confidence, urgency, and irresistible reasoning. Your closing copy summarizes key benefits, overcomes final doubts, and motivates immediate action with clarity and enthusiasm.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
+        blueprintValue: BlueprintValue[],
+        projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
+        onProgress?: (chunk: string) => void
+    ): Promise<string> {
+        const systemPrompt = `You are a top-tier direct response copywriter focused on closing sales with confidence, urgency, and irresistible reasoning. Your closing copy summarizes key benefits, overcomes final doubts, and motivates immediate action with clarity and enthusiasm.  response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
 
-  const formattedBlueprint = blueprintValue
-    .map((section) => {
-      const values = section.values
-        .map((val) => `- ${val.key}: ${val.value}`)
-        .join("\n");
-      return `### ${section.title}\n${values}`;
-    })
-    .join("\n\n");
+        const formattedBlueprint = blueprintValue
+            .map((section) => {
+                const values = section.values
+                    .map((val) => `- ${val.key}: ${val.value}`)
+                    .join("\n");
+                return `### ${section.title}\n${values}`;
+            })
+            .join("\n\n");
 
-  const formattedCategoryInputs = projectCategoryValue
-    .map((item) => `- ${item.key}: ${item.value}`)
-    .join("\n");
+        const formattedCategoryInputs = projectCategoryValue
+            .map((item) => `- ${item.key}: ${item.value}`)
+            .join("\n");
 
-  const userPrompt = [
-    `You are now writing the **Closing** section of a persuasive sales funnel.`,
-    ``,
-    `## 🎯 Goal`,
-    `Give prospects every compelling reason to say YES and purchase immediately.`,
-    ``,
-    `## 🧩 Copy Strategy`,
-    `- Recap the biggest benefits and transformation.`,
-    `- Remind them of the risk-free guarantee.`,
-    `- Overcome any last-minute hesitation with empathy.`,
-    `- Use clear calls to action and urgency without pressure.`,
-    ``,
-    `## 🔽 Provided Inputs by user`,
-    `${formattedCategoryInputs}`,
-    ``,
-    `## 📘 Blueprint`,
-    `${formattedBlueprint}`,
-    ``,
-    `## ✅ Output Format`,
-      `- Use Valid HTML Elements  <html> <body>`,
+        const userPrompt = [
+            `You are now writing the **Closing** section of a persuasive sales funnel.`,
+            ``,
+            `## 🎯 Goal`,
+            `Give prospects every compelling reason to say YES and purchase immediately.`,
+            ``,
+            `## 🧩 Copy Strategy`,
+            `- Recap the biggest benefits and transformation.`,
+            `- Remind them of the risk-free guarantee.`,
+            `- Overcome any last-minute hesitation with empathy.`,
+            `- Use clear calls to action and urgency without pressure.`,
+            ``,
+            `## 🔽 Provided Inputs by user`,
+            `${formattedCategoryInputs}`,
+            ``,
+            `## 📘 Blueprint`,
+            `${formattedBlueprint}`,
+            ``,
+            `## ✅ Output Format`,
+            `- Use Valid HTML Elements  <html> <body>`,
             `- if you use css, only use inline css`,
-    `<section >
+            `<section >
       <h2>Ready to Transform Your [Problem Area]?</h2>
       <p>You’ve seen what works and what doesn’t. Now it’s time to take action and finally get the results you deserve.</p>
       <p>With our [Guarantee Type], there’s zero risk—only the opportunity to change your life/business.</p>
       <p>Don’t wait. Join [Offer Name] today and start your journey toward [Desired Outcome].</p>
       <p><strong>Click the button below to get started now!</strong></p>
     </section>`,
-    ``,
-      `Only return valid HTML inside a <html> <body>. No markdown no intro text.`,
-  ].join("\n");
+            ``,
+            `Only return valid HTML inside a <html> <body>. No markdown no intro text.`,
+        ].join("\n");
 
-  const request: DeepSeekRequest = {
-    model: this.defaultModel,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    stream: true,
-    temperature: 0.75,
-    max_tokens: 900,
-  };
+        const request: DeepSeekRequest = {
+            model: this.defaultModel,
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: userPrompt },
+            ],
+            stream: true,
+            temperature: 0.75,
+            max_tokens: 900,
+        };
 
-  return await this.makeStreamingRequest(request, onProgress);
-}
+        return await this.makeStreamingRequest(request, onProgress);
+    }
 
 
 }

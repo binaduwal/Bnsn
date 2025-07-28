@@ -7,6 +7,7 @@ class EmailService extends DeepSeekService {
   async generateEmailStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are an expert email copywriter with deep knowledge of behavioral psychology, marketing funnels, and persuasive writing. You craft high-converting emails for various types such as sales, onboarding, follow-ups, newsletters, cold outreach, and re-engagement. Your goal is to maximize open rates, click-through rates, and conversions — while maintaining a personal, human touch.`;
@@ -74,6 +75,7 @@ class EmailService extends DeepSeekService {
   async generatePromotionalEmailStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are an expert email copywriter specializing in crafting persuasive promotional emails that engage, build trust, and convert subscribers into customers. Your tone is friendly, authentic, and benefit-focused, balancing storytelling with clear calls to action. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;

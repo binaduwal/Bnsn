@@ -8,6 +8,7 @@ import { generateCurrentDateContext } from "../../utils";
      async generatePressReleaseStream(
        blueprintValue: BlueprintValue[],
        projectCategoryValue: ProjectCategoryValue[],
+       _title:string,
        onProgress?: (chunk: string) => void
      ): Promise<string> {
        const systemPrompt = `You are a professional press release writer with expertise in media communication, journalism, public relations, and brand storytelling. You write authoritative, compelling, and newsworthy press releases that grab media attention, establish credibility, and drive traffic to businesses. Your output must be clean, valid inline-styled HTML that starts with <html> and ends with </html> and content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;

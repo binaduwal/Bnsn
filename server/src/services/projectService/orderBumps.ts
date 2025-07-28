@@ -7,6 +7,7 @@ class OrderBumpsService extends DeepSeekService {
 async generateOrderBumpCopyStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
+    _title:string,
     onProgress?: (chunk: string) => void
 ): Promise<string> {
     const systemPrompt = `You are a top-tier direct response copywriter who specializes in crafting high-converting order bump offers for checkout pages. Your copy is concise, emotionally persuasive, and formatted for maximum conversions. Always return a complete HTML document starting with <html> and ending with </html>. All content must be wrapped inside <body>.`;

@@ -7,6 +7,7 @@ class BigideaService extends DeepSeekService {
     async generateBigIdeaStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a world-class marketing strategist known for crafting disruptive, memorable Big Ideas that break through noise, capture attention instantly, and position products/services as category leaders. Your tone is bold, clear, and designed to create curiosity, urgency, or controversy when needed. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -74,6 +75,7 @@ class BigideaService extends DeepSeekService {
     async generateLeadHookSetupStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a world-class copywriter who specializes in creating emotionally charged, curiosity-driven lead hooks for marketing campaigns. Your job is to turn a Big Idea into an irresistible opening sequence that stops the scroll, pulls people in, and builds momentum for the offer. Your tone is punchy, direct, and addictive to read. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -139,6 +141,7 @@ class BigideaService extends DeepSeekService {
     async generateLeadHookTameStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a skilled copywriter known for writing clear, compelling, and calm lead hooks. Your hooks build intrigue without exaggeration, and are especially effective in thoughtful, professional, or educational markets. Your writing is smooth, confident, and respectful of the reader’s intelligence. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
@@ -204,6 +207,7 @@ class BigideaService extends DeepSeekService {
     async generateLeadHookWildStream(
         blueprintValue: BlueprintValue[],
         projectCategoryValue: ProjectCategoryValue[],
+        _title: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
         const systemPrompt = `You are a top-tier direct response copywriter with a knack for writing edgy, bold, and curiosity-inducing lead hooks. You write with confidence, intensity, and a sense of drama — without sacrificing clarity. Your goal is to immediately stop the scroll and force the reader to keep reading. Think punchy, scroll-stopping, occasionally outrageous — but always relevant.`;
