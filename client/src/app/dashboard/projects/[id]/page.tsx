@@ -15,6 +15,19 @@ import {
   Sparkles,
   Zap,
   CheckCircle,
+  TrendingUp,
+  Target,
+  Layers,
+  FileText,
+  Activity,
+  Clock,
+  Users,
+  Star,
+  BarChart3,
+  Lightbulb,
+  Rocket,
+  Palette,
+  Wand2,
 } from "lucide-react";
 import InlineTextEditor from "@/components/ui/InlineTextEditor";
 import {
@@ -25,7 +38,7 @@ import {
 } from "@/services/projectApi";
 import CampaignAccordion from "@/components/CampainAccordion";
 import EditableTitle from "@/components/ui/EditableTitle";
-import { Field } from "@/services/categoryApi";
+import { Field, updateCategoryApi } from "@/services/categoryApi";
 import toast from "react-hot-toast";
 import { updateCategoryValueApi } from "@/services/blueprintApi";
 import { getWordCountApi } from "@/services/authApi";
@@ -143,9 +156,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       response.data?.categoryId[0]?.subCategories[0]?.thirdCategories[0]?._id
     );
     setSelectedCampaign(response.data?.categoryId[0]?.subCategories[0]?.title);
-    setMainTitle(response.data?.categoryId[0]?.title);
+    setMainTitle(response.data?.categoryId[0]?.alias || response.data?.categoryId[0]?.title);
 
-    setCurrentCampaignName(response.data?.categoryId[0]?.title);
+    setCurrentCampaignName(response.data?.categoryId[0]?.alias || response.data?.categoryId[0]?.title);
 
     setBlueprintId(response?.data?.blueprintId._id);
 
@@ -161,10 +174,39 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     setSelectedCategory(id);
   };
 
-  const handleCampaignUpdate = (oldTitle: string, newTitle: string) => {
-    // Update selectedCampaign if it was the one being edited
-    if (selectedCampaign === oldTitle) {
-      setSelectedCampaign(newTitle);
+  const handleCampaignUpdate = async (oldAlias: string, newAlias: string) => {
+    try {
+      // Find the campaign that was updated
+      let campaignToUpdate: any = null;
+      for (const category of categories) {
+        if (category.subCategories) {
+          for (const subCategory of category.subCategories) {
+            if (subCategory.alias === oldAlias || subCategory.title === oldAlias) {
+              campaignToUpdate = subCategory;
+              break;
+            }
+          }
+          if (campaignToUpdate) break;
+        }
+      }
+
+      if (campaignToUpdate) {
+        await updateCategoryApi(campaignToUpdate._id, { alias: newAlias });
+        
+        // Update local state
+        if (selectedCampaign === oldAlias) {
+          setSelectedCampaign(newAlias);
+        }
+        
+        // Refresh the categories to get the updated data
+        await fetchSingleProject();
+        
+        console.log('Campaign alias updated successfully');
+        toast.success('Campaign alias updated successfully');
+      }
+    } catch (error) {
+      console.error('Error updating campaign alias:', error);
+      toast.error('Failed to update campaign alias');
     }
   };
 
@@ -227,7 +269,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
           if (subCategory.thirdCategories) {
             for (const thirdCategory of subCategory.thirdCategories) {
               if (thirdCategory._id === selectedCategory) {
-                return thirdCategory.title || '';
+                return thirdCategory.alias || thirdCategory.title || '';
               }
             }
           }
@@ -588,10 +630,10 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     const cleanContent = contentToShow?.replace(/<[^>]*>/g, '').trim();
     if (!cleanContent && !isAiStreaming) {
       return (
-        <div className="mb-6">
-          <div className="bg-gray-50 border-gray-200 rounded-lg p-6">
+        <div className="mb-8">
+          <div className="bg-white/70 border border-gray-200 rounded-xl p-8 shadow-sm">
             <div className="text-center text-gray-500">
-              <p>No content generated yet. Please try generating again.</p>
+              <p className="text-lg">No content generated yet. Please try generating again.</p>
             </div>
           </div>
         </div>
@@ -600,17 +642,17 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
     return (
       <div className="mb-6">
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-3 mb-4">
           {isAiStreaming && (
-            <div className="flex items-center gap-1 text-blue-600">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-              <span className="text-sm">Generating...</span>
+            <div className="flex items-center gap-2 text-blue-600">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+              <span className="text-base font-medium">Generating...</span>
             </div>
           )}
         </div>
 
-        <div className="bg-gray-50 border-gray-200 rounded-lg">
-          <div className="space-y-10">
+        <div className="bg-white/70 border border-gray-200 rounded-xl shadow-sm">
+          <div className="space-y-8 p-4">
             {isAiStreaming ? (
               // Show streaming content in real-time
               isEmail ? (
@@ -738,18 +780,18 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         </button>
       </div>
       {email.title && (
-        <h2 className="text-xl  font-semibold mb-2">{email.title}</h2>
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">{email.title}</h2>
       )}
 
       {email.subject && (
-        <p className="text-base text-gray-600 mb-1">
-          <strong>Subject:</strong> {email.subject}
+        <p className="text-lg text-gray-700 mb-3 leading-relaxed">
+          <strong className="text-gray-900">Subject:</strong> {email.subject}
         </p>
       )}
 
       {email.preheader && (
-        <p className="text-sm text-gray-600 mb-4">
-          <strong>Preheader:</strong> {email.preheader}
+        <p className="text-base text-gray-600 mb-6 leading-relaxed">
+          <strong className="text-gray-800">Preheader:</strong> {email.preheader}
         </p>
       )}
 
@@ -802,13 +844,14 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   }) => {
     if (!content.trim()) {
       return (
-        <div className="border border-gray-200 rounded-lg p-6 shadow">
+        <div className="border border-gray-200 rounded-xl p-8 shadow-sm bg-white/80">
           <div className="animate-pulse">
-            <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div className="space-y-2">
-              <div className="h-3 bg-gray-200 rounded"></div>
-              <div className="h-3 bg-gray-200 rounded w-5/6"></div>
+            <div className="h-6 bg-gray-300 rounded w-3/4 mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2 mb-6"></div>
+            <div className="space-y-3">
+              <div className="h-4 bg-gray-200 rounded"></div>
+              <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+              <div className="h-4 bg-gray-200 rounded w-4/5"></div>
             </div>
           </div>
         </div>
@@ -819,9 +862,10 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     const cleanContent = cleanHtmlContent(content);
 
     return (
-      <div className="border border-gray-200 rounded-lg p-6 shadow">
-        <div className="prose max-w-none">
+      <div className="border border-gray-200 rounded-xl p-8 shadow-sm bg-white/80">
+        <div className="prose prose-lg max-w-none">
           <div
+            className="text-gray-700 leading-relaxed"
             dangerouslySetInnerHTML={{
               __html: cleanContent + '<span class="animate-pulse">|</span>',
             }}
@@ -837,8 +881,8 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     const cleanContent = cleanHtmlContent(content);
 
     return (
-      <div className="border relative border-gray-200 flex flex-col gap-1 rounded-lg p-6 shadow">
-        <div className="absolute top-0 right-0">
+      <div className="border relative border-gray-200 flex flex-col gap-2 rounded-xl p-8 shadow-sm bg-white/80">
+        <div className="absolute top-4 right-4 z-10">
           <button
             onClick={() => {
               try {
@@ -850,9 +894,10 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                 toast.error("Failed to copy to clipboard");
               }
             }}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+            className="p-3 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors shadow-sm bg-white border border-gray-200"
+            title="Copy content"
           >
-            <Copy className="w-4 h-4" />
+            <Copy className="w-5 h-5" />
           </button>
         </div>
 
@@ -1064,20 +1109,32 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const campaignFields = getSelectedCampaignFields();
 
   return (
-    <div className="bg-gray-50 flex">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex min-h-screen">
       {/* Left Sidebar */}
-      <aside className="w-80 min-h-[calc(100vh-120px)]  bg-white border-r border-gray-200 flex flex-col shadow-sm">
+      <aside className="w-96 min-h-[calc(100vh-60px)] bg-white/70 backdrop-blur-sm border-r border-white/20 flex flex-col shadow-xl">
         {/* Sidebar Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-white/20">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+              <Target className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">Content Studio</div>
+              <div className="text-sm text-gray-600">Project Workspace</div>
+            </div>
+          </div>
           <EditableTitle title={mainTitle} onSave={setMainTitle} />
         </div>
 
         {/* Campaigns Section */}
         <div className="flex-1 p-4 overflow-y-auto">
           <div className="mb-4">
-            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              Campaigns {selectedCampaign}
-            </h3>
+            <div className="flex items-center space-x-2 mb-4">
+              <Layers className="w-4 h-4 text-indigo-600" />
+              <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                Campaign Library
+              </h3>
+            </div>
             <CampaignAccordion
               campaigns={categories}
               onCategoryChange={handleCategoryChange}
@@ -1090,15 +1147,15 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         </div>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t sticky bottom-0 border-gray-200 bg-gray-50">
+        <div className="p-4 border-t border-white/20 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
           <div className="flex gap-2">
-            <button className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-colors">
+            <button className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white/80 border border-gray-200 rounded-xl hover:bg-white hover:border-gray-300 transition-all duration-200 backdrop-blur-sm">
               <Eye className="w-4 h-4 inline mr-2" />
               View All
             </button>
-            <button className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+            <button className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 border-0 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
               <Plus className="w-4 h-4 inline mr-2" />
-              Add
+              Add New
             </button>
           </div>
         </div>
@@ -1107,131 +1164,121 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col">
         {/* Blueprint Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
+        <header className="bg-white/70 backdrop-blur-sm border-b border-white/20 px-6 py-4 shadow-lg">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              <span className="text-sm font-medium text-blue-600">
-                Blueprint: Productivity Course Demo
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
+              <div className="flex items-center space-x-2">
+                <Layers className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Blueprint: Productivity Course Demo
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                Active
+            <div className="flex items-center gap-3">
+              <div className="flex items-center space-x-2 px-3 py-1.5 bg-gradient-to-r from-green-100 to-emerald-100 border border-green-200 text-green-700 text-xs font-semibold rounded-full">
+                <Activity className="w-3 h-3" />
+                <span>Active Project</span>
               </div>
             </div>
           </div>
         </header>
 
         {/* Content Area */}
-        <div className="flex-1  overflow-hidden">
-          <div className="flex flex-col bg-gray-50">
-            {/* Header */}
-            <header className="bg-white border-b border-gray-200 shadow-sm">
-              <div className="px-6 py-4">
+        <div className="flex-1 overflow-hidden">
+          <div className="flex flex-col bg-gradient-to-br from-slate-50/50 via-blue-50/50 to-indigo-50/50">
+            {/* Enhanced Header */}
+            <header className="bg-white/80 backdrop-blur-sm border-b border-white/30 shadow-lg">
+              <div className="px-6 py-6">
                 <div className="flex items-center justify-between">
                   {/* Breadcrumb and Title */}
-                  <div className="flex items-center space-x-3">
-                    <nav className="flex items-center space-x-2 text-sm text-gray-500">
-                      <span>{currentCampaignName}</span>
-                      <ChevronDown className="w-4 h-4 rotate-[-90deg]" />
+                  <div className="flex items-center space-x-4">
+                    <nav className="flex items-center space-x-2 text-sm">
+                      <div className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
+                        <FileText className="w-4 h-4" />
+                        <span className="font-medium">{currentCampaignName}</span>
+                      </div>
+                      <ChevronDown className="w-4 h-4 rotate-[-90deg] text-gray-400" />
                     </nav>
-                    {/* campaign name */}
-                    <div className="flex items-center space-x-2">
+                    
+                    {/* Campaign name editor */}
+                    <div className="flex items-center space-x-3">
                       {isEditing ? (
                         <input
                           type="text"
                           value={currentCampaignName}
-                          onChange={(e) =>
-                            setCurrentCampaignName(e.target.value)
-                          }
+                          onChange={(e) => setCurrentCampaignName(e.target.value)}
                           onKeyDown={handleNameSave}
                           onBlur={handleNameBlur}
-                          className="text-lg font-semibold text-gray-900 bg-transparent border-b-2 border-blue-500 focus:outline-none"
+                          className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent bg-transparent border-b-2 border-blue-500 focus:outline-none"
                           autoFocus
                         />
                       ) : (
                         <h1
-                          className="text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+                          className="text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent cursor-pointer hover:from-blue-600 hover:to-purple-600 transition-all duration-200"
                           onClick={handleNameEdit}
                         >
                           {currentCampaignName}
                         </h1>
                       )}
 
-                      <button
-                        onClick={handleNameEdit}
-                        className="p-1 rounded hover:bg-gray-100 transition-colors"
-                        title="Edit campaign name"
-                      >
-                        <Edit3 className="w-4 h-4 text-gray-400" />
-                      </button>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={handleNameEdit}
+                          className="p-2 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
+                          title="Edit campaign name"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
 
-                      <button
-                        className="p-1 rounded hover:bg-gray-100 transition-colors"
-                        title={isEmailCategory() ? "Preview email" : "Preview content"}
-                      >
-                        <Eye className="w-4 h-4 text-gray-400" />
-                      </button>
+                        <button
+                          className="p-2 rounded-xl hover:bg-purple-50 hover:text-purple-600 transition-all duration-200"
+                          title={isEmailCategory() ? "Preview email" : "Preview content"}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Stats and Actions */}
-                  <div className="flex items-center space-x-6">
-                    <div className="flex items-center space-x-4">
-                      <div className="text-sm text-gray-600">
-                        Words Left:
-                        <span className="font-medium text-blue-600 ml-1">
-                          {stats.wordsLeft.toLocaleString()}
-                        </span>
-                      </div>
-
-                      <div className="w-24 bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${progressPercentage}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                      <ShoppingCart className="w-5 h-5 text-gray-500" />
-                    </button>
-
-                    <button className="p-2 rounded-lg hover:bg-gray-100 transition-colors">
-                      <Settings className="w-5 h-5 text-gray-500" />
-                    </button>
-                  </div>
                 </div>
               </div>
             </header>
 
             {/* Main Content */}
             <main className="flex-1  min-h-[calc(100vh-320px)] overflow-y-auto">
-              {campaignFields.length > 0  ? (
-                <div className="max-w-7xl space-y-3 mx-auto p-3">
+              {campaignFields.length > 0 ? (
+                <div className="max-w-5xl space-y-3 mx-auto p-3">
                   {campaignFields.map((field, index) => (
                     <div
                       key={field._id}
-                      className={`group relative transition-all duration-200`}
+                      className="group relative transition-all duration-300"
                     >
-                      <div className="bg-white border border-gray-200 rounded-xl p-6 hover:border-gray-300 transition-colors">
-                        {/* Header with label and required indicator */}
-                        <div className="flex items-center justify-between mb-4">
+                      <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:border-blue-200 hover:shadow-lg transition-all duration-300 shadow-sm">
+                        {/* Compact Header */}
+                        <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-2">
-                            <label className="text-base font-semibold text-gray-800">
-                              {field.fieldName}
-                            </label>
+                            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                              <Lightbulb className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div>
+                              <label className="text-base font-semibold text-gray-800">
+                                {field.fieldName}
+                              </label>
+                              <div className="text-xs text-gray-500">
+                                {field.fieldType} field
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-400 font-mono">
+                          <div className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded border border-blue-100">
                             #{index + 1}
                           </div>
                         </div>
 
-                        {/* Input Field */}
+                        {/* Compact Input Field */}
                         <div className="relative">
                           {field.fieldType === "text" && (
-                            <div className="relative">
+                            <div className="relative group">
                               <input
                                 type="text"
                                 value={
@@ -1245,173 +1292,249 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                                     e.target.value
                                   )
                                 }
-                                placeholder={`Enter ${field.fieldName.toLowerCase()}`}
-                                className={`w-full px-4 py-3 border-2 rounded-lg text-gray-700 placeholder-gray-400 
-                          transition-all duration-200 focus:outline-none focus:ring-0
-                          border-gray-200 hover:border-gray-300`}
+                                placeholder={`Enter ${field.fieldName.toLowerCase()}...`}
+                                className="w-full px-3 py-2 border rounded-md text-gray-700 placeholder-gray-400 bg-white/50 backdrop-blur-sm
+                                  transition-all duration-300 focus:outline-none focus:ring-1 focus:ring-blue-100
+                                  border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:bg-white
+                                  text-sm font-medium shadow-sm"
                               />
+                              <div className="absolute inset-0 rounded-md bg-gradient-to-r from-blue-400/0 via-purple-400/0 to-pink-400/0 
+                                group-focus-within:from-blue-400/5 group-focus-within:via-purple-400/5 group-focus-within:to-pink-400/5 
+                                transition-all duration-500 pointer-events-none"></div>
                             </div>
                           )}
+                        </div>
+
+                        {/* Compact Field Description */}
+                        <div className="mt-2 p-2 bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-md border border-blue-100/50">
+                          <div className="flex items-center space-x-1 text-xs text-gray-600">
+                            <FileText className="w-3 h-3 text-blue-500" />
+                            <span>Used for AI content generation</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   ))}
 
-                  {/* Generate Button Section with Streaming UI */}
-                  <div className="flex flex-col items-center mt-4 space-y-4">
+                  {/* Compact Generate Button Section */}
+                  <div className="flex flex-col items-center mt-4 space-y-3">
                     {/* Progress Bar (shown when generating) */}
                     {isGenerating && (
-                      <div className="w-full max-w-md">
-                        <div className="flex justify-between text-sm text-gray-600 mb-2">
-                          <span>{streamingMessage}</span>
-                          <span>{streamingProgress}%</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div
-                            className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
-                            style={{ width: `${streamingProgress}%` }}
-                          />
-                        </div>
-                        {isEmailCategory() && currentEmailIndex > 0 && totalEmails > 0 && (
-                          <div className="mt-2 text-xs text-gray-500 text-center">
-                            Email {currentEmailIndex} of {totalEmails}
+                      <div className="w-full max-w-xl">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl p-5 shadow-xl border border-white/50">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                                <Rocket className="w-4 h-4 text-white animate-bounce" />
+                              </div>
+                              <div>
+                                <div className="text-base font-semibold text-gray-800">{streamingMessage}</div>
+                                <div className="text-sm text-gray-500">AI Generation</div>
+                              </div>
+                            </div>
+                            <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                              {streamingProgress}%
+                            </div>
                           </div>
-                        )}
+                          
+                          <div className="relative w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
+                            <div
+                              className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500 ease-out"
+                              style={{ width: `${streamingProgress}%` }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                          </div>
+                          
+                          {isEmailCategory() && currentEmailIndex > 0 && totalEmails > 0 && (
+                            <div className="mt-3 flex items-center justify-center space-x-2 text-sm text-gray-600">
+                              <Users className="w-4 h-4" />
+                              <span>Email {currentEmailIndex} of {totalEmails}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
 
-                    {/* Generate Button */}
-                    <div className="relative mb-8 flex gap-4">
-
+                    {/* Compact Generate Button */}
+                    <div className="relative">
                       <button
                         disabled={isGenerating}
                         onClick={handleGenerateProject}
-                        className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
+                          disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-2.5 rounded-lg 
+                          flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl 
+                          transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed 
+                          disabled:transform-none font-semibold text-sm"
                       >
-                        <div className="flex items-center gap-3">
+                        {/* Button glow effect */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                        
+                        <div className="flex items-center space-x-2 relative z-10">
                           {isGenerating ? (
                             <>
-                              <Loader className="w-6 h-6 animate-spin" />
-                              <span className="text-lg">
-                                {isEmailCategory() ? "Generating Emails..." : "Generating Content..."}
+                              <Loader className="w-4 h-4 animate-spin" />
+                              <span className="font-semibold">
+                                {isEmailCategory() ? "Generating..." : "Creating..."}
                               </span>
                             </>
                           ) : (
                             <>
-                              <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                              <span className="text-lg">Generate Content</span>
+                              <Wand2 className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+                              <span className="font-semibold">Generate Content</span>
                             </>
                           )}
                         </div>
                       </button>
-
-
                     </div>
                   </div>
 
-                  {/* Generated Content Display */}
+                  {/* Enhanced Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
-                      <div className="w-full max-w-7xl mx-auto mt-6 p-6 bg-white rounded-lg border border-gray-200">
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">
-                          Generated Content
-                        </h2>
+                      <div className="w-full max-w-6xl mx-auto mt-8">
+                        <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-white/50 shadow-xl overflow-hidden">
+                          {/* Content Header */}
+                          <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-white/50">
+                            <div className="flex items-center space-x-4">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-100 to-emerald-100 flex items-center justify-center">
+                                <CheckCircle className="w-5 h-5 text-green-600" />
+                              </div>
+                              <div>
+                                <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                                  Generated Content
+                                </h2>
+                                <p className="text-gray-600">
+                                  AI-powered content ready for your review and customization
+                                </p>
+                              </div>
+                            </div>
+                          </div>
 
-                        {/* AI Generated Content */}
-
-                        {(streamingAiContent || generatedContent.aiContent) &&
-                          renderAiContent()}
+                          {/* Content Body */}
+                          <div className="p-6">
+                            {(streamingAiContent || generatedContent.aiContent) &&
+                              renderAiContent()}
+                          </div>
+                        </div>
                       </div>
                     )}
                 </div>
               ) : (
-                <div className="min-h-[70vh]  flex flex-col justify-center items-center p-8">
-
-
-                  {campaignFields.length == 0  && <div className="relative mb-8 flex gap-4">
-
-                    <button
-                      disabled={isGenerating}
-                      onClick={handleGenerateProject}
-                      className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <div className="flex items-center gap-3">
-                       
-                          <>
-                            <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                            <span className="text-lg">Generate Content</span>
-                          </>
+                <div className="min-h-[60vh] flex flex-col justify-center items-center p-6 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
+                  {/* Empty State with Generate Button */}
+                  {campaignFields.length == 0 && (
+                    <div className="text-center mb-8">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Palette className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <h3 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
+                        Ready to Create Amazing Content?
+                      </h3>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto text-sm">
+                        Generate AI-powered content instantly with our advanced content generation system
+                      </p>
                       
-                      </div>
-                    </button>
+                      <button
+                        disabled={isGenerating}
+                        onClick={handleGenerateProject}
+                        className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
+                          disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-lg 
+                          flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl 
+                          transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed 
+                          disabled:transform-none font-semibold text-sm mx-auto"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                        <div className="flex items-center space-x-2 relative z-10">
+                          <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+                          <span>Generate Content</span>
+                        </div>
+                      </button>
+                    </div>
+                  )}
 
-
-                  </div>}
-
-                  {/* Progress Section */}
+                  {/* Enhanced Progress Section */}
                   {generatedContent.aiContent?.length == 0 && isGenerating && (
-                    <div className="w-full max-w-md">
-                      <div className="flex justify-between text-sm text-gray-600 mb-2">
-                        <span>{streamingMessage}</span>
-                        <span>{streamingProgress}%</span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out"
-                          style={{ width: `${streamingProgress}%` }}
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Generated Content */}
-                  {(generatedContent.aiContent || generatedContent.blueprintValues) && (
-                    <div className="w-full max-w-7xl mx-auto">
-                      <div className=" backdrop-blur-sm rounded-2xl transform animate-fadeIn">
-                        {/* <div className="flex items-center gap-3 mb-6">
-                          <div className="p-2 bg-gradient-to-r from-green-400 to-teal-500 rounded-lg">
-                            <CheckCircle className="w-6 h-6 text-white" />
+                    <div className="w-full max-w-5xl mb-8">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-white/50">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                              <Rocket className="w-4 h-4 text-white animate-bounce" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-800">{streamingMessage}</div>
+                              <div className="text-sm text-gray-500">AI Content Generation in Progress</div>
+                            </div>
                           </div>
-                          <h2 className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                            Generated Content
-                          </h2>
-                        </div> */}
-
-                        {(streamingAiContent || generatedContent.aiContent) && renderAiContent()}
+                          <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                            {streamingProgress}%
+                          </div>
+                        </div>
+                        
+                        <div className="relative w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
+                          <div
+                            className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500 ease-out shadow-sm"
+                            style={{ width: `${streamingProgress}%` }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease-out;
-        }
-      `}</style>
+                  {/* Enhanced Generated Content */}
+                  {(generatedContent.aiContent || generatedContent.blueprintValues) && (
+                    <div className="w-full max-w-6xl mx-auto">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-white/50 shadow-xl overflow-hidden">
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-white/50">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-100 to-emerald-100 flex items-center justify-center">
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div>
+                              <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                                Generated Content
+                              </h2>
+                              <p className="text-gray-600">
+                                AI-powered content ready for your review
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="p-6">
+                          {(streamingAiContent || generatedContent.aiContent) && renderAiContent()}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               )}
             </main>
 
-            {/* Footer Actions */}
-            <footer className="bg-white sticky bottom-0   border-t border-gray-200 px-6 py-4">
+            {/* Enhanced Footer Actions */}
+            <footer className="bg-white/80 backdrop-blur-sm sticky bottom-0 border-t border-white/30 px-4 py-3 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={handleSave}
-                    className="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg text-sm font-semibold text-green-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 transition-all duration-200 shadow-sm"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save</span>
+                    <span>Save Progress</span>
                   </button>
+                </div>
+                
+                <div className="flex items-center space-x-3 text-xs text-gray-600">
+                  <div className="flex items-center space-x-1">
+                    <Activity className="w-3 h-3 text-blue-500" />
+                    <span>Auto-save enabled</span>
+                  </div>
+                  <div className="w-px h-3 bg-gray-300"></div>
+                  <div className="flex items-center space-x-1">
+                    <Clock className="w-3 h-3 text-purple-500" />
+                    <span>Last saved: Just now</span>
+                  </div>
                 </div>
               </div>
             </footer>

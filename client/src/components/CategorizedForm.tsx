@@ -3,10 +3,12 @@ import { CategoryValue, updateCategoryValueApi } from "@/services/blueprintApi";
 import { Loader } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { updateCategoryApi } from "@/services/categoryApi";
 
 export type Category = {
   _id: string;
   title: string;
+  alias: string;
   fields: Field[];
   createdAt?: string;
   updatedAt?: string;
@@ -35,6 +37,7 @@ interface CategoryFormProps {
     categoryId: string,
     formData: Record<string, any>
   ) => void;
+  onCategoryUpdate?: (categoryId: string, data: { alias: string }) => void;
 }
 
 export const CategorizedForm: React.FC<CategoryFormProps> = ({
@@ -43,6 +46,7 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
   loading,
   onCategorySubmit,
   categoryValues,
+  onCategoryUpdate,
 }) => {
   const [formData, setFormData] = useState<FormData>({});
   const [errors, setErrors] = useState<Record<string, Record<string, string>>>(
@@ -62,6 +66,7 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
     {}
   );
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+  const [categoryEditingState, setCategoryEditingState] = useState<Record<string, { isEditing: boolean; tempValue: string }>>({});
 
   useEffect(() => {
     const initialFormData: FormData = {};
@@ -327,6 +332,61 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
     setExpandedCategories(prev => ({
       ...prev,
       [categoryId]: !prev[categoryId]
+    }));
+  };
+
+  const handleCategoryAliasEdit = (categoryId: string) => {
+    const category = categories.find(c => c._id === categoryId);
+    if (category) {
+      setCategoryEditingState(prev => ({
+        ...prev,
+        [categoryId]: {
+          isEditing: true,
+          tempValue: category.alias || category.title
+        }
+      }));
+    }
+  };
+
+  const handleCategoryAliasChange = (categoryId: string, value: string) => {
+    setCategoryEditingState(prev => ({
+      ...prev,
+      [categoryId]: {
+        ...prev[categoryId],
+        tempValue: value
+      }
+    }));
+  };
+
+  const handleCategoryAliasSave = async (categoryId: string) => {
+    const editingState = categoryEditingState[categoryId];
+    if (editingState && editingState.tempValue.trim()) {
+      try {
+        await updateCategoryApi(categoryId, { alias: editingState.tempValue.trim() });
+        
+        // Call parent callback to refresh categories
+        if (onCategoryUpdate) {
+          onCategoryUpdate(categoryId, { alias: editingState.tempValue.trim() });
+        }
+        
+        console.log('Category alias updated successfully');
+        toast.success('Category alias updated successfully');
+      } catch (error) {
+        console.error('Error updating category alias:', error);
+        toast.error('Failed to update category alias');
+      }
+    }
+    
+    setCategoryEditingState(prev => ({
+      ...prev,
+      [categoryId]: { isEditing: false, tempValue: '' }
+    }));
+  };
+
+  const handleCategoryAliasCancel = (categoryId: string) => {
+    setCategoryEditingState(prev => ({
+      ...prev,
+      [categoryId]: { isEditing: false, tempValue: '' }
     }));
   };
 
@@ -602,11 +662,42 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
-                            <h2 className={`text-2xl font-bold mb-1 ${
-                              hasData ? 'text-gray-900' : 'text-gray-600'
-                            }`}>
-                              {category.title}
-                            </h2>
+                            <div className="flex items-center gap-2">
+                              {categoryEditingState[category._id]?.isEditing ? (
+                                <input
+                                  type="text"
+                                  value={categoryEditingState[category._id]?.tempValue || category.alias || category.title}
+                                  onChange={(e) => handleCategoryAliasChange(category._id, e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      handleCategoryAliasSave(category._id);
+                                    } else if (e.key === 'Escape') {
+                                      handleCategoryAliasCancel(category._id);
+                                    }
+                                  }}
+                                  onBlur={() => handleCategoryAliasSave(category._id)}
+                                  className={`text-2xl font-bold mb-1 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500 ${
+                                    hasData ? 'text-gray-900' : 'text-gray-600'
+                                  }`}
+                                  autoFocus
+                                />
+                              ) : (
+                                <h2 className={`text-2xl font-bold mb-1 ${
+                                  hasData ? 'text-gray-900' : 'text-gray-600'
+                                }`}>
+                                  {category.alias || category.title}
+                                </h2>
+                              )}
+                              <button
+                                onClick={() => handleCategoryAliasEdit(category._id)}
+                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:text-gray-600 p-1"
+                                title="Edit alias"
+                              >
+                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                              </button>
+                            </div>
                             {!hasData && (
                               <button
                                 onClick={() => toggleCategoryExpansion(category._id)}

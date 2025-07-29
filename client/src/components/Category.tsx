@@ -1,22 +1,59 @@
-import { ChevronDown, HelpCircle, X } from "lucide-react";
+"use client";
+
+import { ChevronDown, HelpCircle, X, Edit2 } from "lucide-react";
+import { useState } from "react";
 
 interface CategoryProps {
-  name: string;
+  id: string;
+  title: string;
+  alias: string;
   isExpanded?: boolean;
   isActive?: boolean;
   onToggle?: () => void;
   onRemove?: () => void;
+  onUpdate?: (id: string, data: { alias: string }) => void;
   children?: React.ReactNode;
 }
 
 export const Category: React.FC<CategoryProps> = ({
-  name,
+  id,
+  title,
+  alias,
   isExpanded = false,
   isActive = false,
   onToggle,
   onRemove,
+  onUpdate,
   children,
 }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(alias);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setEditValue(alias);
+  };
+
+  const handleSave = () => {
+    if (editValue.trim() && editValue !== alias && onUpdate) {
+      onUpdate(id, { alias: editValue.trim() });
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setEditValue(alias);
+    setIsEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave();
+    } else if (e.key === 'Escape') {
+      handleCancel();
+    }
+  };
+
   return (
     <div className="mb-6">
       <div className="flex items-center gap-3 group">
@@ -26,7 +63,19 @@ export const Category: React.FC<CategoryProps> = ({
             isActive ? "underline" : ""
           }`}
         >
-          <h3 className="text-gray-700 font-medium text-base">{name}</h3>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onBlur={handleSave}
+              className="text-gray-700 font-medium text-base border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500"
+              autoFocus
+            />
+          ) : (
+            <h3 className="text-gray-700 font-medium text-base">{alias}</h3>
+          )}
           <ChevronDown
             className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
               isExpanded ? "rotate-180" : ""
@@ -36,6 +85,15 @@ export const Category: React.FC<CategoryProps> = ({
         <div title="Blueprint form" className="max-w-max">
           <HelpCircle className="w-4 h-4 text-gray-400" />
         </div>
+        {!isEditing && onUpdate && (
+          <button
+            onClick={handleEdit}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:text-gray-600"
+            title="Edit alias"
+          >
+            <Edit2 className="w-4 h-4 text-gray-400" />
+          </button>
+        )}
         <button
           onClick={onRemove}
           className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:text-gray-600"

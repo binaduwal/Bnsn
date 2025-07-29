@@ -8,12 +8,18 @@ import { Category } from "../models";
 
 export const createCategory = catchAsync(
   async (req: Request, res: Response, next: any) => {
-    const { title, description, fields, settings, parentId, type } = req.body;
+    const { title, alias, description, fields, settings, parentId, type } = req.body;
 
     // Check for duplicate title within same parent scope
-    const duplicateCategory = await Category.findOne({ title, parentId });
-    if (duplicateCategory) {
+    const duplicateTitle = await Category.findOne({ title, parentId });
+    if (duplicateTitle) {
       return next(createError("Category with this title already exists under the selected parent", 400));
+    }
+
+    // Check for duplicate alias within same parent scope
+    const duplicateAlias = await Category.findOne({ alias, parentId });
+    if (duplicateAlias) {
+      return next(createError("Category with this alias already exists under the selected parent", 400));
     }
 
     let level = 0;
@@ -29,6 +35,7 @@ export const createCategory = catchAsync(
 
     const category = new Category({
       title,
+      alias: alias || title, // Use title as default if alias not provided
       description,
       fields,
       settings,
@@ -39,6 +46,51 @@ export const createCategory = catchAsync(
 
     await category.save();
     res.status(201).json(category);
+  }
+);
+
+export const updateCategory = catchAsync(
+  async (req: Request, res: Response, next: any) => {
+    const { id } = req.params;
+    const { title, alias, description, fields, settings, parentId, type } = req.body;
+
+    const category = await Category.findById(id);
+    if (!category) {
+      return next(createError("Category not found", 404));
+    }
+
+    // Check for duplicate title within same parent scope (excluding current category)
+    if (title && title !== category.title) {
+      const duplicateTitle = await Category.findOne({ title, parentId: parentId || category.parentId, _id: { $ne: id } });
+      if (duplicateTitle) {
+        return next(createError("Category with this title already exists under the selected parent", 400));
+      }
+    }
+
+    // Check for duplicate alias within same parent scope (excluding current category)
+    if (alias && alias !== category.alias) {
+      const duplicateAlias = await Category.findOne({ alias, parentId: parentId || category.parentId, _id: { $ne: id } });
+      if (duplicateAlias) {
+        return next(createError("Category with this alias already exists under the selected parent", 400));
+      }
+    }
+
+    // Update the category
+    const updatedCategory = await Category.findByIdAndUpdate(
+      id,
+      {
+        title: title || category.title,
+        alias: alias || category.alias,
+        description: description || category.description,
+        fields: fields || category.fields,
+        settings: settings || category.settings,
+        parentId: parentId !== undefined ? parentId : category.parentId,
+        type: type || category.type,
+      },
+      { new: true }
+    );
+
+    res.status(200).json(updatedCategory);
   }
 );
 
