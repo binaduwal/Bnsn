@@ -1,8 +1,17 @@
 import { api, errorHandler } from "./api"
 
-export const allCategoryApi = async (type: string, level?: number) => {
+export const allCategoryApi = async (type: string, level?: number, projectId?: string) => {
     try {
-        const res = await api.get(`/category?type=${type}${level !== undefined ? `&level=${level}` : ''}`)
+        const queryParams = new URLSearchParams();
+        queryParams.append('type', type);
+        if (level !== undefined) {
+            queryParams.append('level', level.toString());
+        }
+        if (projectId) {
+            queryParams.append('projectId', projectId);
+        }
+        
+        const res = await api.get(`/category?${queryParams.toString()}`)
         return res.data as { success: boolean, data: Category[] }
     } catch (error) {
         throw errorHandler(error)
@@ -31,6 +40,7 @@ export type Category = {
     _id: string;
     title: string;
     alias: string;
+    effectiveAlias?: string; // The effective alias (custom or default)
     type: string; // If you want to be specific, use: "project" | other possible values
     parentId: string | null;
     description: string;

@@ -17,6 +17,7 @@ import blueprintRoutes from "./routes/blueprints";
 import categoryRoutes from "./routes/category";
 import activitiesRoutes from "./routes/activities";
 import adminRoutes from "./routes/admin";
+import userCategoryAliasRoutes from "./routes/userCategoryAlias";
 
 import aiRoutes from "./routes/ai";
 import campaignRoutes from "./routes/campaigns";
@@ -30,7 +31,7 @@ const PORT = process.env.PORT || 5000;
 
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"),
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"),
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100000"),
   message: "Too many requests from this IP, please try again later.",
   standardHeaders: true,
   legacyHeaders: false,
@@ -71,6 +72,7 @@ app.use("/api/blueprints", blueprintRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/activities", activitiesRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/user-category-aliases", userCategoryAliasRoutes);
 
 app.use("/api/ai", aiRoutes);
 app.use("/api/campaigns", campaignRoutes);

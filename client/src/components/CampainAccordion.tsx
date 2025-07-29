@@ -6,9 +6,6 @@ import { useRouter } from "next/navigation";
 import {
   ChevronDown,
   Settings,
-  Pencil,
-  Check,
-  X,
   Folder,
   FolderOpen,
   Sparkles,
@@ -21,17 +18,20 @@ import {
   Activity
 } from "lucide-react";
 import { Category, SubCategory } from "@/services/projectApi";
+import CategoryAliasEditor from "./CategoryAliasEditor";
 
 interface CampaignAccordionProps {
+  projectId?: string; // Add projectId prop for alias functionality
   campaigns: Category[];
   selectedCampaign: string | null;
   selectedCategory: string | null;
   onCategoryChange: (id: string) => void;
   onCampaignSelect: (id: string) => void;
-  onCampaignUpdate: (oldAlias: string, newAlias: string) => void;
+  onCampaignUpdate?: (oldAlias: string, newAlias: string) => void; // Made optional since CategoryAliasEditor handles user custom aliases
 }
 
 const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
+  projectId,
   campaigns,
   selectedCampaign,
   selectedCategory,
@@ -42,30 +42,10 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
 
 
   const router = useRouter();
-  const [editingCampaign, setEditingCampaign] = useState<string | null>(null);
-  const [editValue, setEditValue] = useState("");
 
   //  useEffect(()=>{
   //   onCategoryChange(campaigns?.[0]?.subCategories[0].thirdCategories[0]?._id)
   //  },[campaigns])
-
-  const startEdit = (campaign: SubCategory) => {
-    setEditingCampaign(campaign.alias || campaign.title);
-    setEditValue(campaign.alias || campaign.title);
-  };
-
-  const cancelEdit = () => {
-    setEditingCampaign(null);
-    setEditValue("");
-  };
-
-  const saveEdit = (oldAlias: string) => {
-    if (editValue.trim() && editValue.trim() !== oldAlias) {
-      onCampaignUpdate(oldAlias, editValue.trim());
-    }
-    setEditingCampaign(null);
-    setEditValue("");
-  };
 
   const handleSettingsClick = (id: string) => {
     router.push(`/dashboard/projects/${id}/settings`);
@@ -76,9 +56,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
   };
 
   const handleHeaderClick = (campaignTitle: string) => {
-    if (editingCampaign === null) {
-      onCampaignSelect(campaignTitle);
-    }
+    onCampaignSelect(campaignTitle);
   };
 
   const isOpen = (campaignTitle: string): boolean => {
@@ -113,21 +91,30 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    {editingCampaign === (campaign.alias || campaign.title) ? (
-                      <input
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            saveEdit(campaign.alias || campaign.title);
-                          } else if (e.key === "Escape") {
-                            cancelEdit();
-                          }
-                        }}
-                        className="w-full border border-blue-300 rounded-lg px-2 py-1 text-sm font-medium bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                        autoFocus
-                      />
+                    {projectId ? (
+                      <div>
+                        <CategoryAliasEditor
+                          projectId={projectId}
+                          categoryId={campaign._id}
+                          defaultAlias={campaign.alias || campaign.title}
+                          effectiveAlias={campaign.effectiveAlias}
+                          onAliasChange={(newAlias) => {
+                            // This is now handled internally by CategoryAliasEditor
+                            // No need to call onCampaignUpdate as it updates the main category alias
+                            console.log('User custom alias changed:', newAlias);
+                          }}
+                          className="text-sm font-semibold text-gray-800 hover:text-blue-600 transition-colors truncate"
+                        />
+                        <div className="flex items-center space-x-2 mt-0.5">
+                          <span className="text-xs text-gray-500">
+                            {campaign.thirdCategories?.length || 0} items
+                          </span>
+                          <div className="flex items-center space-x-1">
+                            <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
+                            <span className="text-xs text-green-600 font-medium">Active</span>
+                          </div>
+                        </div>
+                      </div>
                     ) : (
                       <div>
                         <h2 className="text-sm font-semibold text-gray-800 hover:text-blue-600 transition-colors truncate">
@@ -146,41 +133,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                     )}
                   </div>
 
-                  {editingCampaign === (campaign.alias || campaign.title) ? (
-                    <div className="flex items-center space-x-1">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          saveEdit(campaign.alias || campaign.title);
-                        }}
-                        className="p-1 rounded-md bg-green-50 hover:bg-green-100 border border-green-200 transition-colors"
-                        title="Save"
-                      >
-                        <Check className="w-3 h-3 text-green-600" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          cancelEdit();
-                        }}
-                        className="p-1 rounded-md bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
-                        title="Cancel"
-                      >
-                        <X className="w-3 h-3 text-red-600" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        startEdit(campaign);
-                      }}
-                      className="p-1.5 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-blue-50 transition-all duration-200"
-                      title="Edit campaign"
-                    >
-                      <Pencil className="w-3 h-3 text-blue-500" />
-                    </button>
-                  )}
+                  {/* Edit functionality is now handled by CategoryAliasEditor */}
                 </div>
 
                 <div className="flex items-center space-x-1">
@@ -222,10 +175,10 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
             >
               <div className="px-4 pb-4 space-y-2 bg-gradient-to-b from-blue-50/20 to-purple-50/20">
                 {campaign.thirdCategories.map((third, i) => (
-                  <button
+                  <div
                     key={i}
                     onClick={() => handleCampaignClick(third._id)}
-                    className={`group w-full  relative overflow-hidden transition-all duration-300 rounded-lg ${selectedCategory === third._id
+                    className={`group w-full relative overflow-hidden transition-all duration-300 rounded-lg cursor-pointer ${selectedCategory === third._id
                       ? "bg-gradient-to-r from-blue-100 to-purple-100 border border-blue-300 shadow-md"
                       : "bg-white/80 backdrop-blur-sm border border-gray-200 hover:border-blue-200 hover:shadow-sm hover:bg-white"
                       }`}
@@ -249,12 +202,30 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                         </div>
 
                         <div className="text-left flex-1 min-w-0">
-                          <span className={`text-sm font-medium transition-colors truncate block ${selectedCategory === third._id
-                            ? "text-blue-900"
-                            : "text-gray-800 group-hover:text-blue-700"
-                            }`}>
-                            {third.alias || third.title}
-                          </span>
+                          {projectId ? (
+                            <CategoryAliasEditor
+                              projectId={projectId}
+                              categoryId={third._id}
+                              defaultAlias={third.alias || third.title}
+                              effectiveAlias={third.effectiveAlias}
+                              onAliasChange={(newAlias) => {
+                                // This is now handled internally by CategoryAliasEditor
+                                // No need to call any update function as it updates user-specific custom alias
+                                console.log('Third category custom alias changed:', newAlias);
+                              }}
+                              className={`text-sm font-medium transition-colors truncate block ${selectedCategory === third._id
+                                ? "text-blue-900"
+                                : "text-gray-800 group-hover:text-blue-700"
+                                }`}
+                            />
+                          ) : (
+                            <span className={`text-sm font-medium transition-colors truncate block ${selectedCategory === third._id
+                              ? "text-blue-900"
+                              : "text-gray-800 group-hover:text-blue-700"
+                              }`}>
+                              {third.alias || third.title}
+                            </span>
+                          )}
                           <div className="text-xs text-gray-500 mt-0.5">
                             Template
                           </div>
@@ -277,7 +248,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                         </div>
                       </div>
                     </div>
-                  </button>
+                  </div>
                 ))}
               </div>
             </div>

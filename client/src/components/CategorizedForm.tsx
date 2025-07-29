@@ -4,11 +4,13 @@ import { Loader } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { updateCategoryApi } from "@/services/categoryApi";
+import CategoryAliasEditor from "./CategoryAliasEditor";
 
 export type Category = {
   _id: string;
   title: string;
   alias: string;
+  effectiveAlias?: string; // The effective alias (custom or default)
   fields: Field[];
   createdAt?: string;
   updatedAt?: string;
@@ -29,6 +31,7 @@ type EditingState = Record<
 >;
 
 interface CategoryFormProps {
+  projectId?: string; // Add projectId prop
   categories: Category[];
   loading?: boolean;
   categoryValues: CategoryValue[];
@@ -41,6 +44,7 @@ interface CategoryFormProps {
 }
 
 export const CategorizedForm: React.FC<CategoryFormProps> = ({
+  projectId,
   categories,
   onSubmit,
   loading,
@@ -664,40 +668,33 @@ export const CategorizedForm: React.FC<CategoryFormProps> = ({
                         <div className="flex-1">
                           <div className="flex items-center gap-3">
                             <div className="flex items-center gap-2">
-                              {categoryEditingState[category._id]?.isEditing ? (
-                                <input
-                                  type="text"
-                                  value={categoryEditingState[category._id]?.tempValue || category.alias || category.title}
-                                  onChange={(e) => handleCategoryAliasChange(category._id, e.target.value)}
-                                  onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                      handleCategoryAliasSave(category._id);
-                                    } else if (e.key === 'Escape') {
-                                      handleCategoryAliasCancel(category._id);
-                                    }
+                              {projectId && (
+                                <CategoryAliasEditor
+                                  projectId={projectId}
+                                  categoryId={category._id}
+                                  defaultAlias={category.alias || category.title}
+                                  effectiveAlias={category.effectiveAlias}
+                                  onAliasChange={(newAlias) => {
+                                    // Update the local state to reflect the change
+                                    const updatedCategories = categories.map(cat => 
+                                      cat._id === category._id 
+                                        ? { ...cat, effectiveAlias: newAlias }
+                                        : cat
+                                    );
+                                    // You might want to trigger a re-render or update parent state here
                                   }}
-                                  onBlur={() => handleCategoryAliasSave(category._id)}
-                                  className={`text-2xl font-bold mb-1 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500 ${
+                                  className={`text-2xl font-bold mb-1 ${
                                     hasData ? 'text-gray-900' : 'text-gray-600'
                                   }`}
-                                  autoFocus
                                 />
-                              ) : (
+                              )}
+                              {!projectId && (
                                 <h2 className={`text-2xl font-bold mb-1 ${
                                   hasData ? 'text-gray-900' : 'text-gray-600'
                                 }`}>
                                   {category.alias || category.title}
                                 </h2>
                               )}
-                              <button
-                                onClick={() => handleCategoryAliasEdit(category._id)}
-                                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:text-gray-600 p-1"
-                                title="Edit alias"
-                              >
-                                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </button>
                             </div>
                             {!hasData && (
                               <button

@@ -23,9 +23,7 @@ const navigation = [
   { name: 'Activities', href: '/admin/activities', icon: Activity },
 ];
 
-const bottomNavigation = [
-  { name: 'Settings', href: '/admin/settings', icon: Settings },
-];
+
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -78,30 +76,7 @@ export function Sidebar() {
 
       <div className="p-4 border-t border-gray-100">
         <div className="space-y-1">
-          {bottomNavigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`
-                  group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out
-                  ${isActive
-                    ? 'bg-gradient-to-r from-gray-500 to-gray-600 text-white shadow-lg'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }
-                `}
-              >
-                <item.icon
-                  className={`
-                    mr-3 h-5 w-5 flex-shrink-0 transition-colors duration-200
-                    ${isActive ? 'text-white' : 'text-gray-400 group-hover:text-gray-600'}
-                  `}
-                />
-                {item.name}
-              </Link>
-            );
-          })}
+          
           <button className="w-full group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out text-red-600 hover:bg-red-50 hover:text-red-700">
             <LogOut className="mr-3 h-5 w-5 flex-shrink-0 transition-colors duration-200 text-red-400 group-hover:text-red-600" />
             Logout

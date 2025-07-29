@@ -5,6 +5,8 @@ import {
 } from "../middleware/errorHandler";
 import { Request, Response } from "express";
 import { Category } from "../models";
+import { AuthRequest } from "../middleware/auth";
+import { UserCategoryAliasService } from "../services/userCategoryAliasService";
 
 export const createCategory = catchAsync(
   async (req: Request, res: Response, next: any) => {
@@ -96,14 +98,23 @@ export const updateCategory = catchAsync(
 
 export const getAllCategory = catchAsync(
   async (req: Request, res: Response, next: any) => {
-    const { type, level } = req.query;
+    const { type, level, projectId } = req.query;
 
     if (!type) {
       return next(createError("Category Type is  required", 400));
     }
 
-    const categories = await Category.find({ type, level }).lean();
-
-    res.status(201).json({ success: true, data: categories });
+    // Check if user is authenticated (has user property)
+    const authReq = req as AuthRequest;
+    if (authReq.user && projectId) {
+      // User is authenticated and projectId is provided, get categories with effective aliases
+      const filter: any = { type, level };
+      const categories = await UserCategoryAliasService.getCategoriesWithEffectiveAliases(authReq.user.id, projectId as string, filter);
+      res.status(200).json({ success: true, data: categories });
+    } else {
+      // No user authentication or no projectId, return categories with default aliases
+      const categories = await Category.find({ type, level }).lean();
+      res.status(200).json({ success: true, data: categories });
+    }
   }
 );
