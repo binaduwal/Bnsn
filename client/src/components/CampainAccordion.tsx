@@ -23,15 +23,15 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
   onCampaignSelect,
   onCampaignUpdate,
 }) => {
-  
+
 
   const router = useRouter();
   const [editingCampaign, setEditingCampaign] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
-//  useEffect(()=>{
-//   onCategoryChange(campaigns?.[0]?.subCategories[0].thirdCategories[0]?._id)
-//  },[campaigns])
+  //  useEffect(()=>{
+  //   onCategoryChange(campaigns?.[0]?.subCategories[0].thirdCategories[0]?._id)
+  //  },[campaigns])
 
   const startEdit = (campaign: SubCategory) => {
     setEditingCampaign(campaign.title);
@@ -76,6 +76,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
           key={campaign._id}
           className="bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow"
         >
+
           {/* Accordion Header */}
           <div
             onClick={() => handleHeaderClick(campaign.title)}
@@ -163,9 +164,8 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                   }
                 >
                   <ChevronDown
-                    className={`w-4 h-4 text-gray-400 hover:text-gray-600 transition-transform duration-200 ${
-                      selectedCampaign === campaign.title ? "rotate-180" : ""
-                    }`}
+                    className={`w-4 h-4 text-gray-400 hover:text-gray-600 transition-transform duration-200 ${selectedCampaign === campaign.title ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
               </div>
@@ -174,11 +174,10 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
 
           {/* Accordion Content */}
           <div
-            className={`overflow-hidden   transition-all duration-300 ease-in-out  ${
-              isOpen(campaign.title)
-                ? "max-h-max opacity-100"
-                : "max-h-0 opacity-0"
-            }`}
+            className={`overflow-hidden   transition-all duration-300 ease-in-out  ${isOpen(campaign.title)
+              ? "max-h-max opacity-100"
+              : "max-h-0 opacity-0"
+              }`}
           >
             <div className="px-4 space-y-1.5 pb-4">
               {campaign.thirdCategories.map((third, i) => (
@@ -191,7 +190,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                     <span className={`text-sm text-left font-medium ${selectedCategory === third._id ? "text-blue-900" : "text-gray-800"}`}>
                       {third.title}
                     </span>
-                   <div className={` min-w-4 min-h-4  ${selectedCategory === third._id ? "bg-blue-600" : "bg-gray-400"} rounded-full flex items-center justify-center  transition-colors`}>
+                    <div className={` min-w-4 min-h-4  ${selectedCategory === third._id ? "bg-blue-600" : "bg-gray-400"} rounded-full flex items-center justify-center  transition-colors`}>
                       <div className=" size-2 bg-white rounded-full"></div>
                     </div>
                   </div>

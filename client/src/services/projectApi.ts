@@ -83,7 +83,7 @@ export const generateProjectStreamApi = async (body: {
         const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
         const controller = new AbortController();
-        
+
         // Set a timeout for the request (5 minutes)
         const timeoutId = setTimeout(() => {
             controller.abort();
@@ -214,9 +214,18 @@ interface FieldValue {
     project: string;
     isAiGeneratedContent: string; // contains HTML and comment blocks as a string
     value: {
-      key: string;
-      value: string[]; // array of idea strings
-      _id: string;
+        key: string;
+        value: string[]; // array of idea strings
+        _id: string;
     }[];
     __v: number;
-  };
+};
+
+export const updateProjectCategoryApi = async (id: string, categoryId: string[]) => {
+    try {
+        const res = await api.post('/projects/update-category/' + id, { categoryId })
+        return res.data
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}

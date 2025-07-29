@@ -20,6 +20,7 @@ const SettingSchema = new mongoose.Schema({
 export interface ICategory extends Document {
   title: string;
   description: string;
+  
   fields: {
     fieldName: string;
     fieldType: string;
@@ -43,6 +44,7 @@ const CategorySchema: Schema = new Schema<ICategory>(
       trim: true,
       maxlength: 100,
     },
+
     type: {
       type: String,
       enum: ["blueprint", "project"],

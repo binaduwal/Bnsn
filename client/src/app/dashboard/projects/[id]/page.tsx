@@ -13,8 +13,7 @@ import {
   Plus,
   Loader,
   Sparkles,
-  Zap,
-  CheckCircle,
+
 } from "lucide-react";
 import InlineTextEditor from "@/components/ui/InlineTextEditor";
 import {
@@ -22,6 +21,7 @@ import {
   generateProjectStreamApi,
   generateProjectApi,
   singleProjectApi,
+  updateProjectCategoryApi,
 } from "@/services/projectApi";
 import CampaignAccordion from "@/components/CampainAccordion";
 import EditableTitle from "@/components/ui/EditableTitle";
@@ -30,6 +30,8 @@ import toast from "react-hot-toast";
 import { updateCategoryValueApi } from "@/services/blueprintApi";
 import { getWordCountApi } from "@/services/authApi";
 import { marked } from "marked";
+import { Drawer } from "@/components/ui/Drawer";
+import useCategory from "@/hooks/useCategory";
 
 export interface Campaign {
   id: string;
@@ -45,10 +47,11 @@ interface ContentGeneratorUIProps {
 
 const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const [currentCampaignName, setCurrentCampaignName] = useState(
     "Content Generator"
   );
-
+  const { category } = useCategory({ level: 0, type: "project" })
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [streamingAiContent, setStreamingAiContent] = useState<string>("");
@@ -88,6 +91,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [blueprintId, setBlueprintId] = useState<string | undefined>(undefined);
   const [fieldValues, setFieldValues] = useState<{ [key: string]: string }>({});
+  const [addingCategory, setAddingCategory] = useState<string[]>([]);
 
   const id = use(params).id;
 
@@ -107,6 +111,17 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       console.error("Error fetching word count:", error);
     }
   };
+
+
+  const handleAddSelected = async () => {
+    try {
+      const res = await updateProjectCategoryApi(id, addingCategory);
+      // toast.success("Selected categories added successfully");
+      console.log('response', res)
+    } catch (error: any) {
+      toast.error(error.message || "Failed to add selected categories");
+    }
+  }
 
   useEffect(() => {
     setFieldValues({})
@@ -204,10 +219,10 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               if (thirdCategory._id === selectedCategory) {
                 const title = thirdCategory.title?.toLowerCase() || '';
                 // Check if the category title contains email-related keywords
-                return title.includes('email') || 
-                       title.includes('promotional') || 
-                       title.includes('content email') ||
-                       title.includes('email generator');
+                return title.includes('email') ||
+                  title.includes('promotional') ||
+                  title.includes('content email') ||
+                  title.includes('email generator');
               }
             }
           }
@@ -215,6 +230,21 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       }
     }
     return false;
+  };
+
+  const handleCategoryClick = (catId: string) => {
+    if (addingCategory.includes(catId)) {
+      setAddingCategory(addingCategory.filter(id => id !== catId));
+    } else {
+      setAddingCategory(prev => [...prev, catId]);
+    }
+  };
+  const handleSelectAll = () => {
+    if (addingCategory.filter(cat => !categories.find(cate => cat == cate._id)).length === category.filter(cat => !categories.find(cate => cat._id == cate._id)).length) {
+      setAddingCategory([]);
+    } else {
+      setAddingCategory(category.filter(cat => !categories.find(cate => cat._id == cate._id)).map(cat => cat._id));
+    }
   };
 
   // Function to get the current category title
@@ -254,7 +284,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         if (data.message?.includes("Generating AI content")) {
           setIsAiStreaming(true);
           setStreamingAiContent(""); // Reset streaming content
-          
+
           // Set email-specific tracking only for email categories
           if (isEmailCategory()) {
             setCurrentEmailIndex(0); // Start from 0, will be updated when first email separator is found
@@ -333,7 +363,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
         if (data.data) {
           setGeneratedContent(data.data);
-          
+
           // Update word count if provided
           if (data.data.wordCount) {
             setStats({
@@ -467,7 +497,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
           // Decode the chunk and add to buffer
           const chunk = decoder.decode(value, { stream: true });
           buffer += chunk;
-          
+
           // Throttle UI updates to prevent freezing - only log every 10 chunks
           const now = Date.now();
           if (now - lastUpdateTime > 100 && totalChunks % 10 === 0) { // Update every 100ms and every 10 chunks
@@ -518,22 +548,22 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         }
       } catch (error: any) {
         console.error("Streaming error:", error);
-        
+
         // Retry logic for connection issues
         if (retryCount < maxRetries && (
-          error.message?.includes('timeout') || 
+          error.message?.includes('timeout') ||
           error.message?.includes('network') ||
           error.message?.includes('connection')
         )) {
           retryCount++;
           setStreamingMessage(`Connection failed, retrying (${retryCount}/${maxRetries})...`);
           console.log(`Retrying streaming attempt ${retryCount}/${maxRetries}`);
-          
+
           // Wait 2 seconds before retrying
           await new Promise(resolve => setTimeout(resolve, 2000));
           return attemptStreaming();
         }
-        
+
         throw error; // Re-throw if max retries reached or different error
       }
     };
@@ -542,7 +572,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       await attemptStreaming();
     } catch (error: any) {
       console.error("All streaming attempts failed:", error);
-      
+
       // Try fallback to non-streaming API
       try {
         setStreamingMessage("Streaming failed, trying fallback...");
@@ -552,7 +582,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
           values: fieldValues,
           blueprintId: blueprintId || "",
         });
-        
+
         setGeneratedContent(fallbackResponse);
         setStreamingProgress(100);
         setStreamingMessage("Generation completed successfully!");
@@ -780,8 +810,8 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       .trim();
 
     // Check if content looks like markdown (starts with # or contains markdown patterns)
-    const isMarkdown = /^#\s|^\*\s|^-\s|^>\s|^\d+\.\s/.test(cleanedContent) || 
-                      /\*\*.*\*\*|\*.*\*|\[.*\]\(.*\)/.test(cleanedContent);
+    const isMarkdown = /^#\s|^\*\s|^-\s|^>\s|^\d+\.\s/.test(cleanedContent) ||
+      /\*\*.*\*\*|\*.*\*|\[.*\]\(.*\)/.test(cleanedContent);
 
     if (isMarkdown) {
       try {
@@ -1005,7 +1035,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
     // Filter out emails without meaningful body content
     const filteredEmails = emails.filter((email) => email.body && email.body.length > 10);
-    
+
     // If no emails were parsed, return the content as a single item
     if (filteredEmails.length === 0 && rawHtml.trim()) {
       return [{
@@ -1096,13 +1126,140 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               <Eye className="w-4 h-4 inline mr-2" />
               View All
             </button>
-            <button className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
+
+            <button onClick={() => setDrawerOpen(true)} className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors">
               <Plus className="w-4 h-4 inline mr-2" />
               Add
             </button>
           </div>
         </div>
       </aside>
+
+      <Drawer title="Add Category" isOpen={drawerOpen} height="full" onClose={() => setDrawerOpen(false)}>
+        <div className="bg-white h-full flex flex-col">
+          {/* Header with search and controls */}
+          <div className="p-6 border-b border-gray-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Add Categories</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Select categories to add to your collection
+                </p>
+              </div>
+              <div className="text-sm text-gray-500">
+                {addingCategory.length} selected
+              </div>
+            </div>
+
+
+            {/* Quick actions */}
+            <div className="flex items-center justify-between">
+              <button
+                onClick={handleSelectAll}
+                className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                {addingCategory.length === category.filter(cat => !categories.find(cate => cat._id == cate._id)).length ? 'Deselect All' : 'Select All'}
+              </button>
+              <div className="text-sm text-gray-500">
+                {category.filter(cat => !categories.find(cate => cat._id == cate._id)).length} categories available
+              </div>
+            </div>
+          </div>
+
+          {/* Categories grid */}
+          <div className="flex-1 max-h-[calc(100vh-350px)] overflow-y-auto p-6">
+            {category.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 mx-auto mb-4 text-gray-300">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-1.01-6-2.709M6.343 6.343A8 8 0 004.5 10.5M17.657 6.343A8 8 0 0019.5 10.5" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No categories found</h3>
+                <p className="text-gray-500">Try adjusting your search terms</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {category.filter(cat => !categories.find(cate => cat._id == cate._id)).map((cat) => {
+                  const isSelected = addingCategory.includes(cat._id);
+                  return (
+                    <div
+                      key={cat._id}
+                      onClick={() => handleCategoryClick(cat._id)}
+                      className={`
+                    group relative p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md
+                    ${isSelected
+                          ? 'bg-blue-50 border-blue-300 shadow-sm'
+                          : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+                        }
+                  `}
+                    >
+                      {/* Selection indicator */}
+                      <div className={`
+                    absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200
+                    ${isSelected
+                          ? 'bg-blue-600 border-blue-600'
+                          : 'border-gray-300 group-hover:border-gray-400'
+                        }
+                  `}>
+                        {isSelected && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Content */}
+                      <div className="pr-8">
+                        <h3 className={`
+                      font-semibold text-lg mb-2 transition-colors
+                      ${isSelected ? 'text-blue-900' : 'text-gray-900'}
+                    `}>
+                          {cat.title}
+                        </h3>
+                        <p className={`
+                      text-sm leading-relaxed transition-colors
+                      ${isSelected ? 'text-blue-700' : 'text-gray-600'}
+                    `}>
+                          {cat.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Footer with actions */}
+          <div className="border-t border-gray-200 p-6 bg-gray-50">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-600">
+                {addingCategory.length > 0 && (
+                  <span className="font-medium">
+                    {addingCategory.length} categor{addingCategory.length === 1 ? 'y' : 'ies'} selected
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  disabled={addingCategory.length === 0}
+                  onClick={handleAddSelected}
+                  className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-blue-600 disabled:hover:shadow-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Add Selected ({addingCategory.length})
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Drawer>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col">
@@ -1208,7 +1365,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
             {/* Main Content */}
             <main className="flex-1  min-h-[calc(100vh-320px)] overflow-y-auto">
-              {campaignFields.length > 0  ? (
+              {campaignFields.length > 0 ? (
                 <div className="max-w-7xl space-y-3 mx-auto p-3">
                   {campaignFields.map((field, index) => (
                     <div
@@ -1328,7 +1485,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                 <div className="min-h-[70vh]  flex flex-col justify-center items-center p-8">
 
 
-                  {campaignFields.length == 0  && <div className="relative mb-8 flex gap-4">
+                  {campaignFields.length == 0 && <div className="relative mb-8 flex gap-4">
 
                     <button
                       disabled={isGenerating}
@@ -1336,12 +1493,12 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                       className="py-2 px-4 rounded-lg bg-blue-500 flex items-center justify-center text-white hover:bg-blue-700 duration-200 capitalize max-w-max disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <div className="flex items-center gap-3">
-                       
-                          <>
-                            <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
-                            <span className="text-lg">Generate Content</span>
-                          </>
-                      
+
+                        <>
+                          <Sparkles className="w-6 h-6 group-hover:rotate-12 transition-transform duration-300" />
+                          <span className="text-lg">Generate Content</span>
+                        </>
+
                       </div>
                     </button>
 

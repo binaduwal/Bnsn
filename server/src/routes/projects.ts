@@ -5,14 +5,15 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { Project } from '../models';
 import { createError } from '../middleware/errorHandler';
-import { 
-  allProject, 
-  createProject, 
-  deleteProject, 
-  generateProject, 
+import {
+  allProject,
+  createProject,
+  deleteProject,
+  generateProject,
   generateContinuousProject,
   getAvailableServices,
-  singleProject 
+  singleProject,
+  updateProjectCategory
 } from '../controllers/projectController';
 
 const router = Router();
@@ -68,7 +69,7 @@ router.post('/', authenticateToken, createProject);
 router.post('/generate', authenticateToken, generateProject);
 router.post('/generate-continuous', authenticateToken, validateBody(continuousGenerationSchema), generateContinuousProject);
 router.get('/services', authenticateToken, getAvailableServices);
-
+router.post('/update-category/:id', authenticateToken, updateProjectCategory);
 
 router.get('/:id', authenticateToken, validateParams(projectParamsSchema), singleProject);
 

@@ -157,7 +157,7 @@ export const generateProject = catchAsync(
       const categoryData = await Category.findById(currentCategory).lean();
 
       // Determine main category by finding the root category
-      let mainCategory = categoryData?.title || '' ;
+      let mainCategory = categoryData?.title || '';
       if (categoryData?.parentId) {
         // If this category has a parent, find the root category
         let currentCategory = categoryData;
@@ -174,9 +174,9 @@ export const generateProject = catchAsync(
 
       // Fetch homepage reference only for website pages (excluding homepage generators)
       let homepageReference = '';
-      if (mainCategory === 'Website Pages' && 
-          categoryData?.title !== 'Simple Home Page' && 
-          categoryData?.title !== 'Landing Page Generator') {
+      if (mainCategory === 'Website Pages' &&
+        categoryData?.title !== 'Simple Home Page' &&
+        categoryData?.title !== 'Landing Page Generator') {
         // Find homepage reference from the same project
         const homepageCategoryValue = await CategoryValue.findOne({
           project,
@@ -185,16 +185,16 @@ export const generateProject = catchAsync(
             { 'category': { $in: await Category.find({ title: 'Landing Page Generator' }).distinct('_id') } }
           ]
         }).populate('category').lean();
-        
+
         if (homepageCategoryValue?.homepageReference) {
           homepageReference = homepageCategoryValue.homepageReference;
         }
       }
 
-      let aiGeneratedContent: string | null = await generatedContent({ 
-        blueprintValues, 
-        fieldValue, 
-        res, 
+      let aiGeneratedContent: string | null = await generatedContent({
+        blueprintValues,
+        fieldValue,
+        res,
         title: categoryData?.title || '',
         sendSSE,
         mainCategory,
@@ -228,7 +228,7 @@ export const generateProject = catchAsync(
       // Update user word count
       try {
         const wordCountResult = await updateUserWordCount(req.user.id, aiGeneratedContent, User);
-        
+
         // Stream completion with word count info
         sendSSE({
           type: "complete",
@@ -263,14 +263,14 @@ export const generateProject = catchAsync(
       }
 
       isExistedValue.isAiGeneratedContent = aiGeneratedContent;
-      
+
       // Store homepage reference if this is a homepage generation
       if (categoryData?.title === "Simple Home Page" || categoryData?.title === "Landing Page Generator") {
         isExistedValue.homepageReference = aiGeneratedContent;
       }
-      
+
       await isExistedValue.save();
-      
+
       res.end();
     } catch (error) {
       console.error("Streaming error:", error);
@@ -289,11 +289,11 @@ export const generateContinuousProject = catchAsync(
       return next(createError("User not found in request", 401));
     }
 
-    const { 
-      tasks, 
-      blueprintId, 
-      parallel = false, 
-      maxConcurrent = 3 
+    const {
+      tasks,
+      blueprintId,
+      parallel = false,
+      maxConcurrent = 3
     } = req.body as {
       tasks: Array<{
         title: string;
@@ -378,7 +378,7 @@ export const generateContinuousProject = catchAsync(
         // Get category data to determine main category
         const categoryData = await Category.findById(task.category).lean();
         let mainCategory = categoryData?.title || '';
-        
+
         // Determine main category by finding the root category
         if (categoryData?.parentId) {
           let currentCategory = categoryData;
@@ -487,7 +487,7 @@ export const generateContinuousProject = catchAsync(
       // Update user word count
       try {
         const wordCountResult = await updateUserWordCount(req.user.id, totalWordCount.toString(), User);
-        
+
         // Stream completion with word count info
         sendSSE({
           type: "complete",
@@ -550,7 +550,7 @@ export const getAvailableServices = catchAsync(
     try {
       const services = continuousProjectGenerator.getAvailableServices();
       const categories = continuousProjectGenerator.getCategories();
-      
+
       const servicesByCategory: { [key: string]: string[] } = {};
       categories.forEach(category => {
         servicesByCategory[category] = continuousProjectGenerator.getServicesByCategory(category);
@@ -594,9 +594,9 @@ export const singleProject = catchAsync(
     // If not found by ObjectId, try by name (URL decoded)
     if (!project) {
       const decodedName = decodeURIComponent(id);
-      project = await Project.findOne({ 
-        name: decodedName, 
-        userId: req.user.id 
+      project = await Project.findOne({
+        name: decodedName,
+        userId: req.user.id
       })
         .populate("categoryId")
         .populate("blueprintId", "_id title")
@@ -741,3 +741,43 @@ export const deleteProject = catchAsync(
     });
   }
 );
+
+export const updateProjectCategory = catchAsync(
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(createError("User not found in request", 401));
+    }
+    const { id } = req.params;
+    const { categoryId } = req.body as { categoryId: mongoose.Types.ObjectId[] };
+
+    if (!id) {
+      return next(createError("Project ID is required", 400));
+    }
+    if (!categoryId || !Array.isArray(categoryId) || categoryId.length === 0) {
+      return next(createError("Category ID array is required and must not be empty", 400));
+    }
+    if (id && !mongoose.Types.ObjectId.isValid(id)) {
+      return next(createError("Invalid project ID", 400));
+    }
+
+    if (categoryId.some(catId => !mongoose.Types.ObjectId.isValid(catId))) {
+      return next(createError("Invalid category ID in the array", 400));
+    }
+
+    const project = await Project.findByIdAndUpdate(
+      id,
+      { $addToSet: { categoryId: { $each: categoryId } } },
+      { new: true }
+    ).populate("categoryId").populate("blueprintId", "_id title").lean();
+
+    if (!project) {
+      return next(createError("Project not found", 404));
+    }
+
+    res.json({
+      success: true,
+      data: project,
+    });
+  }
+);
+
