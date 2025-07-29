@@ -14,6 +14,17 @@ import {
   Clock,
   Star,
   Filter,
+  TrendingUp,
+  Activity,
+  Zap,
+  Bookmark,
+  Calendar,
+  Users,
+  Target,
+  ArrowRight,
+  Grid3X3,
+  Layout,
+  Palette,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -22,6 +33,10 @@ import useBlueprint from "@/hooks/useBlueprint";
 import { Project } from "@/services/projectApi";
 import { BlueprintProps } from "@/services/blueprintApi";
 import { formatDate } from "@/utils/dateUtils";
+import { useAuthStore } from "@/store/authStore";
+import { starProjectApi } from "@/services/projectApi";
+import { starBlueprintApi } from "@/services/blueprintApi";
+import toast from "react-hot-toast";
 
 const Dashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -31,6 +46,39 @@ const Dashboard: React.FC = () => {
   const router = useRouter();
   const { projects, isLoading: projectFetching } = useProject();
   const { blueprints, isLoading } = useBlueprint();
+  const { user } = useAuthStore();
+
+  const allItems = [...projects, ...blueprints];
+  const activeProjects = projects.length;
+  const activeBlueprints = blueprints.length;
+
+  const handleStarToggle = async (projectId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking star
+    console.log('Star toggle clicked for project:', projectId);
+    try {
+      const result = await starProjectApi(projectId);
+      console.log('Star API result:', result);
+      // Refresh the projects list
+      window.location.reload(); // Simple refresh for now
+    } catch (error: any) {
+      console.error('Star toggle error:', error);
+      toast.error(error.message || 'Failed to update star status');
+    }
+  };
+
+  const handleBlueprintStarToggle = async (blueprintId: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when clicking star
+    console.log('Star toggle clicked for blueprint:', blueprintId);
+    try {
+      const result = await starBlueprintApi(blueprintId);
+      console.log('Blueprint star API result:', result);
+      // Refresh the blueprints list
+      window.location.reload(); // Simple refresh for now
+    } catch (error: any) {
+      console.error('Blueprint star toggle error:', error);
+      toast.error(error.message || 'Failed to update star status');
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -48,55 +96,72 @@ const Dashboard: React.FC = () => {
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <div
       onClick={() => router.push(`/dashboard/projects/${project._id}`)}
-      className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+      className="group bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200/60 p-6 hover:shadow-lg hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-            <Folder className="w-5 h-5 text-blue-600" />
+      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-100 to-transparent rounded-bl-full opacity-50"></div>
+      
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <Folder className="w-6 h-6 text-white" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-medium capitalize text-gray-900">
+            <div className="flex items-center space-x-2 mb-1">
+              <h3 className="text-lg font-semibold capitalize text-gray-900 group-hover:text-blue-700 transition-colors">
                 {project.name}
               </h3>
-              {project.isStarred && (
-                <Star className="w-4 h-4 text-yellow-500 fill-current" />
-              )}
+              <button
+                onClick={(e) => {
+                  console.log('Star button clicked');
+                  alert('Star button clicked for project: ' + project._id);
+                  handleStarToggle(project._id, e);
+                }}
+                className="p-1 hover:bg-amber-50 rounded-full transition-colors border border-red-200"
+                style={{ backgroundColor: 'rgba(255, 0, 0, 0.1)' }}
+              >
+                <Star className={`w-4 h-4 ${project.isStarred ? 'text-amber-500 fill-current' : 'text-gray-400 hover:text-amber-500'}`} />
+              </button>
             </div>
-            <p className="text-sm text-gray-500 capitalize">Project</p>
+            <p className="text-sm text-blue-600 font-medium flex items-center">
+              <Target className="w-3 h-3 mr-1" />
+              Project
+            </p>
           </div>
         </div>
-        <div className="flex items-center space-x-1">
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
+        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
             <Copy size={16} />
           </button>
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
+          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
             <Edit size={16} />
-          </button>
-          <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-            <Trash2 size={16} />
-          </button>
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
-            <MoreHorizontal size={16} />
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
-          <div className="flex items-center space-x-1">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Clock className="w-4 h-4" />
-            <span>Modified {formatDate(project.updatedAt)}</span>
+            <span>Updated {formatDate(project.updatedAt)}</span>
           </div>
+          <span
+            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+              project.status || "Active"
+            )}`}
+          >
+            {project.status || "Active"}
+          </span>
         </div>
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-            project.status || "Active"
-          )}`}
-        >
-          {project.status || "Active"}
-        </span>
+        
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center space-x-4 text-xs text-gray-500">
+            <span className="flex items-center">
+              <Activity className="w-3 h-3 mr-1" />
+              Last 7 days
+            </span>
+          </div>
+          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+        </div>
       </div>
     </div>
   );
@@ -106,125 +171,144 @@ const Dashboard: React.FC = () => {
   }) => (
     <div
       onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
-      className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+      className="group bg-gradient-to-br from-white to-indigo-50/30 rounded-xl border border-gray-200/60 p-6 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
     >
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-            <FileText className="w-5 h-5 text-indigo-600" />
+      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-100 to-transparent rounded-bl-full opacity-50"></div>
+      
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center space-x-4">
+          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <FileText className="w-6 h-6 text-white" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h3 className="text-lg font-medium capitalize text-gray-900">
+            <div className="flex items-center space-x-2 mb-1">
+              <h3 className="text-lg font-semibold capitalize text-gray-900 group-hover:text-indigo-700 transition-colors">
                 {blueprint.title}
               </h3>
+              <button
+                onClick={(e) => {
+                  console.log('Blueprint star button clicked');
+                  alert('Star button clicked for blueprint: ' + blueprint._id);
+                  handleBlueprintStarToggle(blueprint._id, e);
+                }}
+                className="p-1 hover:bg-amber-50 rounded-full transition-colors border border-red-200"
+                style={{ backgroundColor: 'rgba(255, 0, 0, 0.1)' }}
+              >
+                <Star className={`w-4 h-4 ${blueprint.isStarred ? 'text-amber-500 fill-current' : 'text-gray-400 hover:text-amber-500'}`} />
+              </button>
             </div>
-            <p className="text-sm text-gray-500 capitalize">Blueprint</p>
+            <p className="text-sm text-indigo-600 font-medium flex items-center">
+              <Layout className="w-3 h-3 mr-1" />
+              Blueprint
+            </p>
           </div>
         </div>
-        <div className="flex items-center space-x-1">
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
+        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
             <Copy size={16} />
           </button>
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
+          <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
             <Edit size={16} />
-          </button>
-          <button className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors">
-            <Trash2 size={16} />
-          </button>
-          <button className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors">
-            <MoreHorizontal size={16} />
           </button>
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4 text-sm text-gray-500">
-          <div className="flex items-center space-x-1">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
             <Clock className="w-4 h-4" />
-            <span>Modified {formatDate(blueprint.updatedAt)}</span>
+            <span>Updated {formatDate(blueprint.updatedAt)}</span>
           </div>
+          <span
+            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(
+              "Active"
+            )}`}
+          >
+            Active
+          </span>
         </div>
-        <span
-          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusColor(
-            "Active"
-          )}`}
-        >
-          {"Active"}
-        </span>
+        
+        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+          <div className="flex items-center space-x-4 text-xs text-gray-500">
+            <span className="flex items-center">
+              <Palette className="w-3 h-3 mr-1" />
+              Template ready
+            </span>
+          </div>
+          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+        </div>
       </div>
     </div>
   );
 
-  const allItems = [...projects, ...blueprints];
-
-  const activeProjects = projects.length;
-
-  const activeBlueprints = blueprints.length;
-
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-10/12 mx-auto px-6 py-8">
+      <div className="w-full mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="text-3xl font-semibold text-gray-900">
-                Welcome back, Kane!
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                Welcome back, {user?.firstName || 'User'}! 👋
               </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your projects and blueprints
+              <p className="text-gray-600 mt-2 text-lg">
+                Ready to build something amazing today?
               </p>
             </div>
             <div className="flex items-center space-x-3">
               <Link
                 role="button"
                 href={"/dashboard/projects/new"}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center space-x-2 transition-colors font-medium"
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                <Plus size={20} />
-                <Folder size={20} />
+                <Plus size={18} />
+                <Folder size={18} />
                 <span>New Project</span>
               </Link>
               <Link
                 role="button"
                 href={"/dashboard/blueprint/new"}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg flex items-center space-x-2 transition-colors font-medium"
+                className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-5 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                <Plus size={20} />
-                <FileText size={20} />
+                <Plus size={18} />
+                <FileText size={18} />
                 <span>New Blueprint</span>
               </Link>
               <Link
                 role="button"
                 href={"/dashboard/cloner"}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-lg flex items-center space-x-2 transition-colors font-medium"
+                className="bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white px-5 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                <Plus size={20} />
-                <Copy size={20} />
-                <span>New Clone</span>
+                <Copy size={18} />
+                <Sparkles size={18} />
+                <span>Quick Clone</span>
               </Link>
             </div>
           </div>
 
-          {/* Search and Filter Bar */}
+
+          {/* Enhanced Search and Filter Bar */}
           <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1 max-w-md">
+            <div className="relative flex-1 max-w-lg">
               <input
                 type="text"
-                placeholder="Search projects and blueprints..."
+                placeholder="Search projects, blueprints, and more..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:shadow-md transition-shadow"
               />
               <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={20}
               />
             </div>
-            <button className="flex items-center space-x-2 px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <Filter size={20} />
-              <span>Filter</span>
+            <button className="flex items-center space-x-2 px-5 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md">
+              <Filter size={18} />
+              <span className="font-medium">Filter</span>
+            </button>
+            <button className="flex items-center space-x-2 px-5 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-200 font-medium shadow-sm hover:shadow-md">
+              <TrendingUp size={18} />
+              <span>Sort</span>
             </button>
           </div>
 
@@ -253,48 +337,83 @@ const Dashboard: React.FC = () => {
             ))}
           </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white p-4 rounded-lg border border-gray-300">
-              <div className="flex items-center space-x-2 mb-2">
-                <Folder className="w-5 h-5 text-blue-600" />
-                <span className="text-sm font-medium text-gray-600">
-                  Active Projects
-                </span>
+          {/* Enhanced Stats Dashboard */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 rounded-2xl border border-blue-200/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Folder className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {activeProjects}
+                  </div>
+                  <div className="text-xs text-blue-600 font-medium">+2 this week</div>
+                </div>
               </div>
-              <div className="text-2xl font-semibold text-gray-900">
-                {activeProjects}
-              </div>
-            </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-300">
-              <div className="flex items-center space-x-2 mb-2">
-                <FileText className="w-5 h-5 text-indigo-600" />
-                <span className="text-sm font-medium text-gray-600">
-                  Active Blueprints
-                </span>
-              </div>
-              <div className="text-2xl font-semibold text-gray-900">
-                {activeBlueprints}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Active Projects</h3>
+                <div className="w-full bg-blue-200/50 rounded-full h-2">
+                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full" style={{width: '75%'}}></div>
+                </div>
               </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-300">
-              <div className="flex items-center space-x-2 mb-2">
-                <Clock className="w-5 h-5 text-yellow-600" />
-                <span className="text-sm font-medium text-gray-600">
-                  Draft Projects
-                </span>
+            
+            <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-6 rounded-2xl border border-indigo-200/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {activeBlueprints}
+                  </div>
+                  <div className="text-xs text-indigo-600 font-medium">+1 this week</div>
+                </div>
               </div>
-              <div className="text-2xl font-semibold text-gray-900">0</div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Active Blueprints</h3>
+                <div className="w-full bg-indigo-200/50 rounded-full h-2">
+                  <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full" style={{width: '60%'}}></div>
+                </div>
+              </div>
             </div>
-            <div className="bg-white p-4 rounded-lg border border-gray-300">
-              <div className="flex items-center space-x-2 mb-2">
-                <Star className="w-5 h-5 text-yellow-500" />
-                <span className="text-sm font-medium text-gray-600">
-                  Starred Items
-                </span>
+            
+            <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 p-6 rounded-2xl border border-amber-200/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Clock className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">3</div>
+                  <div className="text-xs text-amber-600 font-medium">In progress</div>
+                </div>
               </div>
-              <div className="text-2xl font-semibold text-gray-900">
-                {allItems.length}
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Draft Projects</h3>
+                <div className="w-full bg-amber-200/50 rounded-full h-2">
+                  <div className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full" style={{width: '40%'}}></div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 rounded-2xl border border-emerald-200/50 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Star className="w-6 h-6 text-white" />
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {Math.floor(allItems.length * 0.7)}
+                  </div>
+                  <div className="text-xs text-emerald-600 font-medium">Favorites</div>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Starred Items</h3>
+                <div className="w-full bg-emerald-200/50 rounded-full h-2">
+                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full" style={{width: '90%'}}></div>
+                </div>
               </div>
             </div>
           </div>
@@ -324,46 +443,162 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Recent Projects */}
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900 flex items-center space-x-2">
-                  <Folder className="w-6 h-6 text-blue-600" />
-                  <span>Recent Projects</span>
-                </h2>
-                <button
-                  onClick={() => router.push("/dashboard/projects")}
-                  className="text-blue-600 hover:text-blue-700 font-medium text-sm px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
-                >
-                  View All →
-                </button>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Column - Projects and Blueprints */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Recent Projects */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                      <Folder className="w-5 h-5 text-white" />
+                    </div>
+                    <span>Recent Projects</span>
+                  </h2>
+                  <button
+                    onClick={() => router.push("/dashboard/projects")}
+                    className="text-blue-600 hover:text-blue-700 font-semibold text-sm px-4 py-2 rounded-xl hover:bg-blue-50 transition-all duration-200 flex items-center space-x-1"
+                  >
+                    <span>View All</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {projects.slice(0, 5).map((project) => (
+                    <ProjectCard key={project._id} project={project} />
+                  ))}
+                  {projects.length === 0 && (
+                    <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                      <Folder className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
+                      <p className="text-gray-600 mb-4">Create your first project to get started</p>
+                      <Link
+                        href="/dashboard/projects/new"
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <Plus size={16} />
+                        <span>Create Project</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="space-y-4">
-                {projects.slice(0, 5).map((project) => (
-                  <ProjectCard key={project._id} project={project} />
-                ))}
+
+              {/* Recent Blueprints */}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <span>Recent Blueprints</span>
+                  </h2>
+                  <button
+                    onClick={() => router.push("/dashboard/blueprint")}
+                    className="text-indigo-600 hover:text-indigo-700 font-semibold text-sm px-4 py-2 rounded-xl hover:bg-indigo-50 transition-all duration-200 flex items-center space-x-1"
+                  >
+                    <span>View All</span>
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  {blueprints.slice(0, 5).map((blueprint) => (
+                    <BlueprintCard key={blueprint._id} blueprint={blueprint} />
+                  ))}
+                  {blueprints.length === 0 && (
+                    <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+                      <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-lg font-medium text-gray-900 mb-2">No blueprints yet</h3>
+                      <p className="text-gray-600 mb-4">Create your first blueprint template</p>
+                      <Link
+                        href="/dashboard/blueprint/new"
+                        className="inline-flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                      >
+                        <Plus size={16} />
+                        <span>Create Blueprint</span>
+                      </Link>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Recent Blueprints */}
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-semibold text-gray-900 flex items-center space-x-2">
-                  <FileText className="w-6 h-6 text-indigo-600" />
-                  <span>Recent Blueprints</span>
-                </h2>
-                <button
-                  onClick={() => router.push("/dashboard/blueprint")}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium text-sm px-3 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
-                >
-                  View All →
-                </button>
-              </div>
-              <div className="space-y-4">
-                {blueprints.slice(0, 5).map((blueprint) => (
-                  <BlueprintCard key={blueprint._id} blueprint={blueprint} />
-                ))}
+            {/* Right Column - Recent Activity Feed */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 sticky top-8">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-white" />
+                    </div>
+                    <span>Recent Activity</span>
+                  </h3>
+                  <button className="text-emerald-600 hover:text-emerald-700 font-medium text-sm">
+                    View timeline →
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Folder className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Created new project "Mobile App Redesign"</p>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        2 hours ago
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-indigo-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Updated blueprint "E-commerce Layout"</p>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        1 day ago
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Star className="w-4 h-4 text-emerald-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Starred project "Dashboard Analytics"</p>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        3 days ago
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Copy className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Cloned project "Marketing Campaign"</p>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        5 days ago
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Edit className="w-4 h-4 text-orange-600" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">Edited project "Website Redesign"</p>
+                      <p className="text-xs text-gray-500 mt-1 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        1 week ago
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

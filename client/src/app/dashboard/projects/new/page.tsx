@@ -335,7 +335,7 @@ const CreateProject: React.FC = () => {
                     <textarea
                       value={projectDetails}
                       onChange={(e) => setProjectDetails(e.target.value)}
-                      placeholder="Tell BNSN about your project. You can provide up to 10,000 words, or if you're feeling lazy, just 30 will do. It's best to include details such as what you're selling and who you'd like to sell it to. You can include details about yourself as well. If you have bonuses, testimonials, and offer details, feed them to BNSN right here."
+                      placeholder="Tell Ai District Copywrite about your project. You can provide up to 10,000 words, or if you're feeling lazy, just 30 will do. It's best to include details such as what you're selling and who you'd like to sell it to. You can include details about yourself as well. If you have bonuses, testimonials, and offer details, feed them to Ai District Copywrite right here."
                       className="w-full h-48 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                       maxLength={10000}
                     />

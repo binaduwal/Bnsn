@@ -69,15 +69,18 @@ function Header() {
         <div className="flex items-center gap-4">
           {/* Word Count Section */}
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-3 px-3 py-2 bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-700/50 shadow-sm">
+            <Link 
+              href="/dashboard/purchase"
+              className="flex items-center space-x-3 px-3 py-2 bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-700/50 shadow-sm hover:bg-gray-700/80 transition-all duration-200 cursor-pointer group"
+            >
               <div className="flex items-center space-x-2">
-                <BarChart3 className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-medium text-gray-300">Words:</span>
+                <BarChart3 className="w-4 h-4 text-blue-400 group-hover:text-blue-300 transition-colors" />
+                <span className="text-sm font-medium text-gray-300 group-hover:text-gray-200 transition-colors">Words:</span>
               </div>
-              <span className="font-bold text-base bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="font-bold text-base bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent group-hover:from-blue-300 group-hover:to-purple-300 transition-all duration-200">
                 {stats.wordsLeft.toLocaleString()}
               </span>
-            </div>
+            </Link>
 
             <div className="w-24 bg-gray-700 rounded-full h-2 shadow-inner">
               <div

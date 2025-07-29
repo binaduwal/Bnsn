@@ -1,6 +1,6 @@
-# BNSN Server
+# Ai District Copywrite Server
 
-Backend server for BNSN application with DeepSeek integration.
+Backend server for Ai District Copywrite application with DeepSeek integration.
 
 ## Setup
 

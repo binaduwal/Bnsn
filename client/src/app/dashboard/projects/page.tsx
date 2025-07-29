@@ -27,6 +27,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { deleteProjectApi, Project } from "@/services/projectApi";
+import { getAllBlueprintApi, BlueprintProps } from "@/services/blueprintApi";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { formatTableDate } from "@/utils/dateUtils";
 import useProject from "@/hooks/useProject";
@@ -37,18 +38,31 @@ const ProjectsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBlueprint, setSelectedBlueprint] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [blueprints, setBlueprints] = useState<BlueprintProps[]>([]);
+  const [isLoadingBlueprints, setIsLoadingBlueprints] = useState(false);
   const router = useRouter();
 
   const { isLoading, projects, fetchAllProjects } = useProject();
 
-  const blueprints = [
-    "All Blueprints",
-    "Viral Content Engine for Women's Activewear",
-    "AI Agency Accelerator",
-    "Your Best Life",
-    "Dr. Hoyos Medical Office",
-    "Outreach for business owners to sell their company",
-  ];
+  // Fetch blueprints on component mount
+  React.useEffect(() => {
+    const fetchBlueprints = async () => {
+      setIsLoadingBlueprints(true);
+      try {
+        const response = await getAllBlueprintApi();
+        if (response.success) {
+          setBlueprints(response.data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch blueprints:', error);
+        toast.error('Failed to load blueprints');
+      } finally {
+        setIsLoadingBlueprints(false);
+      }
+    };
+
+    fetchBlueprints();
+  }, []);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
@@ -192,15 +206,15 @@ const ProjectsPage: React.FC = () => {
 
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
 
-  const handleBlueprintSelect = (blueprint: string) => {
-    setSelectedBlueprint(blueprint === "All Blueprints" ? "" : blueprint);
+  const handleBlueprintSelect = (blueprint: BlueprintProps | null) => {
+    setSelectedBlueprint(blueprint ? blueprint.title : "");
     setIsDropdownOpen(false);
     setCurrentPage(1);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
-      <div className="max-w-7xl  mx-auto px-6 py-8">
+      <div className="w-full  mx-auto px-6 py-8">
         {/* Modern Hero Header */}
         <div className="mb-12">
           <div className="text-center mb-8">
@@ -229,7 +243,7 @@ const ProjectsPage: React.FC = () => {
           </div>
 
           {/* Enhanced Search and Filter Bar */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8 relative z-10">
             <div className="flex flex-col lg:flex-row items-center space-y-4 lg:space-y-0 lg:space-x-6">
               <div className="relative flex-1 max-w-md">
                 <input
@@ -265,24 +279,34 @@ const ProjectsPage: React.FC = () => {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-10 max-h-60 overflow-y-auto mt-2">
-                    {blueprints.map((blueprint, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleBlueprintSelect(blueprint)}
-                        className="w-full px-6 py-4 text-left hover:bg-blue-50 text-gray-700 border-b border-gray-100 last:border-b-0 text-sm font-medium transition-colors"
-                      >
-                        {blueprint}
-                      </button>
-                    ))}
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-10 max-h-60 overflow-y-auto mt-2 z-20">
+                    {/* All Blueprints option */}
+                    <button
+                      onClick={() => handleBlueprintSelect(null)}
+                      className="w-full px-6 py-4 text-left hover:bg-blue-50 text-gray-700 border-b border-gray-100 text-sm font-medium transition-colors"
+                    >
+                      All Blueprints
+                    </button>
+                    {/* Dynamic blueprints */}
+                    {isLoadingBlueprints ? (
+                      <div className="px-6 py-4 text-gray-500 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin inline mr-2" />
+                        Loading blueprints...
+                      </div>
+                    ) : (
+                      blueprints.map((blueprint) => (
+                        <button
+                          key={blueprint._id}
+                          onClick={() => handleBlueprintSelect(blueprint)}
+                          className="w-full px-6 py-4 text-left hover:bg-blue-50 text-gray-700 border-b border-gray-100 last:border-b-0 text-sm font-medium transition-colors"
+                        >
+                          {blueprint.title}
+                        </button>
+                      ))
+                    )}
                   </div>
                 )}
               </div>
-
-              <button className="flex items-center space-x-2 px-6 py-3.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors shadow-sm">
-                <Filter size={18} className="text-purple-600" />
-                <span className="font-medium text-gray-700">Advanced Filters</span>
-              </button>
             </div>
           </div>
 

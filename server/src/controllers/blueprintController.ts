@@ -176,7 +176,7 @@ export const getSingleBlueprint = catchAsync(
     }
 
 
-    console.log('category values', categoryValues)
+    // console.log('category values', categoryValues)
 
     res.status(200).json({
       success: true,
