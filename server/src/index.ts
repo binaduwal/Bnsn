@@ -50,18 +50,7 @@ app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(limiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(
-  fileUpload({
-    createParentPath: true,
-    limits: {
-      fileSize: parseInt(process.env.MAX_FILE_SIZE || "10485760"), // 10MB
-    },
-    abortOnLimit: true,
-    responseOnLimit: "File size limit has been reached",
-    useTempFiles: true,
-    tempFileDir: path.join(uploadDir, "temp"),
-  })
-);
+
 
 app.use("/uploads", express.static(uploadDir));
 

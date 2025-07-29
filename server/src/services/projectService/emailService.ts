@@ -55,7 +55,7 @@ class EmailService extends DeepSeekService {
       `- Do NOT use markdown or explanations — only return the HTML.`,
       `- Separate emails using <!-- Email X --> comments.`,
       ``,
-      `Your response must be clean HTML blocks only. No markdown. No extra explanation.`,
+      `Your response must be clean HTML blocks only. No markdown. No intro text. No extra explanation.`,
     ].join("\n");
 
     const request: DeepSeekRequest = {
@@ -78,7 +78,7 @@ class EmailService extends DeepSeekService {
     _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
-    const systemPrompt = `You are an expert email copywriter specializing in crafting persuasive promotional emails that engage, build trust, and convert subscribers into customers. Your tone is friendly, authentic, and benefit-focused, balancing storytelling with clear calls to action. response should be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
+    const systemPrompt = `You are an expert email copywriter specializing in crafting persuasive promotional emails that engage, build trust, and convert subscribers into customers. Your tone is friendly, authentic, and benefit-focused, balancing storytelling with clear calls to action. response must be start directly from <html> and end with </html>, no intro texts, and content must be inside <body>`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {
@@ -142,6 +142,7 @@ class EmailService extends DeepSeekService {
       `- Use different subject lines, hooks, and approaches for each email`,
       `- Only return valid HTML. No markdown, no intro text, no explanations`,
       `- Separate emails with <!-- Email 1 -->, <!-- Email 2 -->, etc.`,
+      '- No markdown, intro text or explanations — only return the HTML.',
     ].join("\n");
 
     const request: DeepSeekRequest = {
