@@ -3,9 +3,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
-import fileUpload from "express-fileupload";
 import dotenv from "dotenv";
-import path from "path";
 import fs from "fs";
 
 import { connectDatabase } from "./config/database";
@@ -32,8 +30,19 @@ const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"),
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100"),
   message: "Too many requests from this IP, please try again later.",
+  //need to send json response
+  headers: true,
   standardHeaders: true,
   legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({
+      error: "Too many requests",
+      message: "You have exceeded the number of allowed requests. Please try again later.",
+    });
+  },
+
+
+
 });
 
 const uploadDir = process.env.UPLOAD_PATH || "./uploads";
@@ -71,7 +80,6 @@ app.use("/api/blueprints", blueprintRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/activities", activitiesRoutes);
 app.use("/api/admin", adminRoutes);
-
 app.use("/api/ai", aiRoutes);
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/upload", uploadRoutes);
@@ -83,7 +91,6 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     await connectDatabase();
-
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📊 Health check: http://localhost:${PORT}/health`);
