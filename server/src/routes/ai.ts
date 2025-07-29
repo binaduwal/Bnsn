@@ -3,7 +3,6 @@ import Joi from 'joi';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateBody } from '../middleware/validation';
 import { deepSeekService } from '../services/deepseek';
-import { createError } from '../middleware/errorHandler';
 
 const router = Router();
 
@@ -32,8 +31,8 @@ const analyzeProjectSchema = Joi.object({
   projectData: Joi.object().required(),
 });
 
-router.post('/generate-blueprint', 
-  authenticateToken, 
+router.post('/generate-blueprint',
+  authenticateToken,
   validateBody(generateBlueprintSchema),
   async (req: AuthRequest, res, next) => {
     try {
