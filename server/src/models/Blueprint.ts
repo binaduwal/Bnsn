@@ -5,6 +5,7 @@ interface IBlueprint extends Document {
   description: string;
   offerType: string;
   categories: mongoose.Schema.Types.ObjectId[];
+  userId: mongoose.Schema.Types.ObjectId;
 
 }
 
@@ -26,6 +27,11 @@ const BlueprintSchema = new mongoose.Schema<IBlueprint>({
       ref: "Category",
     },
   ],
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
 }, { timestamps: true });
 
 export const Blueprint = mongoose.model<IBlueprint>(

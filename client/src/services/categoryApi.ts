@@ -9,12 +9,28 @@ export const allCategoryApi = async (type: string, level?: number) => {
     }
 }
 
+export const createCategoryApi = async (data: { title: string, alias?: string, description?: string, fields?: Field[], settings?: any, parentId?: string, type: string }) => {
+    try {
+        const res = await api.post('/category', data)
+        return res.data as Category
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}
 
-
+export const updateCategoryApi = async (id: string, data: Partial<Category>) => {
+    try {
+        const res = await api.put(`/category/${id}`, data)
+        return res.data as Category
+    } catch (error) {
+        throw errorHandler(error)
+    }
+}
 
 export type Category = {
     _id: string;
     title: string;
+    alias: string;
     type: string; // If you want to be specific, use: "project" | other possible values
     parentId: string | null;
     description: string;

@@ -8,20 +8,42 @@ import {
   LogOut,
   User,
   X,
+  BarChart3,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { getWordCountApi } from "@/services/authApi";
 
 function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [stats, setStats] = useState({ wordsLeft: 100000, totalWords: 100000 });
   const {user} = useAuthStore();
   const { logout } = useAuthStore();
   const router = useRouter();
   const toggleProfile = () => {
     setIsProfileOpen(!isProfileOpen);
   };
+
+  const fetchWordCount = async () => {
+    try {
+      const response = await getWordCountApi();
+      setStats({
+        wordsLeft: response.data.wordsLeft,
+        totalWords: response.data.totalWords,
+      });
+    } catch (error) {
+      console.error("Error fetching word count:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchWordCount();
+    // Refresh word count every 30 seconds
+    const interval = setInterval(fetchWordCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const logoutFn = () => {
     logout();
@@ -45,6 +67,25 @@ function Header() {
 
         {/* Right Section */}
         <div className="flex items-center gap-4">
+          {/* Word Count Section */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 px-3 py-2 bg-gray-800/80 backdrop-blur-sm rounded-lg border border-gray-700/50 shadow-sm">
+              <div className="flex items-center space-x-2">
+                <BarChart3 className="w-4 h-4 text-blue-400" />
+                <span className="text-sm font-medium text-gray-300">Words:</span>
+              </div>
+              <span className="font-bold text-base bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                {stats.wordsLeft.toLocaleString()}
+              </span>
+            </div>
+
+            <div className="w-24 bg-gray-700 rounded-full h-2 shadow-inner">
+              <div
+                className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500 shadow-sm"
+                style={{ width: `${((stats.totalWords - stats.wordsLeft) / stats.totalWords) * 100}%` }}
+              />
+            </div>
+          </div>
           {/* Search Bar */}
          
 

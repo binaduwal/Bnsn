@@ -19,6 +19,7 @@ const SettingSchema = new mongoose.Schema({
 
 export interface ICategory extends Document {
   title: string;
+  alias: string;
   description: string;
   
   fields: {
@@ -44,7 +45,15 @@ const CategorySchema: Schema = new Schema<ICategory>(
       trim: true,
       maxlength: 100,
     },
-
+    alias: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+      default: function() {
+        return this.title;
+      }
+    },
     type: {
       type: String,
       enum: ["blueprint", "project"],
@@ -68,4 +77,5 @@ const CategorySchema: Schema = new Schema<ICategory>(
 );
 
 CategorySchema.index({ title: 1, parentId: 1, type: 1  });
+CategorySchema.index({ alias: 1, parentId: 1, type: 1  });
 export const Category = mongoose.model<ICategory>("Category", CategorySchema);

@@ -20,7 +20,7 @@ export const createBlueprint = catchAsync(
       return next(createError("Missing required fields", 400));
     }
 
-    const blueprint = new Blueprint({ title, description, offerType });
+    const blueprint = new Blueprint({ title, description, offerType, userId: req.user.id });
     await blueprint.save(); // Save blueprint first to get ID
 
     const usedCategoryIds: mongoose.Schema.Types.ObjectId[] = [];
@@ -60,7 +60,7 @@ export const createBlueprint = catchAsync(
 
       if (Array.isArray(aiGeneratedContent) && aiGeneratedContent.length > 0) {
         console.log(`Processing ${aiGeneratedContent.length} categories...`);
-        
+
         for (const aiCategory of aiGeneratedContent) {
           const {
             title: categoryTitle,
@@ -87,6 +87,7 @@ export const createBlueprint = catchAsync(
           const categoryValue = new CategoryValue({
             category: category._id,
             blueprint: blueprint._id,
+            userId: req.user.id,
             value: fields.map((f: any) => ({
               key: f.fieldName,
               value: f.value || '', // Handle undefined values
@@ -105,12 +106,7 @@ export const createBlueprint = catchAsync(
       blueprint.categories = usedCategoryIds;
       await blueprint.save();
 
-      // Log summary of generated data
-      console.log(`\n=== BLUEPRINT GENERATION SUMMARY ===`);
-      console.log(`Blueprint ID: ${blueprint._id}`);
-      console.log(`Categories processed: ${usedCategoryIds.length}`);
-      console.log(`Total categories available: ${allCategories.length}`);
-      
+
       // Count total fields with data
       let totalFieldsWithData = 0;
       for (const aiCategory of aiGeneratedContent || []) {
@@ -122,18 +118,18 @@ export const createBlueprint = catchAsync(
       console.log(`=====================================\n`);
 
       // Send final success response
-      res.write(`data: ${JSON.stringify({ 
-        type: 'complete', 
+      res.write(`data: ${JSON.stringify({
+        type: 'complete',
         data: blueprint,
-        success: true 
+        success: true
       })}\n\n`);
       res.end();
 
     } catch (aiError) {
       console.error("Error during AI content generation:", aiError);
-      res.write(`data: ${JSON.stringify({ 
-        type: 'error', 
-        message: 'Error during AI content generation' 
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        message: 'Error during AI content generation'
       })}\n\n`);
       res.end();
     }
@@ -145,7 +141,7 @@ export const getAllBlueprint = catchAsync(
       return next(createError("User not found in request", 401));
     }
 
-    const blueprints = await Blueprint.find().sort({ createdAt: -1 }).lean()
+    const blueprints = await Blueprint.find({ userId: req.user.id }).sort({ createdAt: -1 }).lean()
 
     if (!blueprints) {
       return next(createError("No blueprints found", 404))

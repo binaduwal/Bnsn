@@ -113,6 +113,7 @@ export const generateProject = catchAsync(
 
       let isExistedValue = await CategoryValue.findOne({
         project,
+        userId: req.user.id,
         category: currentCategory,
       });
 
@@ -122,6 +123,7 @@ export const generateProject = catchAsync(
         isExistedValue = new CategoryValue({
           category: currentCategory,
           project,
+          userId: req.user.id,
           value: fieldValue,
         });
       }
@@ -134,7 +136,7 @@ export const generateProject = catchAsync(
       });
 
       const blueprintValues = (
-        (await CategoryValue.find({ blueprint: blueprintId })
+        (await CategoryValue.find({ blueprint: blueprintId, userId: req.user.id })
           .populate("category")
           .lean()) as any[]
       ).map((blue) => ({ title: blue.category.title, values: blue.value }));
@@ -774,9 +776,102 @@ export const updateProjectCategory = catchAsync(
       return next(createError("Project not found", 404));
     }
 
+
+    // Extract all category IDs for batch processing
+    const rootCategoryIds = project.categoryId?.map((cat: any) => cat._id) || [];
+
+    // Batch fetch all categories in the hierarchy
+    const [allSubCategories, allThirdCategories, allCategoryValues] = await Promise.all([
+      // Get all subcategories for root categories
+      Category.find({
+        userId: req.user.id,
+        parentId: { $in: rootCategoryIds },
+        type: "project",
+      }).lean(),
+
+      // Get all third-level categories (we'll filter by subcategory IDs after)
+      Category.find({
+        userId: req.user.id,
+        type: "project",
+        parentId: { $exists: true, $ne: null }
+      }).lean(),
+
+      // Get all category values for this project
+      CategoryValue.find({
+        userId: req.user.id,
+        project: project._id,
+      }).lean()
+    ]);
+
+    // Get subcategory IDs for third-level category filtering
+    const subCategoryIds = allSubCategories.map(sub => sub._id);
+
+    // Filter third-level categories to only those belonging to our subcategories
+    const thirdCategories = allThirdCategories.filter(third =>
+      subCategoryIds.some(subId => subId.toString() === third.parentId?.toString())
+    );
+
+    // Create lookup maps for O(1) access
+    const categoryValueMap = new Map();
+    allCategoryValues.forEach(cv => {
+      categoryValueMap.set(cv.category.toString(), cv);
+    });
+
+    const subCategoryMap = new Map();
+    allSubCategories.forEach(sub => {
+      const parentId = sub?.parentId?.toString();
+      if (!subCategoryMap.has(parentId)) {
+        subCategoryMap.set(parentId, []);
+      }
+      subCategoryMap.get(parentId).push(sub);
+    });
+
+    const thirdCategoryMap = new Map();
+    thirdCategories.forEach(third => {
+      const parentId = third?.parentId?.toString();
+      if (!thirdCategoryMap.has(parentId)) {
+        thirdCategoryMap.set(parentId, []);
+      }
+      thirdCategoryMap.get(parentId).push(third);
+    });
+
+    // Build nested category structure using maps
+    const buildCategoryTree = (categories: any[]) => {
+      return categories.map(category => {
+        const categoryId = category._id.toString();
+        const subCategories = subCategoryMap.get(categoryId) || [];
+
+        const categoryWithChildren = {
+          ...category,
+          subCategories: subCategories.map((subCategory: any) => {
+            const subCategoryId = subCategory._id.toString();
+            const thirdCategoriesForSub = thirdCategoryMap.get(subCategoryId) || [];
+
+            return {
+              ...subCategory,
+              thirdCategories: thirdCategoriesForSub.map((thirdCategory: any) => ({
+                ...thirdCategory,
+                fieldValue: categoryValueMap.get(thirdCategory._id.toString()) || null,
+              })),
+              fieldValue: categoryValueMap.get(subCategoryId) || null,
+            };
+          }),
+          fieldValue: categoryValueMap.get(categoryId) || null,
+        };
+
+        return categoryWithChildren;
+      });
+    };
+
+    const responseData = {
+      ...project,
+      categoryId: buildCategoryTree(project.categoryId || []),
+    };
+
+
     res.json({
       success: true,
-      data: project,
+      data: responseData,
     });
   }
 );

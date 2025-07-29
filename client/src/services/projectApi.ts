@@ -80,7 +80,7 @@ export const generateProjectStreamApi = async (body: {
 }) => {
     const token = Cookies.get("token")
     try {
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002';
 
         const controller = new AbortController();
 
@@ -168,6 +168,7 @@ export interface Project {
 export interface ThirdCategory {
     _id: string;
     title: string;
+    alias: string;
     type: string;
     parentId: string;
     description: string;
@@ -182,6 +183,7 @@ export interface ThirdCategory {
 export interface SubCategory {
     _id: string;
     title: string;
+    alias: string;
     type: string;
     parentId: string;
     description: string;
@@ -197,6 +199,7 @@ export interface SubCategory {
 export interface Category {
     _id: string;
     title: string;
+    alias: string;
     type: string;
     parentId: string | null;
     description: string;
