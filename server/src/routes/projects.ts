@@ -5,6 +5,7 @@ import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { validateBody, validateParams, validateQuery } from '../middleware/validation';
 import { Project } from '../models';
 import { createError } from '../middleware/errorHandler';
+import { ActivityService } from '../services/activityService';
 import {
   allProject,
   createProject,
@@ -124,8 +125,12 @@ router.put('/:id/star', authenticateToken, validateParams(projectParamsSchema), 
       return next(createError('Project not found', 404));
     }
 
+    const wasStarred = project.isStarred;
     project.isStarred = !project.isStarred;
     await project.save();
+
+    // Log activity
+    await ActivityService.logProjectStarred(req.user.id, project.name, project._id as string, project.isStarred);
 
     res.json({
       success: true,

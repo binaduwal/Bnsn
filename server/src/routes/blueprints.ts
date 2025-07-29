@@ -13,6 +13,7 @@ import { CategoryValue } from "../models/CategoryValue";
 import { createError } from "../middleware/errorHandler";
 import { createBlueprint, deleteBlueprint, getAllBlueprint, getSingleBlueprint } from "../controllers/blueprintController";
 import { deepSeekService } from "../services/deepseek";
+import { ActivityService } from "../services/activityService";
 
 const router = Router();
 
@@ -179,8 +180,12 @@ router.put("/:id/star", authenticateToken, validateParams(blueprintParamsSchema)
       return next(createError("Blueprint not found", 404));
     }
 
+    const wasStarred = blueprint.isStarred;
     blueprint.isStarred = !blueprint.isStarred;
     await blueprint.save();
+
+    // Log activity
+    await ActivityService.logBlueprintStarred(req.user.id, blueprint.title, blueprint._id as string, blueprint.isStarred);
 
     res.json({
       success: true,

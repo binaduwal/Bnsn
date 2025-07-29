@@ -36,6 +36,7 @@ import { formatDate } from "@/utils/dateUtils";
 import { useAuthStore } from "@/store/authStore";
 import { starProjectApi } from "@/services/projectApi";
 import { starBlueprintApi } from "@/services/blueprintApi";
+import useActivities from "@/hooks/useActivities";
 import toast from "react-hot-toast";
 
 const Dashboard: React.FC = () => {
@@ -46,6 +47,7 @@ const Dashboard: React.FC = () => {
   const router = useRouter();
   const { projects, isLoading: projectFetching } = useProject();
   const { blueprints, isLoading } = useBlueprint();
+  const { activities, isLoading: activitiesLoading } = useActivities(5);
   const { user } = useAuthStore();
 
   const allItems = [...projects, ...blueprints];
@@ -93,6 +95,52 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'project_created':
+      case 'project_updated':
+      case 'project_deleted':
+        return <Folder className="w-4 h-4 text-blue-600" />;
+      case 'project_starred':
+        return <Star className="w-4 h-4 text-amber-600" />;
+      case 'blueprint_created':
+      case 'blueprint_updated':
+      case 'blueprint_deleted':
+        return <FileText className="w-4 h-4 text-indigo-600" />;
+      case 'blueprint_starred':
+        return <Star className="w-4 h-4 text-amber-600" />;
+      case 'project_generated':
+        return <Zap className="w-4 h-4 text-green-600" />;
+      case 'blueprint_cloned':
+        return <Copy className="w-4 h-4 text-purple-600" />;
+      default:
+        return <Activity className="w-4 h-4 text-gray-600" />;
+    }
+  };
+
+  const getActivityBgColor = (type: string) => {
+    switch (type) {
+      case 'project_created':
+      case 'project_updated':
+      case 'project_deleted':
+        return 'bg-blue-100';
+      case 'project_starred':
+        return 'bg-amber-100';
+      case 'blueprint_created':
+      case 'blueprint_updated':
+      case 'blueprint_deleted':
+        return 'bg-indigo-100';
+      case 'blueprint_starred':
+        return 'bg-amber-100';
+      case 'project_generated':
+        return 'bg-green-100';
+      case 'blueprint_cloned':
+        return 'bg-purple-100';
+      default:
+        return 'bg-gray-100';
+    }
+  };
+
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <div
       onClick={() => router.push(`/dashboard/projects/${project._id}`)}
@@ -112,8 +160,6 @@ const Dashboard: React.FC = () => {
               </h3>
               <button
                 onClick={(e) => {
-                  console.log('Star button clicked');
-                  alert('Star button clicked for project: ' + project._id);
                   handleStarToggle(project._id, e);
                 }}
                 className="p-1 hover:bg-amber-50 rounded-full transition-colors border border-red-200"
@@ -187,8 +233,6 @@ const Dashboard: React.FC = () => {
               </h3>
               <button
                 onClick={(e) => {
-                  console.log('Blueprint star button clicked');
-                  alert('Star button clicked for blueprint: ' + blueprint._id);
                   handleBlueprintStarToggle(blueprint._id, e);
                 }}
                 className="p-1 hover:bg-amber-50 rounded-full transition-colors border border-red-200"
@@ -348,13 +392,20 @@ const Dashboard: React.FC = () => {
                   <div className="text-2xl font-bold text-gray-900">
                     {activeProjects}
                   </div>
-                  <div className="text-xs text-blue-600 font-medium">+2 this week</div>
+                  <div className="text-xs text-blue-600 font-medium">
+                    {projects.filter(p => p.status === 'Published').length} published
+                  </div>
                 </div>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Active Projects</h3>
                 <div className="w-full bg-blue-200/50 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full" style={{width: '75%'}}></div>
+                  <div 
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full" 
+                    style={{
+                      width: `${activeProjects > 0 ? (projects.filter(p => p.status === 'Published').length / activeProjects) * 100 : 0}%`
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -368,13 +419,20 @@ const Dashboard: React.FC = () => {
                   <div className="text-2xl font-bold text-gray-900">
                     {activeBlueprints}
                   </div>
-                  <div className="text-xs text-indigo-600 font-medium">+1 this week</div>
+                  <div className="text-xs text-indigo-600 font-medium">
+                    {blueprints.filter(b => b.isStarred).length} starred
+                  </div>
                 </div>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Active Blueprints</h3>
                 <div className="w-full bg-indigo-200/50 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full" style={{width: '60%'}}></div>
+                  <div 
+                    className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full" 
+                    style={{
+                      width: `${activeBlueprints > 0 ? (blueprints.filter(b => b.isStarred).length / activeBlueprints) * 100 : 0}%`
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -385,14 +443,21 @@ const Dashboard: React.FC = () => {
                   <Clock className="w-6 h-6 text-white" />
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-gray-900">3</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {projects.filter(p => p.status === 'Draft').length}
+                  </div>
                   <div className="text-xs text-amber-600 font-medium">In progress</div>
                 </div>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Draft Projects</h3>
                 <div className="w-full bg-amber-200/50 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full" style={{width: '40%'}}></div>
+                  <div 
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full" 
+                    style={{
+                      width: `${activeProjects > 0 ? (projects.filter(p => p.status === 'Draft').length / activeProjects) * 100 : 0}%`
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -404,7 +469,7 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gray-900">
-                    {Math.floor(allItems.length * 0.7)}
+                    {projects.filter(p => p.isStarred).length + blueprints.filter(b => b.isStarred).length}
                   </div>
                   <div className="text-xs text-emerald-600 font-medium">Favorites</div>
                 </div>
@@ -412,7 +477,12 @@ const Dashboard: React.FC = () => {
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Starred Items</h3>
                 <div className="w-full bg-emerald-200/50 rounded-full h-2">
-                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full" style={{width: '90%'}}></div>
+                  <div 
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full" 
+                    style={{
+                      width: `${allItems.length > 0 ? ((projects.filter(p => p.isStarred).length + blueprints.filter(b => b.isStarred).length) / allItems.length) * 100 : 0}%`
+                    }}
+                  ></div>
                 </div>
               </div>
             </div>
@@ -422,25 +492,45 @@ const Dashboard: React.FC = () => {
         {/* Content Grid */}
         {searchQuery || activeTab !== "all" ? (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold text-gray-900">
-                {searchQuery
-                  ? `Search Results 0`
-                  : activeTab === "projects"
-                  ? "All Projects"
-                  : "All Blueprints"}
-              </h2>
-              <div className="text-sm text-gray-600">0 items found</div>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-              {projects.map((item, i) => (
-                <ProjectCard key={i} project={item} />
-              ))}
+            {(() => {
+              const filteredProjects = searchQuery 
+                ? projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                : activeTab === "projects" 
+                ? projects 
+                : [];
+              
+              const filteredBlueprints = searchQuery 
+                ? blueprints.filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()))
+                : activeTab === "blueprints" 
+                ? blueprints 
+                : [];
+              
+              const totalItems = filteredProjects.length + filteredBlueprints.length;
+              
+              return (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-semibold text-gray-900">
+                      {searchQuery
+                        ? `Search Results (${totalItems})`
+                        : activeTab === "projects"
+                        ? "All Projects"
+                        : "All Blueprints"}
+                    </h2>
+                    <div className="text-sm text-gray-600">{totalItems} items found</div>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                    {filteredProjects.map((item, i) => (
+                      <ProjectCard key={i} project={item} />
+                    ))}
 
-              {blueprints.map((item, i) => (
-                <BlueprintCard key={i} blueprint={item} />
-              ))}
-            </div>
+                    {filteredBlueprints.map((item, i) => (
+                      <BlueprintCard key={i} blueprint={item} />
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -538,66 +628,38 @@ const Dashboard: React.FC = () => {
                   </button>
                 </div>
                 <div className="space-y-4">
-                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Folder className="w-4 h-4 text-blue-600" />
+                  {activitiesLoading ? (
+                    // Loading skeleton
+                    [...Array(5)].map((_, i) => (
+                      <div key={i} className="flex items-start space-x-4 p-3 rounded-lg">
+                        <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
+                        </div>
+                      </div>
+                    ))
+                  ) : activities.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Activity className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500">No recent activity</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Created new project "Mobile App Redesign"</p>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        2 hours ago
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <FileText className="w-4 h-4 text-indigo-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Updated blueprint "E-commerce Layout"</p>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        1 day ago
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Star className="w-4 h-4 text-emerald-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Starred project "Dashboard Analytics"</p>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        3 days ago
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Copy className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Cloned project "Marketing Campaign"</p>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        5 days ago
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                    <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Edit className="w-4 h-4 text-orange-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">Edited project "Website Redesign"</p>
-                      <p className="text-xs text-gray-500 mt-1 flex items-center">
-                        <Calendar className="w-3 h-3 mr-1" />
-                        1 week ago
-                      </p>
-                    </div>
-                  </div>
+                  ) : (
+                    activities.map((activity) => (
+                      <div key={activity._id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className={`w-8 h-8 ${getActivityBgColor(activity.type)} rounded-full flex items-center justify-center flex-shrink-0`}>
+                          {getActivityIcon(activity.type)}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-xs text-gray-500 mt-1 flex items-center">
+                            <Calendar className="w-3 h-3 mr-1" />
+                            {formatDate(activity.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
