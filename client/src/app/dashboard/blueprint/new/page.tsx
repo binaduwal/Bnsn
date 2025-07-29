@@ -97,16 +97,16 @@ const CreateBlueprint: React.FC = () => {
           />
         </div>
 
-        {/* Feed BNSN */}
+        {/* Feed Ai District Copywrite */}
         <div className="mb-6">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Feed BNSN
+            Feed Ai District Copywrite
           </label>
           <div className="relative">
             <textarea
               value={feedBnsn}
               onChange={(e) => setFeedBnsn(e.target.value)}
-              placeholder="Tell BNSN about your project. You can provide up to 10,000 words, or if you're feeling lazy, just 30 will do. It's best to include details such as what you're selling and who you'd like to sell it to. You can include details about yourself as well. If you have bonuses, testimonials, and offer details, feed them to BNSN right here."
+              placeholder="Tell Ai District Copywrite about your project. You can provide up to 10,000 words, or if you're feeling lazy, just 30 will do. It's best to include details such as what you're selling and who you'd like to sell it to. You can include details about yourself as well. If you have bonuses, testimonials, and offer details, feed them to Ai District Copywrite right here."
               className="w-full h-64 px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               maxLength={10000}
             />

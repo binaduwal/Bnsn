@@ -25,6 +25,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.ico" />
+        <title>AI Copywriter</title>
+        <meta name="description" content="AI Copywriter" />
+        <meta name="keywords" content="AI, Copywriter" />
+        <meta name="author" content="AI Copywriter" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="robots" content="index, follow" />
+        <meta name="googlebot" content="index, follow" />
+        <meta name="bingbot" content="index, follow" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} relative antialiased`}
       >

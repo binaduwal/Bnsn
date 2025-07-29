@@ -1,7 +1,7 @@
 {
   "name": "bnsn-server",
   "version": "1.0.0",
-  "description": "Backend server for BNSN application with DeepSeek integration",
+  "description": "Backend server for Ai District Copywrite application with DeepSeek integration",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -10,10 +10,12 @@
     "lint": "eslint src --ext .ts",
     "test": "jest",
     "migrate:word-count": "tsx src/scripts/migrateWordCount.ts",
-    "migrate:alias": "tsx src/scripts/migrateAlias.ts"
+    "migrate:alias": "tsx src/scripts/migrateAlias.ts",
+    "test:payment": "tsx src/scripts/testPayment.ts"
   },
   "dependencies": {
     "@types/mongoose": "^5.11.96",
+    "@types/stripe": "^8.0.416",
     "axios": "^1.6.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -27,6 +29,7 @@
     "mongoose": "^8.16.3",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
+    "stripe": "^18.3.0",
     "uuid": "^9.0.1"
   },
   "devDependencies": {

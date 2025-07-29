@@ -7,9 +7,12 @@ import {
   validateParams,
   validateQuery,
 } from "../middleware/validation";
-import { Category as Blueprint } from "../models";
+import { Blueprint } from "../models/Blueprint";
+import { Category } from "../models";
+import { CategoryValue } from "../models/CategoryValue";
 import { createError } from "../middleware/errorHandler";
 import { createBlueprint, deleteBlueprint, getAllBlueprint, getSingleBlueprint } from "../controllers/blueprintController";
+import { deepSeekService } from "../services/deepseek";
 
 const router = Router();
 
@@ -17,6 +20,11 @@ const createBlueprintSchema = Joi.object({
   title: Joi.string().required().min(1).max(200),
   description: Joi.string().required().min(10).max(5000),
   offerType: Joi.string().required().min(2).max(100),
+});
+
+const cloneBlueprintSchema = Joi.object({
+  userCopy: Joi.string().required().min(1).max(10000),
+  customTitle: Joi.string().optional().min(1).max(200),
 });
 
 const updateBlueprintSchema = Joi.object({
@@ -152,6 +160,193 @@ router.delete(
     }
   }
 );
+
+router.put("/:id/star", authenticateToken, validateParams(blueprintParamsSchema), async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user) {
+      return next(createError("User not found in request", 401));
+    }
+
+    const { id } = req.params;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return next(createError("Invalid blueprint ID", 400));
+    }
+
+    const blueprint = await Blueprint.findOne({ _id: id, userId: req.user.id });
+
+    if (!blueprint) {
+      return next(createError("Blueprint not found", 404));
+    }
+
+    blueprint.isStarred = !blueprint.isStarred;
+    await blueprint.save();
+
+    res.json({
+      success: true,
+      data: blueprint,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post("/:id/clone", authenticateToken, validateParams(blueprintParamsSchema), validateBody(cloneBlueprintSchema), async (req: AuthRequest, res, next) => {
+  try {
+    if (!req.user) {
+      return next(createError("User not found in request", 401));
+    }
+
+    const { id } = req.params;
+    const { userCopy, customTitle } = req.body;
+
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return next(createError("Invalid blueprint ID", 400));
+    }
+
+    // Find the original blueprint
+    const originalBlueprint = await Blueprint.findOne({
+      _id: id,
+      userId: req.user.id,
+    }).lean();
+
+    if (!originalBlueprint) {
+      return next(createError("Blueprint not found", 404));
+    }
+
+    // Create the cloned blueprint first
+    const clonedBlueprint = new Blueprint({
+      title: customTitle || `Cloned: ${originalBlueprint.title}`,
+      description: `Cloned from ${originalBlueprint.title} with custom modifications.\n\nUser's Copy:\n${userCopy}\n\nOriginal Blueprint: ${originalBlueprint.title}\nCloned at: ${new Date().toLocaleString()}`,
+      offerType: originalBlueprint.offerType,
+      categories: originalBlueprint.categories || [],
+      userId: req.user.id,
+      isStarred: false,
+    });
+
+    await clonedBlueprint.save();
+
+    // Set up SSE headers for streaming
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control',
+    });
+
+    try {
+      // Get all blueprint categories
+      const allCategories = await Category.find({ type: "blueprint" });
+
+      if (allCategories.length === 0) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: 'No blueprint categories found' })}\n\n`);
+        res.end();
+        return;
+      }
+
+      // Use DeepSeek to process the user's copy and generate enhanced content
+      const aiGeneratedContent = await deepSeekService.generateBlueprint(
+        userCopy, // Use user's copy instead of original description
+        originalBlueprint.offerType,
+        allCategories,
+        (chunk: string) => {
+          // Send progress chunk to client
+          res.write(`data: ${JSON.stringify({ type: 'progress', content: chunk })}\n\n`);
+        }
+      );
+
+      console.log("AI Generated Content for Clone:", JSON.stringify(aiGeneratedContent, null, 2));
+
+      if (!aiGeneratedContent) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: 'DeepSeek API is unreachable' })}\n\n`);
+        res.end();
+        return;
+      }
+
+      if (Array.isArray(aiGeneratedContent) && aiGeneratedContent.length > 0) {
+        console.log(`Processing ${aiGeneratedContent.length} categories for clone...`);
+
+        const usedCategoryIds: mongoose.Schema.Types.ObjectId[] = [];
+
+        for (const aiCategory of aiGeneratedContent) {
+          const {
+            title: categoryTitle,
+            description: categoryDescription,
+            fields,
+          } = aiCategory;
+
+          console.log(`Processing category: ${categoryTitle} with ${fields?.length || 0} fields`);
+
+          // Find existing category
+          const category = await Category.findOne({
+            title: categoryTitle,
+            type: "blueprint"
+          });
+
+          if (!category) {
+            console.warn(`Category not found: ${categoryTitle}`);
+            continue;
+          }
+
+          usedCategoryIds.push(category._id as mongoose.Schema.Types.ObjectId);
+
+          // Create CategoryValue document for the cloned blueprint
+          const categoryValue = new CategoryValue({
+            category: category._id,
+            blueprint: clonedBlueprint._id,
+            userId: req.user.id,
+            value: fields.map((f: any) => ({
+              key: f.fieldName,
+              value: f.value || '',
+            })),
+          });
+
+          console.log(`Saving category value for ${categoryTitle} with ${fields.length} fields`);
+          await categoryValue.save();
+        }
+
+        // Update cloned blueprint with used category IDs
+        clonedBlueprint.categories = usedCategoryIds;
+        await clonedBlueprint.save();
+
+        // Count total fields with data
+        let totalFieldsWithData = 0;
+        for (const aiCategory of aiGeneratedContent || []) {
+          if (aiCategory.fields && Array.isArray(aiCategory.fields)) {
+            totalFieldsWithData += aiCategory.fields.length;
+          }
+        }
+        console.log(`Total fields with data for clone: ${totalFieldsWithData}`);
+        console.log(`=====================================\n`);
+
+        // Send final success response
+        res.write(`data: ${JSON.stringify({
+          type: 'complete',
+          data: clonedBlueprint,
+          success: true
+        })}\n\n`);
+        res.end();
+
+      } else {
+        console.warn("Invalid or empty AI response format for clone categories.");
+        console.log("AI Response:", aiGeneratedContent);
+        res.write(`data: ${JSON.stringify({ type: 'error', message: 'Invalid AI response format' })}\n\n`);
+        res.end();
+      }
+
+    } catch (aiError) {
+      console.error("Error during AI content generation for clone:", aiError);
+      res.write(`data: ${JSON.stringify({
+        type: 'error',
+        message: 'Error during AI content generation'
+      })}\n\n`);
+      res.end();
+    }
+  } catch (error) {
+    next(error);
+  }
+});
 
 router.post(
   "/:id/duplicate",

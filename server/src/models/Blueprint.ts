@@ -6,7 +6,7 @@ interface IBlueprint extends Document {
   offerType: string;
   categories: mongoose.Schema.Types.ObjectId[];
   userId: mongoose.Schema.Types.ObjectId;
-
+  isStarred: boolean;
 }
 
 const BlueprintSchema = new mongoose.Schema<IBlueprint>({
@@ -31,6 +31,10 @@ const BlueprintSchema = new mongoose.Schema<IBlueprint>({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
+  },
+  isStarred: {
+    type: Boolean,
+    default: false,
   },
 }, { timestamps: true });
 

@@ -19,6 +19,7 @@ import categoryRoutes from "./routes/category";
 import aiRoutes from "./routes/ai";
 import campaignRoutes from "./routes/campaigns";
 import uploadRoutes from "./routes/upload";
+import paymentRoutes from "./routes/payments";
 
 dotenv.config();
 
@@ -70,6 +71,7 @@ app.use("/api/category", categoryRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/campaigns", campaignRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

@@ -1,22 +1,20 @@
 "use client";
 
 import {
-  LucideWand2,
-  LucideChevronDown,
-  LucideChevronRight,
   LucideLayoutDashboard,
   LucideFileText,
   LucideFolder,
-  LucidePuzzle,
-  LucideBook,
   LucideListOrdered,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import React, { useState } from "react";
+import { useAuthStore } from "@/store/authStore";
 
 function Sidebar() {
-  const [activeLink, setActiveLink] = useState("/dashboard");
+  const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>(["Add On"]);
+  const { user } = useAuthStore();
 
   const navLinks = [
     {
@@ -49,11 +47,12 @@ function Sidebar() {
     );
   };
 
-  const handleLinkClick = (href: string) => {
-    setActiveLink(href);
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+    return pathname.startsWith(href);
   };
-
-  const isActive = (href: string) => activeLink === href;
   const isExpanded = (label: string) => expandedItems.includes(label);
 
   return (
@@ -68,7 +67,7 @@ function Sidebar() {
             <h2 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent">
               Workspace
             </h2>
-            <p className="text-sm text-gray-500">Kane's Dashboard</p>
+            <p className="text-sm text-gray-500">{user?.firstName || 'User'}'s Dashboard</p>
           </div>
         </div>
       </div>
@@ -80,7 +79,6 @@ function Sidebar() {
             <Link
               key={item.label}
               href={item.href}
-              onClick={() => handleLinkClick(item.href)}
               className={`flex items-center gap-3 p-3 border border-transparent rounded-xl transition-all duration-200 font-medium mb-1 ${
                 isActive(item.href)
                   ? "bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm border border-purple-200/50"
