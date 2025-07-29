@@ -11,6 +11,7 @@ class AdvertorialService extends DeepSeekService {
         topic: string,
         onProgress?: (chunk: string) => void
     ): Promise<string> {
+        console.log('first', topic)
         const systemPrompt = `You are an expert copywriter who specializes in creating high-converting advertorials. You understand audience psychology, storytelling, and persuasive content. Your goal is to craft advertorials that build trust, educate, and lead readers to take action. Response should start directly from <html> and end with </html>, no intro texts, and all content must be inside <body>.`;
 
         const formattedBlueprint = blueprintValue

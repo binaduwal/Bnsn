@@ -181,7 +181,7 @@ class VslPageService extends DeepSeekService {
   async generateMiniVslLeadStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
-    _title:string,
+    title:string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are a world-class direct response copywriter who specializes in writing captivating Mini VSL Leads (Video Sales Letters) that hook the viewer, build tension, and lead into the pitch. You understand pacing, emotional triggers, and how to move the prospect toward curiosity and commitment without revealing everything up front. Always return a complete HTML document starting with <html> and ending with </html>. All content must be inside <body>.`;
@@ -200,7 +200,7 @@ class VslPageService extends DeepSeekService {
       .join("\n");
 
     const userPrompt = [
-      `You are writing the first 1–2 minutes of a mini VSL script (video sales letter).`,
+      `You are writing the first 1–2 minutes of a mini VSL script (video sales letter) for  **${title}**.`,
       ``,
       `## 🎯 Objective`,
       `- Grab attention immediately (hook).`,

@@ -175,7 +175,7 @@ Return pure JSON only.`;
     _title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
-    const systemPrompt = `You are a CRO expert. Write high-converting Thank You pages in pure HTML with inline styles only. Build gratitude, trust, and inspire next actions. Output must be HTML only - no explanations or markdown. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
+    const systemPrompt = `You are a CRO expert. Write high-converting Thank You pages in pure HTML with inline styles only. Build gratitude, trust, and inspire next actions. Output must be HTML only <html><body>...</body></html> - no explanations or markdown or Intro text. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
     const formattedBlueprint = blueprintValue
       .map((section) => {
@@ -194,7 +194,7 @@ Return pure JSON only.`;
       `Write a complete HTML Thank You Page.`,
       ``,
       `## Guidelines`,
-      `- Start with <html> and end with </html>`,
+      `- Start with <html> and end with </html>, content must be inside <body>`,
       `- Use ONLY inline styles`,
       `- No <style> tags, CSS classes, or external stylesheets`,
       `- No markdown, comments, or intro text`,
@@ -204,6 +204,7 @@ Return pure JSON only.`;
       `- Include follow-up CTA like "Refer a Friend", "Shop Again", or "Share Now"`,
       `- Optionally include discount code, support link, or bonus`,
       `- Inject trust and personalization from inputs`,
+      ` no explanations or markdown or Intro text`,
       ``,
       `## Input Data`,
       `Context: ${formattedCategoryInputs}`,

@@ -337,8 +337,8 @@ export const executeService = async (
       blueprintValues,
       fieldValue,
       title,
-      ...additionalParams,
       progressCallback,
+      ...additionalParams,
       shouldUseHomepageReference ? homepageReference : undefined
     );
 
