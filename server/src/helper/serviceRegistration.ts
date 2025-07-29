@@ -386,8 +386,17 @@ export const registerAllServices = () => {
             description: "Generate closing content"
         }
     ]);
+
     // Sales Page Funnel Services
     serviceRegistryManager.registerBatch([
+        {
+            title: "Ad Generator",
+            service: deepSeekService,
+            method: "generateAdCopyStream",
+            category: "Sales Page Funnel",
+            description: "Generate ad copy for e-commerce"
+        },
+
         {
             title: "Presell Intro",
             service: salesFunnelService,
@@ -485,6 +494,13 @@ export const registerAllServices = () => {
             method: "generateEmailStream",
             category: "Sales Page Funnel",
             description: "Generate content marketing emails"
+        },
+        {
+            title: "Promotional Email Generator",
+            service: emailService,
+            method: "generatePromotionalEmailStream",
+            category: "Sales Page Funnel",
+            description: "Generate promotional sales emails"
         },
         {
             title: "Promotional Email Generator",

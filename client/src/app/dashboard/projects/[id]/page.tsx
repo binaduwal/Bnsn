@@ -450,7 +450,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     setIsGenerating(true);
     setStreamingProgress(0);
     setStreamingMessage("Starting generation...");
-    setGeneratedContent({});
+    // setGeneratedContent({});
     setStreamingAiContent(""); // Reset streaming content
 
     // Add timeout for streaming - increased to 5 minutes
@@ -1104,9 +1104,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const campaignFields = getSelectedCampaignFields();
 
   return (
-    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 flex min-h-screen">
+    <div className="bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 overflow-hidden flex ">
       {/* Left Sidebar */}
-      <aside className="w-96 min-h-[calc(100vh-60px)] bg-white/70 backdrop-blur-sm border-r border-white/20 flex flex-col shadow-xl">
+      <aside className="w-96 min-h-[calc(100vh-90px)]  max-h-[calc(100vh-90px)] overflow-y-auto bg-white/70 backdrop-blur-sm border-r border-r-white/60 flex flex-col shadow-xl">
         {/* Sidebar Header */}
         <div className="p-6 border-b border-white/20">
           <div className="flex items-center space-x-3 mb-4">
@@ -1283,7 +1283,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       </Drawer>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col">
+      <main className="flex-1  max-h-[calc(100vh-90px)]  flex flex-col">
         {/* Blueprint Header */}
         <header className="bg-white/70 backdrop-blur-sm border-b border-white/20 px-6 py-4 shadow-lg">
           <div className="flex items-center justify-between">
@@ -1367,10 +1367,10 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
             </header>
 
             {/* Main Content */}
-            <main onClick={() => console.log('campaign', campaignFields)} className="flex-1 min-h-[calc(100vh-320px)] overflow-y-auto">
+            <main onClick={() => console.log('campaign', campaignFields)} className="flex-1 max-h-[calc(100vh-280px)] min-h-[calc(100vh-280px)] overflow-y-auto">
               {campaignFields.length > 0 ? (
                 <div className="max-w-5xl space-y-3 mx-auto p-3">
-                  {campaignFields.map((field, index) => (
+                  {!generatedContent?.aiContent && campaignFields.map((field, index) => (
                     <div
                       key={field._id}
                       className="group relative transition-all duration-300"
@@ -1477,7 +1477,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                     )}
 
                     {/* Compact Generate Button */}
-                    <div className="relative">
+                    {!generatedContent?.aiContent && <div className="relative">
                       <button
                         disabled={isGenerating}
                         onClick={handleGenerateProject}
@@ -1506,7 +1506,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                           )}
                         </div>
                       </button>
-                    </div>
+                    </div>}
                   </div>
 
                   {/* Enhanced Generated Content Display */}
@@ -1543,7 +1543,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               ) : (
                 <div className="min-h-[60vh] flex flex-col justify-center items-center p-6 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
                   {/* Empty State with Generate Button */}
-                  {campaignFields.length == 0 && (
+                  {!generatedContent?.aiContent && campaignFields.length == 0 && (
                     <div className="text-center mb-8">
                       <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Palette className="w-8 h-8 text-blue-600" />
@@ -1637,13 +1637,13 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
             <footer className="bg-white/80 backdrop-blur-sm sticky bottom-0 border-t border-white/30 px-4 py-3 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <button
-                    onClick={handleSave}
+                  {generatedContent.aiContent && <button
+                    onClick={handleGenerateProject}
                     className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg text-sm font-semibold text-green-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 transition-all duration-200 shadow-sm"
                   >
                     <Save className="w-4 h-4" />
-                    <span>Save Progress</span>
-                  </button>
+                    <span>Re Generate</span>
+                  </button>}
                 </div>
 
                 <div className="flex items-center space-x-3 text-xs text-gray-600">

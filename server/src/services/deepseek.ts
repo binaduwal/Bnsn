@@ -228,7 +228,7 @@ Return pure JSON only.`;
   async generateAdCopyStream(
     blueprintValue: BlueprintValue[],
     projectCategoryValue: ProjectCategoryValue[],
-    _title: string,
+    title: string,
     onProgress?: (chunk: string) => void
   ): Promise<string> {
     const systemPrompt = `You are an ad copywriter. Write high-converting ad content for Facebook, Instagram, YouTube, TikTok in pure HTML with inline styles only. Response must begin with <html> and end with </html>. DO NOT include any metadata, special formatting, or instructions like [FREEZE FRAME], [PAUSE], or similar. Output ONLY clean HTML content. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
@@ -250,7 +250,7 @@ Return pure JSON only.`;
         : undefined;
 
     const userPrompt = [
-      `Generate high-converting ad copy in HTML using ONLY inline styles.`,
+      `Generate high-converting ad copy ${title && `for this topic: **${title}**`} in HTML using ONLY inline styles.`,
       ``,
       `## CRITICAL OUTPUT RULES`,
       `- Begin with <html> and end with </html>`,
