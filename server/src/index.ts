@@ -15,6 +15,8 @@ import authRoutes from "./routes/auth";
 import projectRoutes from "./routes/projects";
 import blueprintRoutes from "./routes/blueprints";
 import categoryRoutes from "./routes/category";
+import activitiesRoutes from "./routes/activities";
+import adminRoutes from "./routes/admin";
 
 import aiRoutes from "./routes/ai";
 import campaignRoutes from "./routes/campaigns";
@@ -78,6 +80,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/blueprints", blueprintRoutes);
 app.use("/api/category", categoryRoutes);
+app.use("/api/activities", activitiesRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use("/api/ai", aiRoutes);
 app.use("/api/campaigns", campaignRoutes);

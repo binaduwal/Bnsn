@@ -7,6 +7,7 @@ import { CategoryValue } from "../models/CategoryValue";
 import { generatedContent } from "../helper/projectGeneratorSwitch";
 import { continuousProjectGenerator } from "../helper/continuousProjectGenerator";
 import { updateUserWordCount } from "../utils";
+import { ActivityService } from "../services/activityService";
 
 export const createProject = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -45,6 +46,9 @@ export const createProject = catchAsync(
 
     //save the projects
     await project.save();
+
+    // Log activity
+    await ActivityService.logProjectCreated(req.user.id, name, project._id as string);
 
     res.json({
       success: true,
@@ -737,6 +741,10 @@ export const deleteProject = catchAsync(
     if (!project) {
       return next(createError("Project not found", 404));
     }
+
+    // Log activity
+    await ActivityService.logProjectDeleted(req.user.id, project.name, project._id as string);
+
     res.json({
       success: true,
       data: project,

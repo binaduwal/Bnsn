@@ -47,3 +47,6 @@ export const requireRole = (roles: string[]) => {
     next();
   };
 };
+
+export const auth = authenticateToken;
+export const isAdmin = requireRole(['admin']);

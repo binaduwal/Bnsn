@@ -9,6 +9,7 @@ import {
   User,
   X,
   BarChart3,
+  Shield,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -167,6 +168,17 @@ function Header() {
                     <Bell className="w-4 h-4" />
                     <span className="text-sm">Notifications</span>
                   </button>
+                  {user?.role === 'admin' && (
+                    <Link
+                      role="button"
+                      onClick={toggleProfile}
+                      href="/admin"
+                      className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span className="text-sm">Admin Panel</span>
+                    </Link>
+                  )}
                 </div>
 
                 {/* Logout */}

@@ -26,7 +26,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { deleteProjectApi, Project } from "@/services/projectApi";
+import { deleteProjectApi, Project, starProjectApi } from "@/services/projectApi";
 import { getAllBlueprintApi, BlueprintProps } from "@/services/blueprintApi";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { formatTableDate } from "@/utils/dateUtils";
@@ -40,6 +40,7 @@ const ProjectsPage: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [blueprints, setBlueprints] = useState<BlueprintProps[]>([]);
   const [isLoadingBlueprints, setIsLoadingBlueprints] = useState(false);
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
   const router = useRouter();
 
   const { isLoading, projects, fetchAllProjects } = useProject();
@@ -83,6 +84,16 @@ const ProjectsPage: React.FC = () => {
     }
   };
 
+  const handleStarToggle = async (project: Project) => {
+    try {
+      await starProjectApi(project._id);
+      toast.success(project.isStarred ? "Project unstarred" : "Project starred");
+      fetchAllProjects();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "Active":
@@ -110,12 +121,17 @@ const ProjectsPage: React.FC = () => {
               <Zap className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <h3
-                onClick={() => router.push(`/dashboard/projects/${project._id}`)}
-                className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer capitalize text-lg group-hover:text-blue-600 transition-colors"
-              >
-                {project.name}
-              </h3>
+              <div className="flex items-center space-x-2">
+                <h3
+                  onClick={() => router.push(`/dashboard/projects/${project._id}`)}
+                  className="font-semibold text-gray-900 hover:text-blue-600 cursor-pointer capitalize text-lg group-hover:text-blue-600 transition-colors"
+                >
+                  {project.name}
+                </h3>
+                {project.isStarred && (
+                  <Star size={14} className="text-yellow-500" fill="currentColor" />
+                )}
+              </div>
               <span
                 className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(
                   project.status
@@ -174,8 +190,15 @@ const ProjectsPage: React.FC = () => {
             <Edit size={16} />
             <span>Edit</span>
           </button>
-          <button className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
-            <Star size={16} />
+          <button 
+            onClick={() => handleStarToggle(project)}
+            className={`p-2.5 rounded-xl transition-colors ${
+              project.isStarred 
+                ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50" 
+                : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
+            }`}
+          >
+            <Star size={16} fill={project.isStarred ? "currentColor" : "none"} />
           </button>
           <button
             onClick={() => handleDeleteClick(project)}
@@ -196,7 +219,8 @@ const ProjectsPage: React.FC = () => {
       selectedBlueprint === "" ||
       selectedBlueprint === "All Blueprints" ||
       project.blueprintId.title === selectedBlueprint;
-    return matchesSearch && matchesBlueprint;
+    const matchesStarred = !showStarredOnly || project.isStarred;
+    return matchesSearch && matchesBlueprint && matchesStarred;
   });
 
   const paginatedProjects = filteredProjects.slice(
@@ -307,6 +331,21 @@ const ProjectsPage: React.FC = () => {
                   </div>
                 )}
               </div>
+
+              {/* Starred Filter Toggle */}
+              <button
+                onClick={() => setShowStarredOnly(!showStarredOnly)}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border transition-colors shadow-sm ${
+                  showStarredOnly
+                    ? "bg-yellow-50 border-yellow-200 text-yellow-700"
+                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <Star size={18} className={showStarredOnly ? "text-yellow-600" : "text-gray-500"} fill={showStarredOnly ? "currentColor" : "none"} />
+                <span className="text-sm font-medium">
+                  {showStarredOnly ? "Starred Only" : "All Projects"}
+                </span>
+              </button>
             </div>
           </div>
 
@@ -354,14 +393,14 @@ const ProjectsPage: React.FC = () => {
 
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Users className="w-5 h-5 text-gray-600" />
+                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <Star className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {filteredProjects.filter((p) => p.status === "Archived").length}
+                    {filteredProjects.filter((p) => p.isStarred).length}
                   </p>
-                  <p className="text-sm text-gray-600">Archived</p>
+                  <p className="text-sm text-gray-600">Starred</p>
                 </div>
               </div>
             </div>

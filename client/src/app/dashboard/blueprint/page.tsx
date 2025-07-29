@@ -28,7 +28,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { BlueprintProps, deleteBlueprintApi } from "@/services/blueprintApi";
+import { BlueprintProps, deleteBlueprintApi, starBlueprintApi } from "@/services/blueprintApi";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { formatTableDate } from "@/utils/dateUtils";
 import useBlueprint from "@/hooks/useBlueprint";
@@ -38,6 +38,7 @@ const BlueprintPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(9);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showStarredOnly, setShowStarredOnly] = useState(false);
   const router = useRouter();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [blueprintToDelete, setBlueprintToDelete] =
@@ -77,6 +78,16 @@ const BlueprintPage: React.FC = () => {
     }
   };
 
+  const handleStarToggle = async (blueprint: BlueprintProps) => {
+    try {
+      await starBlueprintApi(blueprint._id);
+      toast.success(blueprint.isStarred ? "Blueprint unstarred" : "Blueprint starred");
+      fetchBlueprint();
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
   const BlueprintCard: React.FC<{ blueprint: BlueprintProps }> = ({
     blueprint,
   }) => {
@@ -94,12 +105,17 @@ const BlueprintPage: React.FC = () => {
                 <Layers className="w-5 h-5 text-indigo-600" />
               </div>
               <div>
-                <h3 
-                  onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
-                  className="font-semibold text-gray-900 hover:text-indigo-600 cursor-pointer capitalize text-lg group-hover:text-indigo-600 transition-colors"
-                >
-                  {blueprint.title}
-                </h3>
+                <div className="flex items-center space-x-2">
+                  <h3 
+                    onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
+                    className="font-semibold text-gray-900 hover:text-indigo-600 cursor-pointer capitalize text-lg group-hover:text-indigo-600 transition-colors"
+                  >
+                    {blueprint.title}
+                  </h3>
+                  {blueprint.isStarred && (
+                    <Star size={14} className="text-yellow-500" fill="currentColor" />
+                  )}
+                </div>
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(
                     "Active"
@@ -159,8 +175,15 @@ const BlueprintPage: React.FC = () => {
               <Edit size={16} />
               <span>Edit</span>
             </button>
-            <button className="p-2.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-colors">
-              <Star size={16} />
+            <button 
+              onClick={() => handleStarToggle(blueprint)}
+              className={`p-2.5 rounded-xl transition-colors ${
+                blueprint.isStarred 
+                  ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50" 
+                  : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
+              }`}
+            >
+              <Star size={16} fill={blueprint.isStarred ? "currentColor" : "none"} />
             </button>
             <button
               onClick={() => handleDeleteClick(blueprint)}
@@ -174,9 +197,11 @@ const BlueprintPage: React.FC = () => {
     );
   };
 
-  const filteredBlueprints = blueprints.filter((blueprint) =>
-    blueprint.title.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredBlueprints = blueprints.filter((blueprint) => {
+    const matchesSearch = blueprint.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStarred = !showStarredOnly || blueprint.isStarred;
+    return matchesSearch && matchesStarred;
+  });
 
   const paginatedBlueprints = filteredBlueprints.slice(
     (currentPage - 1) * itemsPerPage,
@@ -229,6 +254,21 @@ const BlueprintPage: React.FC = () => {
                 />
               </div>
 
+              {/* Starred Filter Toggle */}
+              <button
+                onClick={() => setShowStarredOnly(!showStarredOnly)}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border transition-colors shadow-sm ${
+                  showStarredOnly
+                    ? "bg-yellow-50 border-yellow-200 text-yellow-700"
+                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <Star size={18} className={showStarredOnly ? "text-yellow-600" : "text-gray-500"} fill={showStarredOnly ? "currentColor" : "none"} />
+                <span className="text-sm font-medium">
+                  {showStarredOnly ? "Starred Only" : "All Blueprints"}
+                </span>
+              </button>
+
             </div>
           </div>
 
@@ -272,12 +312,14 @@ const BlueprintPage: React.FC = () => {
             
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-orange-600" />
+                <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
+                  <Star className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{Math.floor(filteredBlueprints.length * 0.3)}</p>
-                  <p className="text-sm text-gray-600">Recently Used</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {filteredBlueprints.filter((b) => b.isStarred).length}
+                  </p>
+                  <p className="text-sm text-gray-600">Starred</p>
                 </div>
               </div>
             </div>
