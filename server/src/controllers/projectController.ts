@@ -784,21 +784,18 @@ export const updateProjectCategory = catchAsync(
     const [allSubCategories, allThirdCategories, allCategoryValues] = await Promise.all([
       // Get all subcategories for root categories
       Category.find({
-        userId: req.user.id,
         parentId: { $in: rootCategoryIds },
         type: "project",
       }).lean(),
 
       // Get all third-level categories (we'll filter by subcategory IDs after)
       Category.find({
-        userId: req.user.id,
         type: "project",
         parentId: { $exists: true, $ne: null }
       }).lean(),
 
       // Get all category values for this project
       CategoryValue.find({
-        userId: req.user.id,
         project: project._id,
       }).lean()
     ]);

@@ -103,7 +103,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>("");
   const [mainTitle, setMainTitle] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [blueprintId, setBlueprintId] = useState<string | undefined>(undefined);
+  const [blueprintId, setBlueprintId] = useState<{ _id: string, title: string } | undefined>(undefined);
   const [fieldValues, setFieldValues] = useState<{ [key: string]: string }>({});
   const [addingCategory, setAddingCategory] = useState<string[]>([]);
 
@@ -129,12 +129,14 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
   const handleAddSelected = async () => {
     try {
-      // const res = await updateProjectCategoryApi(id, addingCategory);
+      const res = await updateProjectCategoryApi(id, addingCategory);
       // toast.success("Selected categories added successfully");
-      console.log('response', id)
-      // setCategories(res.data.categoryId)
-      // setAddingCategory([]);
-      // setDrawerOpen(false);
+      console.log('id', id, addingCategory)
+      console.log('response', res)
+
+      setCategories(res.data.categoryId)
+      setAddingCategory([]);
+      setDrawerOpen(false);
     } catch (error: any) {
       toast.error(error.message || "Failed to add selected categories");
     }
@@ -179,7 +181,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
     setCurrentCampaignName(response.data?.categoryId[0]?.alias || response.data?.categoryId[0]?.title);
 
-    setBlueprintId(response?.data?.blueprintId._id);
+    setBlueprintId(response?.data?.blueprintId);
 
   };
 
@@ -467,10 +469,10 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       try {
         const response = await generateProjectStreamApi({
           category: categories[0]._id,
-          currentCategory: selectedCategory || "",
+          currentCategory: selectedCategory || undefined,
           project: id,
           values: fieldValues,
-          blueprintId,
+          blueprintId: blueprintId?._id || undefined,
         });
 
         // Check if response body exists
@@ -590,7 +592,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
           category: categories[0]._id,
           project: id,
           values: fieldValues,
-          blueprintId: blueprintId || "",
+          blueprintId: blueprintId?._id || "",
         });
 
         setGeneratedContent(fallbackResponse);
@@ -1289,8 +1291,8 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse"></div>
               <div className="flex items-center space-x-2">
                 <Layers className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                  Blueprint: Productivity Course Demo
+                <span className="text-sm font-semibold bg-gradient-to-r capitalize from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Blueprint: {blueprintId?.title || "Untitled Blueprint"}
                 </span>
               </div>
             </div>
