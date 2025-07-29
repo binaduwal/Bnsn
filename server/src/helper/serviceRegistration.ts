@@ -88,6 +88,29 @@ export const registerAllServices = () => {
             description: "Generate VSL scripts"
         },
 
+        {
+            title: "Lead Generator",
+            service: vslPageService,
+            method: "generateVslTslLeadStream",
+            category: "Leads (VSLs & TSLs)",
+            description: "Generate VSL scripts"
+        },
+
+        {
+            title: "Lead",
+            service: vslPageService,
+            method: "generateMiniVslLeadStream",
+            category: "VSLs (Mini)",
+            description: "Generate VSL scripts"
+        },
+        {
+            title: "Close",
+            service: vslPageService,
+            method: "generateMiniVslLeadStream",
+            category: "VSLs (Mini)",
+            description: "Generate VSL scripts"
+        },
+
         //changes
         {
             title: "Problem",
@@ -478,28 +501,28 @@ export const registerAllServices = () => {
             title: "Big Idea Generator",
             service: bigideaService,
             method: "generateBigIdeaStream",
-            category: "Big Ideas",
+            category: "Hooks & Big Ideas",
             description: "Generate big ideas"
         },
         {
             title: "Setup",
             service: bigideaService,
             method: "generateLeadHookSetupStream",
-            category: "Big Ideas",
+            category: "Hooks & Big Ideas",
             description: "Generate lead hook setup"
         },
         {
             title: "Lead Hook Generator (Tame)",
             service: bigideaService,
             method: "generateLeadHookTameStream",
-            category: "Big Ideas",
+            category: "Hooks & Big Ideas",
             description: "Generate tame lead hooks"
         },
         {
             title: "Lead Hook Generator (Wild)",
             service: bigideaService,
             method: "generateLeadHookWildStream",
-            category: "Big Ideas",
+            category: "Hooks & Big Ideas",
             description: "Generate wild lead hooks"
         }
     ]);
@@ -510,14 +533,14 @@ export const registerAllServices = () => {
             title: "Opt-in Page Version 1",
             service: optInPageService,
             method: "generateOptInPageV1Stream",
-            category: "Website Pages",
+            category: "Opt-In Pages",
             description: "Generate opt-in page version 1"
         },
         {
             title: "Opt-in Page Version 2",
             service: optInPageService,
             method: "generateOptInPageV2Stream",
-            category: "Website Pages",
+            category: "Opt-In Pages",
             description: "Generate opt-in page version 2"
         }
     ]);
@@ -532,10 +555,24 @@ export const registerAllServices = () => {
             description: "Generate book ideas"
         },
         {
+            title: "Book Idea Generator",
+            service: bookService,
+            method: "generateBookIdeasStream",
+            category: "Book Ideas",
+            description: "Generate book ideas"
+        },
+        {
             title: "Outline",
             service: bookService,
             method: "generateBookBuilderOutlineStream",
             category: "Book Sales Funnel",
+            description: "Generate book outlines"
+        },
+        {
+            title: "Outline",
+            service: bookService,
+            method: "generateBookBuilderOutlineStream",
+            category: "BookBuilder Outline Data",
             description: "Generate book outlines"
         },
         {
@@ -751,14 +788,14 @@ export const registerAllServices = () => {
             title: "Bonus Creator Basic",
             service: bonusCreaterService,
             method: "generateBasicBonusIdeasStream",
-            category: "Bonuses",
+            category: "Bonus Creator",
             description: "Generate basic bonus ideas"
         },
         {
             title: "Bonus Creator Advanced",
             service: bonusCreaterService,
             method: "generateAdvancedBonusIdeasStream",
-            category: "Bonuses",
+            category: "Bonus Creator",
             description: "Generate advanced bonus ideas"
         }
     ]);
@@ -770,9 +807,10 @@ export const registerAllServices = () => {
             service: brandGeneratorService,
             method: "generateBrandIdentityStream",
             additionalParams: ["Brand Generator"],
-            category: "Branding",
+            category: "Brand Creator",
             description: "Generate brand identity"
-        }
+        },
+
     ]);
 
     // Upsell Services
@@ -786,14 +824,153 @@ export const registerAllServices = () => {
         }
     ]);
 
-    // Webinar Services
+    // Webinar sign-up funnel Services
+    serviceRegistryManager.registerBatch([
+        {
+            title: "(Pre-Webinar) Ad 1",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["The 3 Things"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate 'The 3 Things' webinar content"
+        },
+        {
+            title: "(Pre-Webinar) Ad 2",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Webinar Testimonials"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate webinar testimonials"
+        },
+        {
+            title: "(Pre-Webinar) Ad 3",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Overcoming Objections"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate objection handling for webinars"
+        },
+        {
+            title: "(Pre-Webinar) Ad 4",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Interest Is Sky-High"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate high interest webinar content"
+        },
+        {
+            title: "(Pre-Webinar) Ad 5",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        },
+        //email
+        {
+            title: "(Post-Webinar) Email 1",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        }, {
+            title: "(Post-Webinar) Email 2",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        }, {
+            title: "(Post-Webinar) Email 3",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        },
+
+        {
+            title: "(Pre-Webinar) Email 1",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        }, {
+            title: "(Pre-Webinar) Email 2",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        }, {
+            title: "(Pre-Webinar) Email 3",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        }, {
+            title: "(Pre-Webinar) Email 4",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        },
+        {
+            title: "Registration Page",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        }, {
+            title: "Confirmation Page",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Bad Ideas"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate bad ideas webinar content"
+        },
+
+
+        {
+            title: "(Post-Webinar) Email Followup 8: Discount",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Everything Changes Today"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate 'Everything Changes Today' content"
+        },
+        {
+            title: "(Post-Webinar) Email Followup 9: Bonus",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Webinar Promises"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate webinar promises"
+        },
+        {
+            title: "(Post-Webinar) Email 10: Last Call",
+            service: webinarService,
+            method: "generateWebinarContentStream",
+            additionalParams: ["Why You Should Listen"],
+            category: "Webinar Sign-up Funnel",
+            description: "Generate 'Why You Should Listen' content"
+        },
+
+    ]);
+
+    // webinar 
     serviceRegistryManager.registerBatch([
         {
             title: "The 3 Things",
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["The 3 Things"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate 'The 3 Things' webinar content"
         },
         {
@@ -801,7 +978,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Webinar Testimonials"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate webinar testimonials"
         },
         {
@@ -809,7 +986,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Overcoming Objections"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate objection handling for webinars"
         },
         {
@@ -817,7 +994,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Interest Is Sky-High"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate high interest webinar content"
         },
         {
@@ -825,7 +1002,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Bad Ideas"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate bad ideas webinar content"
         },
         {
@@ -833,7 +1010,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Everything Changes Today"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate 'Everything Changes Today' content"
         },
         {
@@ -841,7 +1018,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Webinar Promises"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate webinar promises"
         },
         {
@@ -849,7 +1026,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Why You Should Listen"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate 'Why You Should Listen' content"
         },
         {
@@ -857,7 +1034,7 @@ export const registerAllServices = () => {
             service: webinarService,
             method: "generateWebinarContentStream",
             additionalParams: ["Why Do This?"],
-            category: "Webinars",
+            category: "Webinar",
             description: "Generate 'Why Do This?' content"
         }
     ]);
