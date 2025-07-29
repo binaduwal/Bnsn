@@ -1144,10 +1144,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-white/20 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
           <div className="flex gap-2">
-            <button className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white/80 border border-gray-200 rounded-xl hover:bg-white hover:border-gray-300 transition-all duration-200 backdrop-blur-sm">
-              <Eye className="w-4 h-4 inline mr-2" />
-              View All
-            </button>
+        
             <button onClick={() => setDrawerOpen(true)} className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 border-0 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
               <Plus className="w-4 h-4 inline mr-2" />
               Add New
