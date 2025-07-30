@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CheckCircle, ArrowRight, Zap } from 'lucide-react';
 import { confirmPaymentApi } from '@/services/paymentApi';
 import { getWordCountApi } from '@/services/authApi';
 import toast from 'react-hot-toast';
 
-const PaymentSuccessPage: React.FC = () => {
+const PaymentSuccessContent: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(true);
   const [wordsAdded, setWordsAdded] = useState(0);
   const router = useRouter();
@@ -85,4 +85,16 @@ const PaymentSuccessPage: React.FC = () => {
   );
 };
 
-export default PaymentSuccessPage; 
+const PaymentSuccessPage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    }>
+      <PaymentSuccessContent />
+    </Suspense>
+  );
+};
+
+export default PaymentSuccessPage;

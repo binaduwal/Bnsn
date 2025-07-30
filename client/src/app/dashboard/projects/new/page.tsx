@@ -126,12 +126,14 @@ const CreateProject: React.FC = () => {
   const createProject = async () => {
     try {
        console.log("res", );
-      const res = await createProjectApi({
-        blueprintId: selectedBlueprint?.id || "",
-        categoryId: [selectedCategory[0]?.id],
-        description: projectDetails,
-        name: projectTitle,
-      });
+    const res = await createProjectApi({
+  name: projectTitle,
+  blueprintId: selectedBlueprint?.id || "",
+  categoryId: [selectedCategory[0]?.id],
+  description: projectDetails,
+  mode: selectedMode,
+  offerType: offerType,
+});
      
       toast.success("Project created successfully");
       router.push(`/dashboard/projects/${res.data._id}`);
