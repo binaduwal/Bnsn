@@ -3,7 +3,6 @@
 import { useAuthStore } from "@/store/authStore";
 import {
   ChevronDown,
-  Bell,
   Settings,
   LogOut,
   User,
@@ -93,14 +92,6 @@ function Header() {
           {/* Search Bar */}
          
 
-          {/* Notifications */}
-          <div className="relative">
-            <button className="w-10 h-10 bg-gray-800/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-gray-700/80 transition-colors border border-gray-700/50">
-              <Bell className="w-5 h-5 text-gray-300" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-gray-900"></span>
-            </button>
-          </div>
-
           {/* Profile Dropdown */}
           <div className="relative">
             <button
@@ -160,13 +151,6 @@ function Header() {
                   >
                     <Settings className="w-4 h-4" />
                     <span className="text-sm">Preferences</span>
-                  </button>
-                  <button
-                    onClick={toggleProfile}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-gray-300 hover:bg-purple-600/20 hover:text-purple-300 transition-colors"
-                  >
-                    <Bell className="w-4 h-4" />
-                    <span className="text-sm">Notifications</span>
                   </button>
                   {user?.role === 'admin' && (
                     <Link

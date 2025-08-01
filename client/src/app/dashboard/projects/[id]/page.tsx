@@ -195,41 +195,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     setSelectedCategory(id);
   };
 
-  const handleCampaignUpdate = async (oldAlias: string, newAlias: string) => {
-    try {
-      // Find the campaign that was updated
-      let campaignToUpdate: any = null;
-      for (const category of categories) {
-        if (category.subCategories) {
-          for (const subCategory of category.subCategories) {
-            if (subCategory.alias === oldAlias || subCategory.title === oldAlias) {
-              campaignToUpdate = subCategory;
-              break;
-            }
-          }
-          if (campaignToUpdate) break;
-        }
-      }
 
-      if (campaignToUpdate) {
-        await updateCategoryApi(campaignToUpdate._id, { alias: newAlias });
-
-        // Update local state
-        if (selectedCampaign === oldAlias) {
-          setSelectedCampaign(newAlias);
-        }
-
-        // Refresh the categories to get the updated data
-        await fetchSingleProject();
-
-        console.log('Campaign alias updated successfully');
-        toast.success('Campaign alias updated successfully');
-      }
-    } catch (error) {
-      console.error('Error updating campaign alias:', error);
-      toast.error('Failed to update campaign alias');
-    }
-  };
 
   const progressPercentage =
     ((stats.totalWords - stats.wordsLeft) / stats.totalWords) * 100;
@@ -1131,12 +1097,12 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               </h3>
             </div>
             <CampaignAccordion
+              projectId={id}
               campaigns={categories}
               onCategoryChange={handleCategoryChange}
               selectedCategory={selectedCategory}
               selectedCampaign={selectedCampaign}
               onCampaignSelect={handleCampaignSelect}
-              onCampaignUpdate={handleCampaignUpdate}
             />
           </div>
         </div>

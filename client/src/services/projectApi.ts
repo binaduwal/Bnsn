@@ -174,6 +174,7 @@ export interface ThirdCategory {
     _id: string;
     title: string;
     alias: string;
+    effectiveAlias?: string; // The effective alias (custom or default)
     type: string;
     parentId: string;
     description: string;
@@ -189,6 +190,7 @@ export interface SubCategory {
     _id: string;
     title: string;
     alias: string;
+    effectiveAlias?: string; // The effective alias (custom or default)
     type: string;
     parentId: string;
     description: string;
@@ -205,6 +207,7 @@ export interface Category {
     _id: string;
     title: string;
     alias: string;
+    effectiveAlias?: string; // The effective alias (custom or default)
     type: string;
     parentId: string | null;
     description: string;

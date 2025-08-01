@@ -11,7 +11,11 @@
     "test": "jest",
     "migrate:word-count": "tsx src/scripts/migrateWordCount.ts",
     "migrate:alias": "tsx src/scripts/migrateAlias.ts",
-    "test:payment": "tsx src/scripts/testPayment.ts"
+    "test:payment": "tsx src/scripts/testPayment.ts",
+    "categories:export": "node scripts/exportCategories.js",
+    "categories:import": "node scripts/importCategories.js",
+    "categories:reset": "npm run categories:export && npm run categories:import",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@types/mongoose": "^5.11.96",
