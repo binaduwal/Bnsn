@@ -2,7 +2,12 @@ import { api, errorHandler } from './api'
 import { Field } from './categoryApi'
 import Cookies from "js-cookie";
 
-export const createProjectApi = async (body: { title: string, mode: string, blueprintId?: string, details?: string, offerType?: string, type?: string }) => {
+export const createProjectApi = async (body: {
+    name: string;
+    description: string;
+    blueprintId: string;
+    categoryId: string[];
+}) => {
     try {
         const res = await api.post('/projects', body)
         return res.data

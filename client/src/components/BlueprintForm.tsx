@@ -17,8 +17,7 @@ import {
   Copy,
   Wand2,
 } from "lucide-react";
-import toast from "react-hot-toast";
-import { Category, getSingleBlueprintApi } from "@/services/blueprintApi";
+
 
 interface ProgressBarProps {
   current: number;

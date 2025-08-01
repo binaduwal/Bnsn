@@ -5,7 +5,6 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import fs from "fs";
-
 import { connectDatabase } from "./config/database";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
@@ -15,7 +14,6 @@ import blueprintRoutes from "./routes/blueprints";
 import categoryRoutes from "./routes/category";
 import activitiesRoutes from "./routes/activities";
 import adminRoutes from "./routes/admin";
-
 import aiRoutes from "./routes/ai";
 import campaignRoutes from "./routes/campaigns";
 import uploadRoutes from "./routes/upload";
@@ -40,9 +38,6 @@ const limiter = rateLimit({
       message: "You have exceeded the number of allowed requests. Please try again later.",
     });
   },
-
-
-
 });
 
 const uploadDir = process.env.UPLOAD_PATH || "./uploads";
