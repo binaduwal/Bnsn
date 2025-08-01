@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value;
-  const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
+  const isAdminRoute = request.nextUrl.pathname.startsWith('/dashboard');
   const isAuthRoute = request.nextUrl.pathname.startsWith('/login') || 
                      request.nextUrl.pathname.startsWith('/register');
 

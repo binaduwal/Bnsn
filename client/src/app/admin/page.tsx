@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-    import { adminApi } from '@/services/adminApi';
-    import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { adminApi } from '@/services/adminApi';
 import { Users, FolderOpen, FileText, Activity, UserCheck, TrendingUp, BarChart3 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -151,7 +150,7 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-gray-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">

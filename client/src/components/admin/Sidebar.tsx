@@ -11,7 +11,8 @@ import {
   Activity,
   FolderTree,
   Settings,
-  LogOut
+  LogOut,
+  ChevronLeft
 } from 'lucide-react';
 
 const navigation = [
@@ -77,10 +78,10 @@ export function Sidebar() {
       <div className="p-4 border-t border-gray-100">
         <div className="space-y-1">
           
-          <button className="w-full group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out text-red-600 hover:bg-red-50 hover:text-red-700">
-            <LogOut className="mr-3 h-5 w-5 flex-shrink-0 transition-colors duration-200 text-red-400 group-hover:text-red-600" />
-            Logout
-          </button>
+          <Link href="/dashboard" className="w-full group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out text-red-600 hover:bg-red-50 hover:text-red-700">
+            <ChevronLeft className="mr-3 h-5 w-5 flex-shrink-0 transition-colors duration-200 text-red-400 group-hover:text-red-600" />
+            Back To Site
+          </Link>
         </div>
       </div>
     </div>

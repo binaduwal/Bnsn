@@ -14,6 +14,7 @@ export function useAdminAuth() {
     if (user) {
       if (user.role === 'admin') {
         setIsAdmin(true);
+        router.push('/admin');
       } else {
         // Redirect non-admin users to dashboard
         router.push('/dashboard');
