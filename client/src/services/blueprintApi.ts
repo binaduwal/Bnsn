@@ -1,4 +1,4 @@
-import { api, errorHandler } from "./api"
+import { api, baseURL, errorHandler } from "./api"
 import { Category } from "./categoryApi";
 import Cookies from "js-cookie";
 
@@ -31,7 +31,7 @@ export const createBlueprintStream = async (
         }
 
         // Use the same base URL as the regular API
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002';
+      
         const response = await fetch(`${baseURL}/blueprints`, {
             method: 'POST',
             headers: {

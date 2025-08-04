@@ -3,7 +3,7 @@ import { catchAsync, createError } from "../middleware/errorHandler";
 import { Blueprint } from "../models/Blueprint";
 import { NextFunction, Response } from "express";
 import { deepSeekService } from "../services/deepseek";
-import mongoose from "mongoose";
+import mongoose, { ObjectId } from "mongoose";
 import { Category } from "../models";
 import { CategoryValue } from "../models/CategoryValue";
 
@@ -15,22 +15,24 @@ export const createBlueprint = catchAsync(
 
     const { title, description, offerType } = req.body;
 
-    // Validate required fields
     if (!title || !description || !offerType) {
       return next(createError("Missing required fields", 400));
     }
 
-    const blueprint = new Blueprint({ title, description, offerType, userId: req.user.id });
-    await blueprint.save(); // Save blueprint first to get ID
+    const blueprint = await new Blueprint({
+      title,
+      description,
+      offerType,
+      userId: req.user.id,
+    }).save();
 
-    const usedCategoryIds: mongoose.Schema.Types.ObjectId[] = [];
     const allCategories = await Category.find({ type: "blueprint" });
 
-    if (allCategories.length === 0) {
+    if (!allCategories.length) {
       return next(createError("No blueprint categories found", 404));
     }
 
-    // Set up SSE headers for streaming
+    // Set up Server-Sent Events
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -45,96 +47,69 @@ export const createBlueprint = catchAsync(
         offerType,
         allCategories,
         (chunk: string) => {
-          // Send progress chunk to client
           res.write(`data: ${JSON.stringify({ type: 'progress', content: chunk })}\n\n`);
         }
       );
 
-      console.log("AI Generated Content:", JSON.stringify(aiGeneratedContent, null, 2));
-
-      if (!aiGeneratedContent) {
-        res.write(`data: ${JSON.stringify({ type: 'error', message: 'DeepSeek API is unreachable' })}\n\n`);
+      if (!Array.isArray(aiGeneratedContent) || !aiGeneratedContent.length) {
+        res.write(`data: ${JSON.stringify({ type: 'error', message: 'No AI content returned' })}\n\n`);
         res.end();
         return;
       }
 
-      if (Array.isArray(aiGeneratedContent) && aiGeneratedContent.length > 0) {
-        console.log(`Processing ${aiGeneratedContent.length} categories...`);
+      const categoryTitleMap = new Map(
+        allCategories.map(cat => [cat.title, cat])
+      );
 
-        for (const aiCategory of aiGeneratedContent) {
-          const {
-            title: categoryTitle,
-            description: categoryDescription,
-            fields,
-          } = aiCategory;
+      const categoryValueDocs = [];
 
-          console.log(`Processing category: ${categoryTitle} with ${fields?.length || 0} fields`);
+      for (const aiCategory of aiGeneratedContent) {
+        const { title: catTitle, fields } = aiCategory;
+        const category = categoryTitleMap.get(catTitle);
 
-          // Find existing category (don't create new ones)
-          const category = await Category.findOne({
-            title: categoryTitle,
-            type: "blueprint"
-          });
-
-          if (!category) {
-            console.warn(`Category not found: ${categoryTitle}`);
-            continue;
-          }
-
-          usedCategoryIds.push(category._id as mongoose.Schema.Types.ObjectId);
-
-          // Create CategoryValue document
-          const categoryValue = new CategoryValue({
-            category: category._id,
-            blueprint: blueprint._id,
-            userId: req.user.id,
-            value: fields.map((f: any) => ({
-              key: f.fieldName,
-              value: f.value || '', // Handle undefined values
-            })),
-          });
-
-          console.log(`Saving category value for ${categoryTitle} with ${fields.length} fields`);
-          await categoryValue.save();
+        if (!category || !fields?.length) {
+          continue;
         }
-      } else {
-        console.warn("Invalid or empty AI response format for categories.");
-        console.log("AI Response:", aiGeneratedContent);
+
+        blueprint.categories.push(category._id as ObjectId); // Push to array
+
+        categoryValueDocs.push({
+          category: category._id,
+          blueprint: blueprint._id,
+          userId: req.user.id,
+          value: fields.map((f: any) => ({
+            key: f.fieldName,
+            value: f.value || '',
+          })),
+        });
       }
 
-      // Update blueprint with used category IDs
-      blueprint.categories = usedCategoryIds;
+      // Bulk insert category values (much faster than individual saves)
+      if (categoryValueDocs.length) {
+        await CategoryValue.insertMany(categoryValueDocs);
+      }
+
+      // Save blueprint with category references
       await blueprint.save();
 
+      const totalFields = categoryValueDocs.reduce((acc, curr) => acc + curr.value.length, 0);
+      console.log(`Total fields processed: ${totalFields}`);
 
-      // Count total fields with data
-      let totalFieldsWithData = 0;
-      for (const aiCategory of aiGeneratedContent || []) {
-        if (aiCategory.fields && Array.isArray(aiCategory.fields)) {
-          totalFieldsWithData += aiCategory.fields.length;
-        }
-      }
-      console.log(`Total fields with data: ${totalFieldsWithData}`);
-      console.log(`=====================================\n`);
-
-      // Send final success response
       res.write(`data: ${JSON.stringify({
         type: 'complete',
         data: blueprint,
-        success: true
+        success: true,
       })}\n\n`);
       res.end();
 
-    } catch (aiError) {
-      console.error("Error during AI content generation:", aiError);
-      res.write(`data: ${JSON.stringify({
-        type: 'error',
-        message: 'Error during AI content generation'
-      })}\n\n`);
+    } catch (err) {
+      console.error("AI Generation Error:", err);
+      res.write(`data: ${JSON.stringify({ type: 'error', message: 'AI generation failed' })}\n\n`);
       res.end();
     }
   }
 );
+
 export const getAllBlueprint = catchAsync(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     if (!req.user) {

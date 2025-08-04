@@ -92,7 +92,7 @@ CRITICAL: Return ONLY JSON array starting with [ and ending with ]. No markdown 
 Business: ${feedBnsn}
 Offer: ${offerType}
 
-IMPORTANT: Fill each field with detailed, actionable content. Provide multiple values for each field where appropriate. Be specific and comprehensive. Include:
+IMPORTANT: Fill each field with detailed (only fill where appropriate, dont fill unnecessarily, it is better to be empty than unnecessary value), actionable content. Provide multiple values for each field where appropriate. Be specific and comprehensive. Include:
 - Specific examples and details
 - Multiple options/alternatives
 - Practical, actionable content

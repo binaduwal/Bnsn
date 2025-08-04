@@ -1,8 +1,10 @@
 import axios from "axios";
 import Cookies from "js-cookie";
 
+  export const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+
 export const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002',
+    baseURL,
     headers: {
         "Content-Type": "application/json",
     },
