@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 export const connectDatabase = async (): Promise<void> => {
   try {
-    const mongoUri = process.env.MONGODB_URI;
+    const mongoUri = process.env.MONGODB_URI || '';
     
     const options = {
       autoIndex: true,
