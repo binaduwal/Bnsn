@@ -78,28 +78,15 @@ export class DeepSeekService {
       title: cat.title,
       fields: cat.fields.map((f) => f.fieldName),
     }));
-
-    const systemPrompt = `You are a business strategist. Return a JSON array of category objects. Each object must have:
-- title: string (exact match from provided list)
-- description: string (brief, relevant)
-- fields: array of objects with fieldName and value (array of strings)
-
-Categories: ${JSON.stringify(simplifiedCategories)}
-
-CRITICAL: Return ONLY JSON array starting with [ and ending with ]. No markdown or explanations.`;
-
-    const userPrompt = `Create a comprehensive business blueprint for:
-Business: ${feedBnsn}
-Offer: ${offerType}
-
-IMPORTANT: Fill each field with detailed (only fill where appropriate, dont fill unnecessarily, it is better to be empty than unnecessary value), actionable content. Provide multiple values for each field where appropriate. Be specific and comprehensive. Include:
-- Specific examples and details
-- Multiple options/alternatives
-- Practical, actionable content
-- Industry-specific terminology
-- Real-world applications
-
-Return pure JSON only.`;
+    const systemPrompt = `Business strategist. Return JSON array of category objects:
+    [{"title":"exact_category_name","description":"brief_description","fields":[{"fieldName":"field_name","value":["value1","value2"]}]}]
+    
+    Use these categories: ${JSON.stringify(simplifiedCategories)}
+    
+    RETURN ONLY JSON ARRAY.`;
+    
+    const userPrompt = `Create business blueprint for ${feedBnsn} offering ${offerType}. 
+    Fill relevant fields with specific actionable content. Multiple values per field.`;
 
     const request: DeepSeekRequest = {
       model: this.defaultModel,

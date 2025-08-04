@@ -146,7 +146,7 @@ export const getSingleBlueprint = catchAsync(
 
     for (const category of blueprints.categories) {
       const categoryData = await CategoryValue.findOne({ blueprint: blueprints._id, category: category._id }).lean()
-      console.log('category data', categoryData)
+      // console.log('category data', categoryData)
       categoryValues.push(categoryData)
     }
 
