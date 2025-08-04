@@ -139,9 +139,9 @@ router.put('/users/:id', adminAuth, async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json(user);
+    return res.json(user);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error updating user', error: error.message });
+    return res.status(500).json({ message: 'Error updating user', error: error.message });
   }
 });
 
@@ -154,9 +154,9 @@ router.delete('/users/:id', adminAuth, async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({ message: 'User deleted successfully' });
+    return res.json({ message: 'User deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Error deleting user', error: error.message });
+    return res.status(500).json({ message: 'Error deleting user', error: error.message });
   }
 });
 
@@ -258,9 +258,9 @@ router.put('/categories/:id', adminAuth, async (req: Request, res: Response) => 
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    res.json(category);
+    return res.json(category);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error updating category', error: error.message });
+    return res.status(500).json({ message: 'Error updating category', error: error.message });
   }
 });
 
@@ -273,9 +273,9 @@ router.delete('/categories/:id', adminAuth, async (req: Request, res: Response) 
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    res.json({ message: 'Category deleted successfully' });
+    return res.json({ message: 'Category deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Error deleting category', error: error.message });
+    return res.status(500).json({ message: 'Error deleting category', error: error.message });
   }
 });
 
@@ -350,9 +350,9 @@ router.put('/projects/:id', adminAuth, async (req: Request, res: Response) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    res.json(project);
+    return res.json(project);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error updating project', error: error.message });
+    return res.status(500).json({ message: 'Error updating project', error: error.message });
   }
 });
 
@@ -365,9 +365,9 @@ router.delete('/projects/:id', adminAuth, async (req: Request, res: Response) =>
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    res.json({ message: 'Project deleted successfully' });
+    return res.json({ message: 'Project deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Error deleting project', error: error.message });
+    return res.status(500).json({ message: 'Error deleting project', error: error.message });
   }
 });
 
@@ -437,9 +437,9 @@ router.put('/blueprints/:id', adminAuth, async (req: Request, res: Response) => 
       return res.status(404).json({ message: 'Blueprint not found' });
     }
 
-    res.json(blueprint);
+    return res.json(blueprint);
   } catch (error: any) {
-    res.status(500).json({ message: 'Error updating blueprint', error: error.message });
+    return res.status(500).json({ message: 'Error updating blueprint', error: error.message });
   }
 });
 
@@ -452,9 +452,9 @@ router.delete('/blueprints/:id', adminAuth, async (req: Request, res: Response) 
       return res.status(404).json({ message: 'Blueprint not found' });
     }
 
-    res.json({ message: 'Blueprint deleted successfully' });
+    return res.json({ message: 'Blueprint deleted successfully' });
   } catch (error: any) {
-    res.status(500).json({ message: 'Error deleting blueprint', error: error.message });
+    return res.status(500).json({ message: 'Error deleting blueprint', error: error.message });
   }
 });
 

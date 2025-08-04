@@ -23,10 +23,10 @@ router.get('/effective/:projectId/:categoryId', async (req: AuthRequest, res) =>
     
     const effectiveAlias = await UserCategoryAliasService.getEffectiveAlias(userId, projectId, categoryId);
     
-    res.json({ effectiveAlias });
+    return res.json({ effectiveAlias });
   } catch (error) {
     console.error('Error getting effective alias:', error);
-    res.status(500).json({ error: 'Failed to get effective alias' });
+    return res.status(500).json({ error: 'Failed to get effective alias' });
   }
 });
 
@@ -51,10 +51,10 @@ router.post('/:projectId/:categoryId', async (req: AuthRequest, res) => {
     
     const userAlias = await UserCategoryAliasService.setCustomAlias(userId, projectId, categoryId, customAlias);
     
-    res.json({ success: true, userAlias });
+    return res.json({ success: true, userAlias });
   } catch (error) {
     console.error('Error setting custom alias:', error);
-    res.status(500).json({ error: 'Failed to set custom alias' });
+    return res.status(500).json({ error: 'Failed to set custom alias' });
   }
 });
 
@@ -74,10 +74,10 @@ router.delete('/:projectId/:categoryId', async (req: AuthRequest, res) => {
     
     const removed = await UserCategoryAliasService.removeCustomAlias(userId, projectId, categoryId);
     
-    res.json({ success: true, removed });
+    return res.json({ success: true, removed });
   } catch (error) {
     console.error('Error removing custom alias:', error);
-    res.status(500).json({ error: 'Failed to remove custom alias' });
+    return res.status(500).json({ error: 'Failed to remove custom alias' });
   }
 });
 
@@ -93,10 +93,10 @@ router.get('/:projectId', async (req: AuthRequest, res) => {
     
     const userAliases = await UserCategoryAliasService.getUserCustomAliases(userId, projectId);
     
-    res.json({ userAliases });
+    return res.json({ userAliases });
   } catch (error) {
     console.error('Error getting user custom aliases:', error);
-    res.status(500).json({ error: 'Failed to get user custom aliases' });
+    return res.status(500).json({ error: 'Failed to get user custom aliases' });
   }
 });
 
@@ -113,10 +113,10 @@ router.get('/:projectId/categories/effective', async (req: AuthRequest, res) => 
     
     const categories = await UserCategoryAliasService.getCategoriesWithEffectiveAliases(userId, projectId, filter);
     
-    res.json({ categories });
+    return res.json({ categories });
   } catch (error) {
     console.error('Error getting categories with effective aliases:', error);
-    res.status(500).json({ error: 'Failed to get categories with effective aliases' });
+    return res.status(500).json({ error: 'Failed to get categories with effective aliases' });
   }
 });
 

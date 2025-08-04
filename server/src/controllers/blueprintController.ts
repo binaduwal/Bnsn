@@ -139,7 +139,6 @@ export const getSingleBlueprint = catchAsync(
       return next(createError("No blueprint found", 404))
     }
 
-    console.log('blueprint category', blueprints.categories)
 
 
     const categoryValues: any[] = []

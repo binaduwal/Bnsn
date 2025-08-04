@@ -252,7 +252,9 @@ router.post('/:id/generate-content', authenticateToken, validateParams(campaignP
       campaignType,
     };
 
-    const generatedContent = await deepSeekService.generateEmailContent(contextData, campaignType);
+    const generatedContent = await deepSeekService.generateAdCopyStream([], [], campaign.name, (chunk: string) => {
+      // Handle streaming if needed
+    });
 
     campaign.content = generatedContent;
     campaign.statistics = {

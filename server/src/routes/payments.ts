@@ -140,9 +140,9 @@ router.post('/webhook', async (req, res, next) => {
         console.log(`Unhandled event type ${event.type}`);
     }
 
-    res.json({ received: true });
+    return res.json({ received: true });
   } catch (error) {
-    next(error);
+    return next(error);
   }
 });
 
