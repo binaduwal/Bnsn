@@ -13,6 +13,7 @@ const CreateBlueprint: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [streamingProgress, setStreamingProgress] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
+  const [progressPercentage, setProgressPercentage] = useState<number>(0);
 
   const wordCount = feedBnsn
     .trim()
@@ -36,6 +37,7 @@ const CreateBlueprint: React.FC = () => {
     setIsLoading(true);
     setIsStreaming(true);
     setStreamingProgress("");
+    setProgressPercentage(0);
 
     try {
       await createBlueprintStream(
@@ -46,17 +48,27 @@ const CreateBlueprint: React.FC = () => {
         },
         (chunk: string) => {
           // Handle progress updates
-          setStreamingProgress(prev => prev + chunk);
+          setStreamingProgress(prev => {
+            const newProgress = prev + chunk;
+            // Estimate progress based on content length (adjust this logic as needed)
+            const estimatedProgress = Math.min((newProgress.length / 5000) * 100, 95);
+            setProgressPercentage(estimatedProgress);
+            return newProgress;
+          });
         },
         (data: any) => {
           // Handle completion
           console.log("Blueprint created:", data);
-          router.push(`/dashboard/blueprint/${data._id}`);
+          setProgressPercentage(100);
+          setTimeout(() => {
+            router.push(`/dashboard/blueprint/${data._id}`);
+          }, 500);
         },
         (error: string) => {
           // Handle errors
           toast.error(error);
           setIsStreaming(false);
+          setProgressPercentage(0);
         }
       );
     } catch (error: any) {
@@ -155,13 +167,25 @@ const CreateBlueprint: React.FC = () => {
         {/* Streaming Progress */}
         {isStreaming && (
           <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-3">
               <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
               <span className="text-sm font-medium text-blue-800">
                 Generating your blueprint...
               </span>
             </div>
             
+            {/* Progress Bar */}
+            <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+            
+            {/* Progress Percentage */}
+            <div className="text-xs text-blue-700 text-right">
+              {Math.round(progressPercentage)}% complete
+            </div>
           </div>
         )}
 
