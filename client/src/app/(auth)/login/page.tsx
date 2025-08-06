@@ -145,13 +145,13 @@ const LoginForm: React.FC<{
               Remember me
             </label>
           </div>
-          <button
+          {/* <button
             type="button"
             onClick={onResetPasswordClick}
             className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
             Forgot password?
-          </button>
+          </button> */}
         </div>
 
         <button
