@@ -22,7 +22,7 @@ function useBlueprint() {
     }
   };
 
-  return { isLoading, blueprints, fetchBlueprint };
+  return { isLoading, blueprints, fetchBlueprint,setBlueprints };
 }
 
 export default useBlueprint;

@@ -22,6 +22,7 @@ import {
   TrendingUp,
   Users,
   Activity,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -43,7 +44,7 @@ const ProjectsPage: React.FC = () => {
   const [showStarredOnly, setShowStarredOnly] = useState(false);
   const router = useRouter();
 
-  const { isLoading, projects, fetchAllProjects } = useProject();
+  const { isLoading, projects, fetchAllProjects, setProjects } = useProject();
 
   // Fetch blueprints on component mount
   React.useEffect(() => {
@@ -76,9 +77,10 @@ const ProjectsPage: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!projectToDelete) return;
     try {
+      setProjects((prev) => prev.filter((p) => p._id !== projectToDelete._id));
       await deleteProjectApi(projectToDelete._id);
       toast.success("Project deleted successfully");
-      fetchAllProjects();
+      // fetchAllProjects();
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -86,9 +88,10 @@ const ProjectsPage: React.FC = () => {
 
   const handleStarToggle = async (project: Project) => {
     try {
+      setProjects(p => p.map(prj => prj._id === project._id ? { ...prj, isStarred: !prj.isStarred } : prj));
       await starProjectApi(project._id);
       toast.success(project.isStarred ? "Project unstarred" : "Project starred");
-      fetchAllProjects();
+      // fetchAllProjects();
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -128,9 +131,7 @@ const ProjectsPage: React.FC = () => {
                 >
                   {project.name}
                 </h3>
-                {project.isStarred && (
-                  <Star size={14} className="text-yellow-500" fill="currentColor" />
-                )}
+
               </div>
               <span
                 className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(
@@ -175,10 +176,7 @@ const ProjectsPage: React.FC = () => {
               <span>{formatTableDate(project.updatedAt)}</span>
             </div>
           </div>
-          <div className="flex items-center space-x-1">
-            <Activity className="w-4 h-4 text-green-500" />
-            <span className="text-green-600 font-medium">Active</span>
-          </div>
+
         </div>
 
         {/* Action buttons */}
@@ -190,13 +188,12 @@ const ProjectsPage: React.FC = () => {
             <Edit size={16} />
             <span>Edit</span>
           </button>
-          <button 
+          <button
             onClick={() => handleStarToggle(project)}
-            className={`p-2.5 rounded-xl transition-colors ${
-              project.isStarred 
-                ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50" 
-                : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
-            }`}
+            className={`p-2.5 rounded-xl transition-colors ${project.isStarred
+              ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
+              : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
+              }`}
           >
             <Star size={16} fill={project.isStarred ? "currentColor" : "none"} />
           </button>
@@ -281,6 +278,12 @@ const ProjectsPage: React.FC = () => {
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                   size={20}
                 />
+                {searchQuery.trim() && <div onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 flex justify-center items-center cursor-pointer p-1 size-6 hover:bg-gray-200 duration-200  rounded-full  transform -translate-y-1/2">
+                  <X
+                    className="   text-gray-700"
+                    size={20}
+                  />
+                </div>}
               </div>
 
               {/* Blueprint Filter Dropdown */}
@@ -303,7 +306,7 @@ const ProjectsPage: React.FC = () => {
                 </button>
 
                 {isDropdownOpen && (
-                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl z-10 max-h-60 overflow-y-auto mt-2 z-20">
+                  <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-xl shadow-xl  max-h-60 overflow-y-auto mt-2 z-20">
                     {/* All Blueprints option */}
                     <button
                       onClick={() => handleBlueprintSelect(null)}
@@ -333,17 +336,24 @@ const ProjectsPage: React.FC = () => {
               </div>
 
               {/* Starred Filter Toggle */}
+
               <button
-                onClick={() => setShowStarredOnly(!showStarredOnly)}
-                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border transition-colors shadow-sm ${
-                  showStarredOnly
-                    ? "bg-yellow-50 border-yellow-200 text-yellow-700"
-                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}
+                onClick={() => setShowStarredOnly(false)}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 cursor-pointer transition-colors ${!showStarredOnly ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-white border-gray-200 text-gray-700"} `}
               >
-                <Star size={18} className={showStarredOnly ? "text-yellow-600" : "text-gray-500"} fill={showStarredOnly ? "currentColor" : "none"} />
+                <Star size={18} className={"text-gray-500"} fill={"none"} />
                 <span className="text-sm font-medium">
-                  {showStarredOnly ? "Starred Only" : "All Projects"}
+                  All Projects
+                </span>
+              </button>
+
+              <button
+                onClick={() => setShowStarredOnly(true)}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 transition-colors cursor-pointer  ${showStarredOnly ? "bg-blue-100 border-blue-200 text-yellow-600" : "bg-white border-gray-200 text-gray-700"} `}
+              >
+                <Star size={18} className={"text-yellow-600"} fill={"currentColor"} />
+                <span className="text-sm font-medium">
+                  Starred Only
                 </span>
               </button>
             </div>
@@ -370,7 +380,7 @@ const ProjectsPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
-                    {filteredProjects.filter((p) => p.status === "Published").length}
+                    {filteredProjects.filter((p) => p.status === "Active").length}
                   </p>
                   <p className="text-sm text-gray-600">Active</p>
                 </div>

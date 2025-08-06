@@ -24,9 +24,22 @@ const LoginForm: React.FC<{
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Record<string, string>>({});
   const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      if (!email) {
+        setError((prev) => ({ ...prev, email: "Email is required" }));
+      }
+      if (!password) {
+        setError((prev) => ({ ...prev, password: "Password is required" }));
+      }
+      return;
+    }
+
+    setError({});
+
     try {
       setLoading(true);
       // Handle login logic here "kyraq@mailinator.com" "1234567890@Mm"
@@ -36,116 +49,126 @@ const LoginForm: React.FC<{
       setAuth(res.data.user, res.data.token);
       router.push("/dashboard");
     } catch (error: any) {
-      toast.error(error.message);
+      // toast.error(error.message);
+      setError(p => ({ ...p, response: error.message }));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label
-          htmlFor="email"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Email Address
-        </label>
-        <div className="relative">
-          <Mail
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <input
-            id="email"
-            type="email"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSubmit(e);
-              }
-            }}
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your email"
-          />
+    <div>
+      {error.response && (
+        <div className="my-4 p-4 flex justify-center items-center bg-red-50 rounded-lg border border-red-200">
+          <span className="font-semibold text-red-700">{error.response}</span>
         </div>
-      </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Email Address
+          </label>
+          <div className="relative">
+            <Mail
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+            <input
+              id="email"
+              type="email"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSubmit(e);
+                }
+              }}
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError((prev) => ({ ...prev, email: "" })) }}
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter your email"
+            />
+          </div>
+          <small className="text-red-500">{error.email}</small>
+        </div>
 
-      <div className="space-y-2">
-        <label
-          htmlFor="password"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Password
-        </label>
-        <div className="relative">
-          <Lock
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-            size={20}
-          />
-          <input
-            id="password"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSubmit(e);
-              }
-            }}
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder="Enter your password"
-          />
+        <div className="space-y-2">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Password
+          </label>
+          <div className="relative">
+            <Lock
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={20}
+            />
+            <input
+              id="password"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSubmit(e);
+                }
+              }}
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError((prev) => ({ ...prev, password: "" })) }}
+              className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
+          <small className="text-red-500">{error.password}</small>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label
+              htmlFor="remember-me"
+              className="ml-2 block text-sm text-gray-700"
+            >
+              Remember me
+            </label>
+          </div>
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            onClick={onResetPasswordClick}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            Forgot password?
           </button>
         </div>
-      </div>
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <input
-            id="remember-me"
-            type="checkbox"
-            checked={rememberMe}
-            onChange={(e) => setRememberMe(e.target.checked)}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-          />
-          <label
-            htmlFor="remember-me"
-            className="ml-2 block text-sm text-gray-700"
-          >
-            Remember me
-          </label>
-        </div>
         <button
-          type="button"
-          onClick={onResetPasswordClick}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          disabled={loading}
+          type="submit"
+          className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium flex items-center justify-center space-x-2 transition-colors"
         >
-          Forgot password?
+          {loading ? (
+            <Loader className=" size-6 animate-spin" />
+          ) : (
+            <>
+              <span>Sign In</span>
+              <ArrowRight size={20} />
+            </>
+          )}
         </button>
-      </div>
-
-      <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium flex items-center justify-center space-x-2 transition-colors"
-      >
-        {loading ? (
-          <Loader className=" size-6 animate-spin" />
-        ) : (
-          <>
-            <span>Sign In</span>
-            <ArrowRight size={20} />
-          </>
-        )}
-      </button>
+      </form>
     </div>
   );
 };
@@ -176,8 +199,10 @@ export default function Login() {
               </p>
             </div>
 
+
+
             {/* Login Form */}
-            <LoginForm role="admin" onResetPasswordClick={() => {}} />
+            <LoginForm role="admin" onResetPasswordClick={() => { }} />
 
             {/* Support Information */}
             <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -196,10 +221,10 @@ export default function Login() {
                     <p>
                       • Contact support at{" "}
                       <a
-                        href="mailto:support@industryrockstar.ai"
-                        className="font-medium hover:underline"
+                        href="mailto:support@aidistrictagents.com"
+                        className="font-medium text-yellow-950 hover:underline"
                       >
-                        support@industryrockstar.ai
+                        support@aidistrictagents.com
                       </a>
                     </p>
                   </div>

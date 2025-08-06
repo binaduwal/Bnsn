@@ -25,6 +25,7 @@ import {
   Layers,
   Sparkles,
   Target,
+  X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -44,7 +45,7 @@ const BlueprintPage: React.FC = () => {
   const [blueprintToDelete, setBlueprintToDelete] =
     useState<BlueprintProps | null>(null);
 
-  const { blueprints, isLoading, fetchBlueprint } = useBlueprint();
+  const { blueprints, isLoading, fetchBlueprint, setBlueprints } = useBlueprint();
 
   const totalPages = Math.ceil(blueprints.length / itemsPerPage);
 
@@ -70,9 +71,11 @@ const BlueprintPage: React.FC = () => {
     if (!blueprintToDelete) return;
 
     try {
+      setBlueprints(prev => prev.filter(b => b._id !== blueprintToDelete._id));
+      setShowDeleteModal(false);
+      setBlueprintToDelete(null);
       await deleteBlueprintApi(blueprintToDelete._id);
       toast.success("Blueprint deleted successfully");
-      fetchBlueprint();
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -80,9 +83,9 @@ const BlueprintPage: React.FC = () => {
 
   const handleStarToggle = async (blueprint: BlueprintProps) => {
     try {
-      await starBlueprintApi(blueprint._id);
+      setBlueprints(prev => prev.map(b => b._id === blueprint._id ? { ...b, isStarred: !b.isStarred } : b));
       toast.success(blueprint.isStarred ? "Blueprint unstarred" : "Blueprint starred");
-      fetchBlueprint();
+      await starBlueprintApi(blueprint._id);
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -95,7 +98,7 @@ const BlueprintPage: React.FC = () => {
       <div className="group relative bg-white rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-gray-300 transition-all duration-300 overflow-hidden">
         {/* Gradient accent bar */}
         <div className="h-1.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
-        
+
         {/* Card content */}
         <div className="p-6">
           {/* Header with status and actions */}
@@ -106,15 +109,13 @@ const BlueprintPage: React.FC = () => {
               </div>
               <div>
                 <div className="flex items-center space-x-2">
-                  <h3 
+                  <h3
                     onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
                     className="font-semibold text-gray-900 hover:text-indigo-600 cursor-pointer capitalize text-lg group-hover:text-indigo-600 transition-colors"
                   >
                     {blueprint.title}
                   </h3>
-                  {blueprint.isStarred && (
-                    <Star size={14} className="text-yellow-500" fill="currentColor" />
-                  )}
+
                 </div>
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(
@@ -126,13 +127,9 @@ const BlueprintPage: React.FC = () => {
                 </span>
               </div>
             </div>
-            
+
             {/* Actions dropdown */}
-            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-              <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                <MoreVertical size={16} />
-              </button>
-            </div>
+
           </div>
 
           {/* Blueprint description */}
@@ -160,10 +157,7 @@ const BlueprintPage: React.FC = () => {
                 <span>{formatTableDate(blueprint.updatedAt)}</span>
               </div>
             </div>
-            <div className="flex items-center space-x-1">
-              <Sparkles className="w-4 h-4 text-indigo-500" />
-              <span className="text-indigo-600 font-medium">Premium</span>
-            </div>
+
           </div>
 
           {/* Action buttons */}
@@ -175,13 +169,12 @@ const BlueprintPage: React.FC = () => {
               <Edit size={16} />
               <span>Edit</span>
             </button>
-            <button 
+            <button
               onClick={() => handleStarToggle(blueprint)}
-              className={`p-2.5 rounded-xl transition-colors ${
-                blueprint.isStarred 
-                  ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50" 
-                  : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
-              }`}
+              className={`p-2.5 rounded-xl transition-colors ${blueprint.isStarred
+                ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
+                : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
+                }`}
             >
               <Star size={16} fill={blueprint.isStarred ? "currentColor" : "none"} />
             </button>
@@ -238,8 +231,8 @@ const BlueprintPage: React.FC = () => {
           </div>
 
           {/* Enhanced Search and Filter Bar */}
-          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20 mb-8">
-            <div className="flex flex-col lg:flex-row items-center space-y-4 lg:space-y-0 lg:space-x-6">
+          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-white/20 mb-8">
+            <div className="flex flex-col lg:flex-row items-center space-y-4 lg:space-y-0 lg:space-x-4">
               <div className="relative flex-1 max-w-md">
                 <input
                   type="text"
@@ -252,20 +245,32 @@ const BlueprintPage: React.FC = () => {
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                   size={20}
                 />
+                {searchQuery.trim() && <div onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 flex justify-center items-center cursor-pointer p-1 size-6 hover:bg-gray-200 duration-200  rounded-full  transform -translate-y-1/2">
+                  <X
+                    className="   text-gray-700"
+                    size={20}
+                  />
+                </div>}
               </div>
 
               {/* Starred Filter Toggle */}
               <button
-                onClick={() => setShowStarredOnly(!showStarredOnly)}
-                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border transition-colors shadow-sm ${
-                  showStarredOnly
-                    ? "bg-yellow-50 border-yellow-200 text-yellow-700"
-                    : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                }`}
+                onClick={() => setShowStarredOnly(false)}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 cursor-pointer transition-colors ${!showStarredOnly ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-white border-gray-200 text-gray-700"} `}
               >
-                <Star size={18} className={showStarredOnly ? "text-yellow-600" : "text-gray-500"} fill={showStarredOnly ? "currentColor" : "none"} />
+                <Star size={18} className={"text-gray-500"} fill={"none"} />
                 <span className="text-sm font-medium">
-                  {showStarredOnly ? "Starred Only" : "All Blueprints"}
+                  All Blueprints
+                </span>
+              </button>
+
+              <button
+                onClick={() => setShowStarredOnly(true)}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 transition-colors cursor-pointer  ${showStarredOnly ? "bg-blue-100 border-blue-200 text-yellow-600" : "bg-white border-gray-200 text-gray-700"} `}
+              >
+                <Star size={18} className={"text-yellow-600"} fill={"currentColor"} />
+                <span className="text-sm font-medium">
+                  Starred Only
                 </span>
               </button>
 
@@ -285,7 +290,7 @@ const BlueprintPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -297,7 +302,7 @@ const BlueprintPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -309,7 +314,7 @@ const BlueprintPage: React.FC = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">

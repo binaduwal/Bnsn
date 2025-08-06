@@ -201,7 +201,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                           )}
                         </div>
 
-                        <div className="text-left flex-1 min-w-0">
+                        <div className="text-left flex-1  min-w-0">
                           {projectId ? (
                             <CategoryAliasEditor
                               projectId={projectId}
@@ -232,13 +232,8 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
-                        {selectedCategory === third._id && (
-                          <div className="flex items-center space-x-1 px-2 py-1 bg-green-100 border border-green-200 rounded-md">
-                            <div className="w-1.5 h-1.5 bg-green-600 rounded-full"></div>
-                            <span className="text-xs text-green-700 font-medium">Active</span>
-                          </div>
-                        )}
+                      <div className="flex items-center  space-x-2">
+                      
 
                         <div className={`w-3 h-3 rounded-full flex items-center justify-center transition-all duration-200 ${selectedCategory === third._id
                           ? "bg-blue-600"

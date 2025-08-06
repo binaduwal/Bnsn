@@ -27,6 +27,7 @@ function useProject() {
   return {
     isLoading,
     projects,
+    setProjects,
     fetchAllProjects
   }
 }

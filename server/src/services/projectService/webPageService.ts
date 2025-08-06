@@ -13,6 +13,7 @@ class WebPageService extends DeepSeekService {
     onProgress?: (chunk: string) => void,
     homepageReference?: string
   ): Promise<string> {
+    console.log('hitted')
     const systemPrompt = `You are a senior website UX/copywriting expert specializing in building complete home pages for modern websites. You write SEO-friendly, emotionally engaging, navigational HTML pages. The page must be structured like a real home page — introducing the brand, summarizing offerings, and guiding users to other pages. Your output must be valid inline-styled HTML, starting with <html> and ending with </html> and content must be inside <body> tag. IMPORTANT: Use current information and trends from 2024-2025. Do not reference outdated data or events from before 2024.`;
 
     const formattedBlueprint = blueprintValue

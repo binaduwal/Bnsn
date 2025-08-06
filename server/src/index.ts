@@ -29,7 +29,7 @@ const PORT = process.env.PORT || 5000;
 
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || "900000"),
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100000"),
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "1000000"),
   message: "Too many requests from this IP, please try again later.",
   //need to send json response
   headers: true,

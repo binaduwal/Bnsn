@@ -6,8 +6,7 @@ import {
   ChevronDown,
   Settings,
   Edit3,
-  Eye,
-  ShoppingCart,
+ 
   Save,
   Copy,
   Plus,
@@ -1306,22 +1305,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                         </h1>
                       )}
 
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={handleNameEdit}
-                          className="p-2 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all duration-200"
-                          title="Edit campaign name"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-
-                        <button
-                          className="p-2 rounded-xl hover:bg-purple-50 hover:text-purple-600 transition-all duration-200"
-                          title={isEmailCategory() ? "Preview email" : "Preview content"}
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                      </div>
+                   
                     </div>
                   </div>
 

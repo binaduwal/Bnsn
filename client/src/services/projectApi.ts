@@ -1,4 +1,4 @@
-import { api, errorHandler } from './api'
+import { api, baseURL, errorHandler } from './api'
 import { Field } from './categoryApi'
 import Cookies from "js-cookie";
 export const createProjectApi = async (body: { name: string, blueprintId?: string, categoryId?: string[], description?: string, mode?: string, offerType?: string, type?: string }) => {
@@ -79,7 +79,6 @@ export const generateProjectStreamApi = async (body: {
 }) => {
     const token = Cookies.get("token")
     try {
-        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002';
 
         const controller = new AbortController();
 
@@ -154,7 +153,7 @@ export interface Project {
     userId: string;
     name: string;
     description: string;
-    status: 'Draft' | 'Published' | 'Archived'; // You can adjust or extend these statuses
+    status: 'Draft' | 'Active' | 'Archived'; // You can adjust or extend these statuses
     isStarred: boolean;
     createdAt: string;
     updatedAt: string;

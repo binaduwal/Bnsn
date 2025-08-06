@@ -116,7 +116,7 @@ const CategoryAliasEditor: React.FC<CategoryAliasEditorProps> = ({
     <div className={`group relative ${className}`}>
       {!isEditing ? (
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-900">
+          <span className="text-sm max-w-[150px] text-wrap font-medium text-gray-900">
             {currentAlias}
             {hasCustomAlias && (
               <span className="ml-1 text-xs text-blue-600">(custom)</span>
@@ -153,7 +153,7 @@ const CategoryAliasEditor: React.FC<CategoryAliasEditorProps> = ({
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
             onClick={(e) => e.stopPropagation()}
-            className="border border-blue-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+            className="border border-blue-300  max-w-[150px] rounded-lg px-3 py-1.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
             placeholder="Enter custom alias"
             autoFocus
             onKeyDown={(e) => {

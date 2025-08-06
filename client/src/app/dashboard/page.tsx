@@ -25,6 +25,7 @@ import {
   Grid3X3,
   Layout,
   Palette,
+  X,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -45,23 +46,24 @@ const Dashboard: React.FC = () => {
     "all"
   );
   const router = useRouter();
-  const { projects, isLoading: projectFetching } = useProject();
-  const { blueprints, isLoading } = useBlueprint();
-  const { activities, isLoading: activitiesLoading } = useActivities(5);
+  const { projects, isLoading: projectFetching, setProjects } = useProject();
+  const { blueprints, isLoading, setBlueprints } = useBlueprint();
+  const { activities, isLoading: activitiesLoading, fetchActivities } = useActivities(5);
   const { user } = useAuthStore();
 
   const allItems = [...projects, ...blueprints];
-  const activeProjects = projects.length;
+  const activeProjects = projects.filter(p => p.status === 'Active').length;
   const activeBlueprints = blueprints.length;
 
   const handleStarToggle = async (projectId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click when clicking star
     console.log('Star toggle clicked for project:', projectId);
     try {
+      setProjects(prev => prev.map(p => p._id === projectId ? { ...p, isStarred: !p.isStarred } : p));
       const result = await starProjectApi(projectId);
+      fetchActivities()
       console.log('Star API result:', result);
-      // Refresh the projects list
-      window.location.reload(); // Simple refresh for now
+
     } catch (error: any) {
       console.error('Star toggle error:', error);
       toast.error(error.message || 'Failed to update star status');
@@ -72,10 +74,12 @@ const Dashboard: React.FC = () => {
     e.stopPropagation(); // Prevent card click when clicking star
     console.log('Star toggle clicked for blueprint:', blueprintId);
     try {
+      setBlueprints(prev => prev.map(b => b._id === blueprintId ? { ...b, isStarred: !b.isStarred } : b));
+
       const result = await starBlueprintApi(blueprintId);
       console.log('Blueprint star API result:', result);
       // Refresh the blueprints list
-      window.location.reload(); // Simple refresh for now
+      fetchActivities()
     } catch (error: any) {
       console.error('Blueprint star toggle error:', error);
       toast.error(error.message || 'Failed to update star status');
@@ -144,10 +148,10 @@ const Dashboard: React.FC = () => {
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <div
       onClick={() => router.push(`/dashboard/projects/${project._id}`)}
-      className="group bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200/60 p-6 hover:shadow-lg hover:shadow-blue-100/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+      className="group bg-gradient-to-br from-white to-blue-50/30 rounded-xl border border-gray-200/60 p-6 hover:shadow-lg hover:shadow-blue-100/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-100 to-transparent rounded-bl-full opacity-50"></div>
-      
+
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -174,14 +178,12 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-            <Copy size={16} />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+        {/* <div className="flex items-center space-x-1  transition-opacity">
+         
+          <button className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
             <Edit size={16} />
           </button>
-        </div>
+        </div> */}
       </div>
 
       <div className="space-y-3">
@@ -198,16 +200,8 @@ const Dashboard: React.FC = () => {
             {project.status || "Active"}
           </span>
         </div>
-        
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
-            <span className="flex items-center">
-              <Activity className="w-3 h-3 mr-1" />
-              Last 7 days
-            </span>
-          </div>
-          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
-        </div>
+
+
       </div>
     </div>
   );
@@ -217,10 +211,10 @@ const Dashboard: React.FC = () => {
   }) => (
     <div
       onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
-      className="group bg-gradient-to-br from-white to-indigo-50/30 rounded-xl border border-gray-200/60 p-6 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300 hover:-translate-y-1 cursor-pointer relative overflow-hidden"
+      className="group bg-gradient-to-br from-white to-indigo-50/30 rounded-xl border border-gray-200/60 p-6 hover:shadow-lg hover:shadow-indigo-100/50 transition-all duration-300  cursor-pointer relative overflow-hidden"
     >
       <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-indigo-100 to-transparent rounded-bl-full opacity-50"></div>
-      
+
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center space-x-4">
           <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -247,14 +241,7 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-            <Copy size={16} />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors">
-            <Edit size={16} />
-          </button>
-        </div>
+
       </div>
 
       <div className="space-y-3">
@@ -271,16 +258,8 @@ const Dashboard: React.FC = () => {
             Active
           </span>
         </div>
-        
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
-            <span className="flex items-center">
-              <Palette className="w-3 h-3 mr-1" />
-              Template ready
-            </span>
-          </div>
-          <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" />
-        </div>
+
+
       </div>
     </div>
   );
@@ -302,15 +281,6 @@ const Dashboard: React.FC = () => {
             <div className="flex items-center space-x-3">
               <Link
                 role="button"
-                href={"/dashboard/projects/new"}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-              >
-                <Plus size={18} />
-                <Folder size={18} />
-                <span>New Project</span>
-              </Link>
-              <Link
-                role="button"
                 href={"/dashboard/blueprint/new"}
                 className="bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white px-5 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
@@ -318,6 +288,16 @@ const Dashboard: React.FC = () => {
                 <FileText size={18} />
                 <span>New Blueprint</span>
               </Link>
+              <Link
+                role="button"
+                href={"/dashboard/projects/new"}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-5 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <Plus size={18} />
+                <Folder size={18} />
+                <span>New Project</span>
+              </Link>
+
               <Link
                 role="button"
                 href={"/dashboard/cloner"}
@@ -333,7 +313,7 @@ const Dashboard: React.FC = () => {
 
           {/* Enhanced Search and Filter Bar */}
           <div className="flex items-center space-x-4 mb-6">
-            <div className="relative flex-1 max-w-lg">
+            {/* <div className="relative flex-1 max-w-lg">
               <input
                 type="text"
                 placeholder="Search projects, blueprints, and more..."
@@ -345,42 +325,70 @@ const Dashboard: React.FC = () => {
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                 size={20}
               />
-            </div>
-            <button className="flex items-center space-x-2 px-5 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md">
+              <div className="absolute right-4 top-1/2 flex justify-center items-center cursor-pointer p-1 size-6 hover:bg-gray-200 duration-200  rounded-full  transform -translate-y-1/2">
+                <X onClick={() => setSearchQuery("")}
+                  className="   text-gray-700"
+                  size={20}
+                />
+              </div>
+             
+            </div> */}
+            {/* <button className="flex items-center space-x-2 px-5 py-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md">
               <Filter size={18} />
               <span className="font-medium">Filter</span>
             </button>
             <button className="flex items-center space-x-2 px-5 py-3 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-all duration-200 font-medium shadow-sm hover:shadow-md">
               <TrendingUp size={18} />
               <span>Sort</span>
-            </button>
+            </button> */}
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center space-x-1 mb-6">
-            {[
-              { key: "all", label: "All Items", count: allItems.length },
-              { key: "projects", label: "Projects", count: projects.length },
-              {
-                key: "blueprints",
-                label: "Blueprints",
-                count: blueprints.length,
-              },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
-                className={`px-4 py-2 rounded-lg border border-transparent text-sm font-medium transition-colors ${
-                  activeTab === tab.key
+          <div className=" flex items-center  justify-between mb-7 ">
+
+            <div className="flex items-center space-x-1 ">
+              {[
+                { key: "all", label: "All Items", count: allItems.length },
+                { key: "projects", label: "Projects", count: projects.length },
+                {
+                  key: "blueprints",
+                  label: "Blueprints",
+                  count: blueprints.length,
+                },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as any)}
+                  className={`px-4 py-2 rounded-lg border border-transparent text-sm font-medium transition-colors ${activeTab === tab.key
                     ? "bg-blue-50 text-blue-700 border border-blue-200"
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                }`}
-              >
-                {tab.label} ({tab.count})
-              </button>
-            ))}
-          </div>
+                    }`}
+                >
+                  {tab.label} ({tab.count})
+                </button>
+              ))}
+            </div>
+            <div className="relative flex-1 max-w-sm">
+              <input
+                type="text"
+                placeholder="Search projects, blueprints, and more..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-12 pr-4 py-2 border border-gray-300 rounded-xl bg-white outline-none "
+              />
+              <Search
+                className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={20}
+              />
+              {searchQuery.trim() && <div onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 flex justify-center items-center cursor-pointer p-1 size-6 hover:bg-gray-200 duration-200  rounded-full  transform -translate-y-1/2">
+                <X
+                  className="   text-gray-700"
+                  size={20}
+                />
+              </div>}
 
+            </div>
+          </div>
           {/* Enhanced Stats Dashboard */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <div className="bg-gradient-to-br from-blue-50 to-blue-100/50 p-6 rounded-2xl border border-blue-200/50 shadow-sm hover:shadow-md transition-shadow">
@@ -393,23 +401,23 @@ const Dashboard: React.FC = () => {
                     {activeProjects}
                   </div>
                   <div className="text-xs text-blue-600 font-medium">
-                    {projects.filter(p => p.status === 'Published').length} published
+                    {projects.filter(p => p.status === 'Active').length} active
                   </div>
                 </div>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Active Projects</h3>
                 <div className="w-full bg-blue-200/50 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full" 
+                  <div
+                    className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full"
                     style={{
-                      width: `${activeProjects > 0 ? (projects.filter(p => p.status === 'Published').length / activeProjects) * 100 : 0}%`
+                      width: `${activeProjects > 0 ? (activeProjects / projects.length) * 100 : 0}%`
                     }}
                   ></div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-indigo-50 to-indigo-100/50 p-6 rounded-2xl border border-indigo-200/50 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -427,16 +435,16 @@ const Dashboard: React.FC = () => {
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Active Blueprints</h3>
                 <div className="w-full bg-indigo-200/50 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full" 
+                  <div
+                    className="bg-gradient-to-r from-indigo-500 to-indigo-600 h-2 rounded-full"
                     style={{
-                      width: `${activeBlueprints > 0 ? (blueprints.filter(b => b.isStarred).length / activeBlueprints) * 100 : 0}%`
+                      width: `${activeBlueprints > 0 ? (blueprints.filter(b => b.isStarred).length / blueprints.length) * 100 : 0}%`
                     }}
                   ></div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-amber-50 to-amber-100/50 p-6 rounded-2xl border border-amber-200/50 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -452,16 +460,16 @@ const Dashboard: React.FC = () => {
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Draft Projects</h3>
                 <div className="w-full bg-amber-200/50 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full" 
+                  <div
+                    className="bg-gradient-to-r from-amber-500 to-amber-600 h-2 rounded-full"
                     style={{
-                      width: `${activeProjects > 0 ? (projects.filter(p => p.status === 'Draft').length / activeProjects) * 100 : 0}%`
+                      width: `${activeProjects > 0 ? (projects.filter(p => p.status === 'Draft').length / projects.length) * 100 : 0}%`
                     }}
                   ></div>
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/50 p-6 rounded-2xl border border-emerald-200/50 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-4">
                 <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -477,8 +485,8 @@ const Dashboard: React.FC = () => {
               <div>
                 <h3 className="text-sm font-semibold text-gray-700 mb-1">Starred Items</h3>
                 <div className="w-full bg-emerald-200/50 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full" 
+                  <div
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full"
                     style={{
                       width: `${allItems.length > 0 ? ((projects.filter(p => p.isStarred).length + blueprints.filter(b => b.isStarred).length) / allItems.length) * 100 : 0}%`
                     }}
@@ -493,20 +501,20 @@ const Dashboard: React.FC = () => {
         {searchQuery || activeTab !== "all" ? (
           <div className="space-y-6">
             {(() => {
-              const filteredProjects = searchQuery 
+              const filteredProjects = searchQuery
                 ? projects.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                : activeTab === "projects" 
-                ? projects 
-                : [];
-              
-              const filteredBlueprints = searchQuery 
+                : activeTab === "projects"
+                  ? projects
+                  : [];
+
+              const filteredBlueprints = searchQuery
                 ? blueprints.filter(b => b.title.toLowerCase().includes(searchQuery.toLowerCase()))
-                : activeTab === "blueprints" 
-                ? blueprints 
-                : [];
-              
+                : activeTab === "blueprints"
+                  ? blueprints
+                  : [];
+
               const totalItems = filteredProjects.length + filteredBlueprints.length;
-              
+
               return (
                 <>
                   <div className="flex items-center justify-between">
@@ -514,8 +522,8 @@ const Dashboard: React.FC = () => {
                       {searchQuery
                         ? `Search Results (${totalItems})`
                         : activeTab === "projects"
-                        ? "All Projects"
-                        : "All Blueprints"}
+                          ? "All Projects"
+                          : "All Blueprints"}
                     </h2>
                     <div className="text-sm text-gray-600">{totalItems} items found</div>
                   </div>
@@ -615,17 +623,15 @@ const Dashboard: React.FC = () => {
 
             {/* Right Column - Recent Activity Feed */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-2xl border border-gray-200 p-6 sticky top-8">
+              <div className="bg-white rounded-2xl border border-gray-200 p-6 sticky top-24">
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-3">
                     <div className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-lg flex items-center justify-center">
                       <Activity className="w-5 h-5 text-white" />
                     </div>
-                    <span>Recent Activity</span>
+                    <span>Recent Activities</span>
                   </h3>
-                  <button className="text-emerald-600 hover:text-emerald-700 font-medium text-sm">
-                    View timeline →
-                  </button>
+
                 </div>
                 <div className="space-y-4">
                   {activitiesLoading ? (

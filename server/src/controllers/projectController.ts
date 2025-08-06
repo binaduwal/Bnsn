@@ -275,6 +275,16 @@ export const generateProject = catchAsync(
         isExistedValue.homepageReference = aiGeneratedContent;
       }
 
+      await Project.findByIdAndUpdate(
+        project,
+        {
+          $set: {
+            status: "Active",
+          },
+        },
+        { new: true }
+      );
+
       await isExistedValue.save();
 
       res.end();

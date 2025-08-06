@@ -32,11 +32,11 @@ function Sidebar() {
       href: "/dashboard/projects",
       icon: <LucideFolder size={20} />,
     },
-    {
-      label: "Orders",
-      href: "/dashboard/orders",
-      icon: <LucideListOrdered size={20} />,
-    },
+    // {
+    //   label: "Orders",
+    //   href: "/dashboard/orders",
+    //   icon: <LucideListOrdered size={20} />,
+    // },
   ];
 
   const toggleExpanded = (label: string) => {

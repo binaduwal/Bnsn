@@ -18,7 +18,7 @@ const CreateProject: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [projectTitle, setProjectTitle] = useState("");
   const [selectedMode, setSelectedMode] = useState<"create" | "select">(
-    "create"
+    "select"
   );
   const [selectedCategory, setSelectedCategory] = useState<
     { id: string; title: string }[]
@@ -93,6 +93,9 @@ const CreateProject: React.FC = () => {
       return projectTitle.trim() !== "" && selectedBlueprint !== undefined;
     }
   };
+  const isStep2Valid = () => {
+    return selectedCategory.length > 0;
+  };
 
   const { category } = useCategory({ level: 0, type: "project" });
 
@@ -125,16 +128,16 @@ const CreateProject: React.FC = () => {
 
   const createProject = async () => {
     try {
-       console.log("res", );
-    const res = await createProjectApi({
-  name: projectTitle,
-  blueprintId: selectedBlueprint?.id || "",
-  categoryId: [selectedCategory[0]?.id],
-  description: projectDetails,
-  mode: selectedMode,
-  offerType: offerType,
-});
-     
+      console.log("res",);
+      const res = await createProjectApi({
+        name: projectTitle,
+        blueprintId: selectedBlueprint?.id || "",
+        categoryId: [selectedCategory[0]?.id],
+        description: projectDetails,
+        mode: selectedMode,
+        offerType: offerType,
+      });
+
       toast.success("Project created successfully");
       router.push(`/dashboard/projects/${res.data._id}`);
     } catch (error: any) {
@@ -187,13 +190,12 @@ const CreateProject: React.FC = () => {
               <React.Fragment key={step.id}>
                 <div className="flex items-center space-x-3">
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${
-                      step.id === currentStep
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium ${step.id === currentStep
                         ? "bg-blue-600 text-white"
                         : step.id < currentStep
-                        ? "bg-green-600 text-white"
-                        : "bg-gray-200 text-gray-500"
-                    }`}
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-200 text-gray-500"
+                      }`}
                   >
                     {step.id < currentStep ? (
                       <CheckCircle size={16} />
@@ -203,11 +205,10 @@ const CreateProject: React.FC = () => {
                   </div>
                   <div>
                     <div
-                      className={`text-sm font-medium ${
-                        step.id === currentStep
+                      className={`text-sm font-medium ${step.id === currentStep
                           ? "text-gray-900"
                           : "text-gray-500"
-                      }`}
+                        }`}
                     >
                       {step.title}
                     </div>
@@ -218,9 +219,8 @@ const CreateProject: React.FC = () => {
                 </div>
                 {index < steps.length - 1 && (
                   <div
-                    className={`flex-1 h-px ${
-                      step.id < currentStep ? "bg-green-600" : "bg-gray-200"
-                    }`}
+                    className={`flex-1 h-px ${step.id < currentStep ? "bg-green-600" : "bg-gray-200"
+                      }`}
                   ></div>
                 )}
               </React.Fragment>
@@ -236,7 +236,7 @@ const CreateProject: React.FC = () => {
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-900">
                   <span>Project Title</span>
-                  <HelpCircle size={16} className="text-gray-400" />
+                  {/* <HelpCircle size={16} className="text-gray-400" /> */}
                   <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -257,46 +257,42 @@ const CreateProject: React.FC = () => {
               <div className="space-y-4">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-900">
                   <span>Blueprint</span>
-                  <HelpCircle size={16} className="text-gray-400" />
+                  {/* <HelpCircle size={16} className="text-gray-400" /> */}
                 </label>
 
                 {/* Mode Toggle */}
                 <div className="flex items-center space-x-6">
-                  <button
+                  {/* <button
                     onClick={() => setSelectedMode("create")}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                      selectedMode === "create"
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${selectedMode === "create"
                         ? "bg-blue-50 border-blue-200 text-blue-700"
                         : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        selectedMode === "create"
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedMode === "create"
                           ? "border-blue-600"
                           : "border-gray-300"
-                      }`}
+                        }`}
                     >
                       {selectedMode === "create" && (
                         <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
                       )}
                     </div>
                     <span>Create Blueprint</span>
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => setSelectedMode("select")}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${
-                      selectedMode === "select"
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg border transition-colors ${selectedMode === "select"
                         ? "bg-blue-50 border-blue-200 text-blue-700"
                         : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     <div
-                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        selectedMode === "select"
+                      className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${selectedMode === "select"
                           ? "border-blue-600"
                           : "border-gray-300"
-                      }`}
+                        }`}
                     >
                       {selectedMode === "select" && (
                         <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
@@ -330,7 +326,7 @@ const CreateProject: React.FC = () => {
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2 text-sm font-medium text-gray-900">
                     <span>Project Details</span>
-                    <HelpCircle size={16} className="text-gray-400" />
+                    {/* <HelpCircle size={16} className="text-gray-400" /> */}
                     <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -360,7 +356,7 @@ const CreateProject: React.FC = () => {
                 <div className="space-y-2">
                   <label className="flex items-center space-x-2 text-sm font-medium text-gray-900">
                     <span>Offer Type</span>
-                    <HelpCircle size={16} className="text-gray-400" />
+                    {/* <HelpCircle size={16} className="text-gray-400" /> */}
                     <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -376,9 +372,8 @@ const CreateProject: React.FC = () => {
                         {offerType || "Select offer type..."}
                       </span>
                       <ChevronDown
-                        className={`h-5 w-5 text-gray-400 transition-transform ${
-                          isDropdownOpen ? "rotate-180" : ""
-                        }`}
+                        className={`h-5 w-5 text-gray-400 transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                          }`}
                       />
                     </button>
 
@@ -425,11 +420,10 @@ const CreateProject: React.FC = () => {
                       onClick={() =>
                         handleCategoryClick({ id: item._id, title: item.title })
                       }
-                      className={`p-4  cursor-pointer duration-300 border rounded-lg flex flex-col gap-2 ${
-                        selectedCategory.find((data) => data.id === item._id)
+                      className={`p-4  cursor-pointer duration-300 border rounded-lg flex flex-col gap-2 ${selectedCategory.find((data) => data.id === item._id)
                           ? "border-blue-600 bg-blue-50"
                           : "hover:bg-gray-200 border-gray-200"
-                      } `}
+                        } `}
                       key={index}
                     >
                       <h4 className="text-gray-900 font-semibold text-xl">
@@ -491,7 +485,7 @@ const CreateProject: React.FC = () => {
 
             <button
               onClick={handleContinue}
-              disabled={!isStep1Valid()}
+              disabled={!isStep1Valid() || (currentStep === 2 && !isStep2Valid())}
               className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               <span>Continue</span>

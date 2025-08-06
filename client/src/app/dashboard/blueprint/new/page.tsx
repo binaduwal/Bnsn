@@ -14,6 +14,7 @@ const CreateBlueprint: React.FC = () => {
   const [streamingProgress, setStreamingProgress] = useState<string>("");
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [progressPercentage, setProgressPercentage] = useState<number>(0);
+  const [errors, setErrors] = useState<Record<string, string>>({})
 
   const wordCount = feedBnsn
     .trim()
@@ -34,11 +35,24 @@ const CreateBlueprint: React.FC = () => {
 
   const handleSubmitBlueprint = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+  
+
+    if (!blueprintName.trim() || !feedBnsn.trim() || !selectedOfferType) {
+      if (!blueprintName.trim()) {
+        setErrors(prev => ({ ...prev, blueprintName: "Blueprint name is required." }));
+      }
+      if (!feedBnsn.trim()) {
+        setErrors(prev => ({ ...prev, feedBnsn: "Feed Ai District Copywrite is required." }));
+      }
+      if (!selectedOfferType) {
+        setErrors(prev => ({ ...prev, selectedOfferType: "Offer type is required." }));
+      }
+      return
+    }
+  setIsLoading(true);
     setIsStreaming(true);
     setStreamingProgress("");
     setProgressPercentage(0);
-
     try {
       await createBlueprintStream(
         {
@@ -50,7 +64,6 @@ const CreateBlueprint: React.FC = () => {
           // Handle progress updates
           setStreamingProgress(prev => {
             const newProgress = prev + chunk;
-            // Estimate progress based on content length (adjust this logic as needed)
             const estimatedProgress = Math.min((newProgress.length / 5000) * 100, 95);
             setProgressPercentage(estimatedProgress);
             return newProgress;
@@ -81,6 +94,7 @@ const CreateBlueprint: React.FC = () => {
 
   const handleOfferTypeSelect = (offerType: string) => {
     setSelectedOfferType(offerType);
+    setErrors(prev => ({ ...prev, selectedOfferType: "" }));
     setIsDropdownOpen(false);
   };
 
@@ -103,10 +117,13 @@ const CreateBlueprint: React.FC = () => {
           <input
             type="text"
             value={blueprintName}
-            onChange={(e) => setBlueprintName(e.target.value)}
+            onChange={(e) => {setBlueprintName(e.target.value); setErrors(prev => ({ ...prev, blueprintName: "" }));}}
             placeholder="What do you want to name this blueprint?"
             className="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
+          {errors.blueprintName && (
+            <small className="text-red-500">{errors.blueprintName}</small>
+          )}
         </div>
 
         {/* Feed Ai District Copywrite */}
@@ -117,7 +134,7 @@ const CreateBlueprint: React.FC = () => {
           <div className="relative">
             <textarea
               value={feedBnsn}
-              onChange={(e) => setFeedBnsn(e.target.value)}
+              onChange={(e) => {setFeedBnsn(e.target.value); setErrors(prev => ({ ...prev, feedBnsn: "" }));}}
               placeholder="Tell Ai District Copywrite about your project. You can provide up to 10,000 words, or if you're feeling lazy, just 30 will do. It's best to include details such as what you're selling and who you'd like to sell it to. You can include details about yourself as well. If you have bonuses, testimonials, and offer details, feed them to Ai District Copywrite right here."
               className="w-full h-64 px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
               maxLength={10000}
@@ -126,6 +143,9 @@ const CreateBlueprint: React.FC = () => {
               Words: {feedBnsn.trim() === "" ? 0 : wordCount}
             </div>
           </div>
+          {errors.feedBnsn && (
+            <small className="text-red-500">{errors.feedBnsn}</small>
+          )}
         </div>
 
         {/* Offer Type */}
@@ -162,6 +182,9 @@ const CreateBlueprint: React.FC = () => {
               </div>
             )}
           </div>
+          {errors.selectedOfferType && (
+            <small className="text-red-500">{errors.selectedOfferType}</small>
+          )}
         </div>
 
         {/* Streaming Progress */}
@@ -173,15 +196,15 @@ const CreateBlueprint: React.FC = () => {
                 Generating your blueprint...
               </span>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="w-full bg-blue-100 rounded-full h-2 mb-2">
-              <div 
+              <div
                 className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
                 style={{ width: `${progressPercentage}%` }}
               ></div>
             </div>
-            
+
             {/* Progress Percentage */}
             <div className="text-xs text-blue-700 text-right">
               {Math.round(progressPercentage)}% complete
