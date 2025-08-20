@@ -5,7 +5,6 @@ import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import fs from "fs";
-
 import { connectDatabase } from "./config/database";
 import { errorHandler } from "./middleware/errorHandler";
 import { notFound } from "./middleware/notFound";
@@ -41,9 +40,6 @@ const limiter = rateLimit({
       message: "You have exceeded the number of allowed requests. Please try again later.",
     });
   },
-
-
-
 });
 
 const uploadDir = process.env.UPLOAD_PATH || "./uploads";
