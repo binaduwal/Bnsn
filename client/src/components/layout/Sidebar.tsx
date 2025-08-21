@@ -1,0 +1,106 @@
+"use client";
+
+import {
+  LucideLayoutDashboard,
+  LucideFileText,
+  LucideFolder,
+  LucideListOrdered,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import React, { useState } from "react";
+import { useAuthStore } from "@/store/authStore";
+
+function Sidebar() {
+  const pathname = usePathname();
+  const [expandedItems, setExpandedItems] = useState<string[]>(["Add On"]);
+  const { user } = useAuthStore();
+
+  const navLinks = [
+    {
+      label: "Dashboard",
+      href: "/dashboard",
+      icon: <LucideLayoutDashboard size={20} />,
+    },
+    {
+      label: "Blueprint",
+      href: "/dashboard/blueprint",
+      icon: <LucideFileText size={20} />,
+    },
+    {
+      label: "Projects",
+      href: "/dashboard/projects",
+      icon: <LucideFolder size={20} />,
+    },
+    // {
+    //   label: "Orders",
+    //   href: "/dashboard/orders",
+    //   icon: <LucideListOrdered size={20} />,
+    // },
+  ];
+
+  const toggleExpanded = (label: string) => {
+    setExpandedItems((prev) =>
+      prev.includes(label)
+        ? prev.filter((item) => item !== label)
+        : [...prev, label]
+    );
+  };
+
+  const isActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+    return pathname.startsWith(href);
+  };
+  const isExpanded = (label: string) => expandedItems.includes(label);
+
+  return (
+    <div className="w-[300px] h-full bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-lg">
+      {/* Header */}
+      <div className="p-6 border-b border-gray-200/50">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <LucideLayoutDashboard className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent">
+              Workspace
+            </h2>
+            <p className="text-sm text-gray-500">{user?.firstName || 'User'}'s Dashboard</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <nav className="p-4">
+        <div className="flex flex-col gap-1">
+          {navLinks.map((item) => (
+            <Link
+              key={item.label}
+              href={item.href}
+              className={`flex items-center gap-3 p-3 border border-transparent rounded-xl transition-all duration-200 font-medium mb-1 ${
+                isActive(item.href)
+                  ? "bg-gradient-to-r from-purple-100 to-indigo-100 text-purple-700 shadow-sm border border-purple-200/50"
+                  : "text-gray-700 hover:bg-purple-50 hover:text-purple-700"
+              }`}
+            >
+              <span
+                className={`${
+                  isActive(item.href) ? "text-purple-600" : "text-purple-500"
+                }`}
+              >
+                {item.icon}
+              </span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      
+    </div>
+  );
+}
+
+export default Sidebar;
