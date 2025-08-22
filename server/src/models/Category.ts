@@ -10,7 +10,7 @@ const FieldSchema = new mongoose.Schema({
   },
 });
 
-const SettingSchema = new mongoose.Schema({
+const SettingSchema = new mongoose.Schema({ 
   focus: String,
   tone: String,
   quantity: String,

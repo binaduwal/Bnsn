@@ -54,6 +54,10 @@ const Dashboard: React.FC = () => {
   const allItems = [...projects, ...blueprints];
   const activeProjects = projects.filter(p => p.status === 'Active').length;
   const activeBlueprints = blueprints.length;
+  const combinedData = [...activities, ...blueprints];
+
+  console.log('Active blueprints:', blueprints);
+  console.log('Active activities:', activities);
 
   const handleStarToggle = async (projectId: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click when clicking star
@@ -645,22 +649,22 @@ const Dashboard: React.FC = () => {
                         </div>
                       </div>
                     ))
-                  ) : activities.length === 0 ? (
+                  ) : combinedData.length  === 0 ? (
                     <div className="text-center py-8">
                       <Activity className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-500">No recent activity</p>
                     </div>
                   ) : (
-                    activities.map((activity) => (
-                      <div key={activity._id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <div className={`w-8 h-8 ${getActivityBgColor(activity.type)} rounded-full flex items-center justify-center flex-shrink-0`}>
-                          {getActivityIcon(activity.type)}
+                    combinedData.map((item : any)  => (
+                      <div key={item._id} className="flex items-start space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className={`w-8 h-8 ${getActivityBgColor(item.type)} rounded-full flex items-center justify-center flex-shrink-0`}>
+                          {getActivityIcon(item.type)}
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                          <p className="text-sm font-medium text-gray-900">{item.title}</p>
                           <p className="text-xs text-gray-500 mt-1 flex items-center">
                             <Calendar className="w-3 h-3 mr-1" />
-                            {formatDate(activity.createdAt)}
+                            {formatDate(item.createdAt)}
                           </p>
                         </div>
                       </div>

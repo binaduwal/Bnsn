@@ -145,11 +145,11 @@ const ProjectsPage: React.FC = () => {
           </div>
 
           {/* Actions dropdown */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {/* <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
             <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
               <MoreVertical size={16} />
             </button>
-          </div>
+          </div> */}
         </div>
 
         {/* Blueprint info */}

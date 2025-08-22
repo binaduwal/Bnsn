@@ -303,7 +303,7 @@ const BlueprintPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
+            {/* <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-purple-600" />
@@ -313,7 +313,7 @@ const BlueprintPage: React.FC = () => {
                   <p className="text-sm text-gray-600">Premium</p>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className="bg-white/70 backdrop-blur-sm rounded-xl p-5 border border-white/20 shadow-sm">
               <div className="flex items-center space-x-3">

@@ -1,17 +1,16 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { adminApi, PaginatedResponse } from '@/services/adminApi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Pagination } from '@/components/ui/Pagination';
-import { Search, Edit, Plus, ChevronRight, ChevronDown, X } from 'lucide-react';
-
+import React, { useState, useEffect } from "react";
+import { adminApi, PaginatedResponse } from "@/services/adminApi";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Pagination } from "@/components/ui/Pagination";
+import { Search, Edit, Plus, ChevronRight, ChevronDown, X } from "lucide-react";
 interface Category {
   _id: string;
   title: string;
   alias: string;
   description: string;
-  type: 'blueprint' | 'project';
+  type: "blueprint" | "project";
   level: number;
   parentId?: string;
   fields: Array<{
@@ -32,17 +31,21 @@ interface Category {
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
   const [showEditModal, setShowEditModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set()
+  );
 
   // Function to expand all categories
   const expandAllCategories = (categories: Category[]) => {
     const allIds = new Set<string>();
     const collectIds = (cats: Category[]) => {
-      cats.forEach(cat => {
+      cats.forEach((cat) => {
         if (cat.children && cat.children.length > 0) {
           allIds.add(cat._id);
           collectIds(cat.children);
@@ -58,26 +61,22 @@ export default function CategoriesPage() {
     setExpandedCategories(new Set());
   };
 
-  useEffect(() => {
-    loadCategories();
-  }, [searchTerm]); // Remove pagination dependencies since we get all categories
+useEffect(() => {
+  loadCategories(searchTerm);
+}, [searchTerm]);
 
-  const loadCategories = async () => {
-    try {
-      setLoading(true);
-      const response = await adminApi.getCategories(
-        1, // page parameter (ignored by server)
-        25, // limit parameter (ignored by server)
-        searchTerm
-      );
-      setCategories(response.data);
-      // setPagination(response.pagination); // Removed pagination state
-    } catch (error) {
-      console.error('Error loading categories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+const loadCategories = async (search: string = "") => {
+  try {
+    setLoading(true);
+    const response = await adminApi.getCategories(1, 25, search);
+    setCategories(response.data);
+  } catch (error) {
+    console.error("Error loading categories:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -96,9 +95,9 @@ export default function CategoriesPage() {
   const renderCategoryTree = (categories: Category[], level = 0) => {
     return categories.map((category, index) => (
       <div key={`${category._id}-${level}-${index}`}>
-        <div 
+        <div
           className={`flex items-center p-3 hover:bg-gray-50 border-b ${
-            level > 0 ? 'ml-6' : ''
+            level > 0 ? "ml-6" : ""
           }`}
         >
           <div className="flex items-center flex-1">
@@ -122,14 +121,18 @@ export default function CategoriesPage() {
               <div className="text-sm text-gray-500">{category.alias}</div>
             </div>
             <div className="flex items-center space-x-2">
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                category.type === 'blueprint' 
-                  ? 'bg-blue-100 text-blue-800' 
-                  : 'bg-green-100 text-green-800'
-              }`}>
+              <span
+                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  category.type === "blueprint"
+                    ? "bg-blue-100 text-blue-800"
+                    : "bg-green-100 text-green-800"
+                }`}
+              >
                 {category.type}
               </span>
-              <span className="text-xs text-gray-500">Level {category.level}</span>
+              <span className="text-xs text-gray-500">
+                Level {category.level}
+              </span>
               {category.children && category.children.length > 0 && (
                 <span className="text-xs text-gray-400">
                   ({category.children.length} children)
@@ -145,11 +148,13 @@ export default function CategoriesPage() {
             </div>
           </div>
         </div>
-        {category.children && category.children.length > 0 && expandedCategories.has(category._id) && (
-          <div key={`children-${category._id}-${level}`}>
-            {renderCategoryTree(category.children, level + 1)}
-          </div>
-        )}
+        {category.children &&
+          category.children.length > 0 &&
+          expandedCategories.has(category._id) && (
+            <div key={`children-${category._id}-${level}`}>
+              {renderCategoryTree(category.children, level + 1)}
+            </div>
+          )}
       </div>
     ));
   };
@@ -171,23 +176,27 @@ export default function CategoriesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Categories Management</h1>
-          <p className="text-gray-600 mt-2">View content categories and their structure</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Categories Management
+          </h1>
+          <p className="text-gray-600 mt-2">
+            View content categories and their structure
+          </p>
         </div>
         <div className="flex items-center space-x-3">
-          <button 
+          <button
             onClick={() => expandAllCategories(categories)}
             className="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 text-sm"
           >
             Expand All
           </button>
-          <button 
+          <button
             onClick={collapseAllCategories}
             className="bg-gray-600 text-white px-3 py-2 rounded-lg hover:bg-gray-700 text-sm"
           >
             Collapse All
           </button>
-          <button 
+          <button
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
           >
@@ -207,33 +216,35 @@ export default function CategoriesPage() {
                 placeholder="Search categories..."
                 value={searchTerm}
                 onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10   pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-0">
-            {renderCategoryTree(categories)}
-          </div>
+          <div className="space-y-0">{renderCategoryTree(categories)}</div>
         </CardContent>
       </Card>
 
       {showEditModal && selectedCategory && (
         <CategoryModal
           category={selectedCategory}
+          categories={categories}
           onClose={() => {
             setShowEditModal(false);
             setSelectedCategory(null);
           }}
           onSave={async (updatedCategory) => {
             try {
-              await adminApi.updateCategory(selectedCategory._id, updatedCategory);
+              await adminApi.updateCategory(
+                selectedCategory._id,
+                updatedCategory
+              );
               await loadCategories();
               setShowEditModal(false);
               setSelectedCategory(null);
             } catch (error) {
-              console.error('Error updating category:', error);
+              console.error("Error updating category:", error);
             }
           }}
         />
@@ -242,13 +253,14 @@ export default function CategoriesPage() {
       {showCreateModal && (
         <CategoryModal
           onClose={() => setShowCreateModal(false)}
+          categories={categories}
           onSave={async (newCategory) => {
             try {
               await adminApi.createCategory(newCategory);
               await loadCategories();
               setShowCreateModal(false);
             } catch (error) {
-              console.error('Error creating category:', error);
+              console.error("Error creating category:", error);
             }
           }}
         />
@@ -259,85 +271,126 @@ export default function CategoriesPage() {
 
 interface CategoryModalProps {
   category?: Category;
+  categories: Category[];
   onClose: () => void;
   onSave: (category: Partial<Category>) => void;
 }
 
-function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
+function CategoryModal({
+  category,
+  categories,
+  onClose,
+  onSave,
+}: CategoryModalProps) {
   const [formData, setFormData] = useState({
-    title: category?.title || '',
-    alias: category?.alias || '',
-    description: category?.description || '',
-    type: category?.type || 'project',
+    title: category?.title || "",
+    alias: category?.alias || "",
+    description: category?.description || "",
+    type: category?.type || "project",
     level: category?.level || 0,
-    parentId: category?.parentId || '',
+    parentId: category?.parentId || null,
     fields: category?.fields || [],
     settings: category?.settings || {
-      focus: '',
-      tone: '',
-      quantity: '',
-      contentLenght: 0
-    }
+      focus: "",
+      tone: "",
+      quantity: "",
+      contentLenght: 0,
+    },
   });
 
-  const [newField, setNewField] = useState({ fieldName: '', fieldType: 'text' });
+  // console.log("this is formdata fields",formData.fields)
+  const [newField, setNewField] = useState({
+    fieldName: "",
+    fieldType: "text",
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // When editing, exclude title from the update data
+    e.stopPropagation();
+
+    const cleanedData = {
+      ...formData,
+      parentId: formData.parentId || null,
+    };
+
     if (category) {
-      const { title, ...updateData } = formData;
+      const { title, ...updateData } = cleanedData;
       onSave(updateData);
     } else {
-      onSave(formData);
+      onSave(cleanedData);
     }
   };
 
+  const [fieldError, setFieldError] = useState<string | null>(null);
+
   const addField = () => {
-    if (newField.fieldName.trim()) {
-      setFormData({
-        ...formData,
-        fields: [...formData.fields, { ...newField }]
-      });
-      setNewField({ fieldName: '', fieldType: 'text' });
+    if (!newField.fieldName.trim()) {
+      setFieldError("Field name is required.");
+      return;
     }
+    setFormData({
+      ...formData,
+      fields: [...formData.fields, { ...newField }],
+    });
+    setNewField({ fieldName: "", fieldType: "text" });
+    setFieldError(null);
   };
 
   const removeField = (index: number) => {
     setFormData({
       ...formData,
-      fields: formData.fields.filter((_, i) => i !== index)
+      fields: formData.fields.filter((_, i) => i !== index),
     });
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-xl font-bold mb-4">
-          {category ? 'Edit Category' : 'Create Category'}
-          {category && (
-            <p className="text-sm text-gray-600 mt-1 font-normal">
-              Note: Only the alias can be modified for existing categories
-            </p>
-          )}
-        </h2>
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold">
+              {category ? "Edit Category" : "Create Category"}
+            </h2>
+            {category && (
+              <p className="text-sm text-gray-600 mt-1 font-normal">
+                Note: Only the alias can be modified for existing categories
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
-                Title {category && <span className="text-gray-500 text-xs">(Read-only)</span>}
+                Title{" "}
+                {category && (
+                  <span className="text-gray-500 text-xs">(Read-only)</span>
+                )}
               </label>
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 className={`w-full p-2 border rounded-lg ${
-                  category ? 'bg-gray-100 cursor-not-allowed' : ''
+                  category ? "bg-gray-100 cursor-not-allowed" : ""
                 }`}
                 required
                 disabled={!!category}
-                title={category ? "Title cannot be changed for existing categories" : ""}
+                title={
+                  category
+                    ? "Title cannot be changed for existing categories"
+                    : ""
+                }
               />
             </div>
             <div>
@@ -345,18 +398,24 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
               <input
                 type="text"
                 value={formData.alias}
-                onChange={(e) => setFormData({ ...formData, alias: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, alias: e.target.value })
+                }
                 className="w-full p-2 border rounded-lg"
                 required
               />
             </div>
           </div>
-          
+
           <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
+            <label className="block text-sm font-medium mb-1">
+              Description
+            </label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="w-full p-2 border rounded-lg"
               rows={3}
             />
@@ -367,7 +426,12 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
               <label className="block text-sm font-medium mb-1">Type</label>
               <select
                 value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value as 'blueprint' | 'project' })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    type: e.target.value as "blueprint" | "project",
+                  })
+                }
                 className="w-full p-2 border rounded-lg"
               >
                 <option value="project">Project</option>
@@ -379,20 +443,34 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
               <input
                 type="number"
                 value={formData.level}
-                onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({ ...formData, level: parseInt(e.target.value) })
+                }
                 className="w-full p-2 border rounded-lg"
                 min="0"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Parent ID</label>
-              <input
-                type="text"
-                value={formData.parentId}
-                onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
+              <label className="block text-sm font-medium mb-1">
+                Parent Category
+              </label>
+              <select
+                value={formData.parentId || ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    parentId: e.target.value === "" ? null : e.target.value,
+                  })
+                }
                 className="w-full p-2 border rounded-lg"
-                placeholder="Optional"
-              />
+              >
+                <option value="">None</option>
+                {categories.map((cat) => (
+                  <option key={cat._id} value={cat._id}>
+                    {cat.title}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -439,13 +517,17 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
                 <input
                   type="text"
                   value={newField.fieldName}
-                  onChange={(e) => setNewField({ ...newField, fieldName: e.target.value })}
+                  onChange={(e) =>
+                    setNewField({ ...newField, fieldName: e.target.value })
+                  }
                   className="flex-1 p-2 border rounded-lg"
                   placeholder="New field name"
                 />
                 <select
                   value={newField.fieldType}
-                  onChange={(e) => setNewField({ ...newField, fieldType: e.target.value })}
+                  onChange={(e) =>
+                    setNewField({ ...newField, fieldType: e.target.value })
+                  }
                   className="p-2 border rounded-lg"
                 >
                   <option value="text">Text</option>
@@ -461,6 +543,10 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
+
+              {fieldError && (
+                <p className="text-red-500 text-sm mt-1">{fieldError}</p>
+              )}
             </div>
           </div>
 
@@ -470,10 +556,12 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
               <input
                 type="text"
                 value={formData.settings.focus}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  settings: { ...formData.settings, focus: e.target.value }
-                })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    settings: { ...formData.settings, focus: e.target.value },
+                  })
+                }
                 className="w-full p-2 border rounded-lg"
               />
             </div>
@@ -482,10 +570,12 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
               <input
                 type="text"
                 value={formData.settings.tone}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  settings: { ...formData.settings, tone: e.target.value }
-                })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    settings: { ...formData.settings, tone: e.target.value },
+                  })
+                }
                 className="w-full p-2 border rounded-lg"
               />
             </div>
@@ -497,22 +587,34 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
               <input
                 type="text"
                 value={formData.settings.quantity}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  settings: { ...formData.settings, quantity: e.target.value }
-                })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    settings: {
+                      ...formData.settings,
+                      quantity: e.target.value,
+                    },
+                  })
+                }
                 className="w-full p-2 border rounded-lg"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">Content Length</label>
+              <label className="block text-sm font-medium mb-1">
+                Content Length
+              </label>
               <input
                 type="number"
                 value={formData.settings.contentLenght}
-                onChange={(e) => setFormData({ 
-                  ...formData, 
-                  settings: { ...formData.settings, contentLenght: parseInt(e.target.value) }
-                })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    settings: {
+                      ...formData.settings,
+                      contentLenght: parseInt(e.target.value),
+                    },
+                  })
+                }
                 className="w-full p-2 border rounded-lg"
               />
             </div>
@@ -530,11 +632,11 @@ function CategoryModal({ category, onClose, onSave }: CategoryModalProps) {
               type="submit"
               className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              {category ? 'Update Category' : 'Create Category'}
+              {category ? "Update Category" : "Create Category"}
             </button>
           </div>
         </form>
       </div>
     </div>
   );
-} 
+}

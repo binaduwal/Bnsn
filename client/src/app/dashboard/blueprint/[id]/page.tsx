@@ -29,7 +29,6 @@ function page({ params }: { params: Promise<{ id: string }> }) {
       setLoading(false);
     }
   };
-
   return (
     <div className=" border border-gray-300 p-4 rounded-lg mx-2 shadow-md">
       <CategorizedForm

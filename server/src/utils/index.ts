@@ -7,7 +7,8 @@ export const formatDate = (date: Date): string => {
 };
 
 export const countWords = (text: string): number => {
-  return text.trim().split(/\s+/).length;
+  // return text.trim().split(/\s+/).length;
+  return text.trim().length;
 };
 
 export const truncateText = (text: string, maxLength: number): string => {
@@ -62,7 +63,7 @@ export const countGeneratedWords = (content: string): number => {
   const withoutComments = withoutHtml.replace(/<!--[\s\S]*?-->/g, '');
   
   // Remove email separators and metadata
-  const cleanContent = withoutComments
+  const cleanContent = withoutHtml
     .replace(/<!-- Email \d+ -->/gi, '')
     .replace(/<!--\s*Subject:\s*.*?-->/gi, '')
     .replace(/<!--\s*Preheader:\s*.*?-->/gi, '')
@@ -74,7 +75,7 @@ export const countGeneratedWords = (content: string): number => {
     .replace(/<\/body>/gi, '');
   
   // Count words in the cleaned content
-  return countWords(cleanContent);
+  return countWords(withoutHtml);
 };
 
 // Function to update user word count

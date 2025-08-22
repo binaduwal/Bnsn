@@ -6,7 +6,6 @@ import {
   ChevronDown,
   Settings,
   Edit3,
- 
   Save,
   Copy,
   Plus,
@@ -17,7 +16,6 @@ import {
   TrendingUp,
   Target,
   Layers,
-  FileText,
   Activity,
   Clock,
   Users,
@@ -27,6 +25,8 @@ import {
   Rocket,
   Palette,
   Wand2,
+  FileText,
+  Code,
 } from "lucide-react";
 import InlineTextEditor from "@/components/ui/InlineTextEditor";
 import {
@@ -60,11 +60,10 @@ interface ContentGeneratorUIProps {
 
 const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [currentCampaignName, setCurrentCampaignName] = useState(
-    "Content Generator"
-  );
-  const { category } = useCategory({ level: 0, type: "project" })
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [currentCampaignName, setCurrentCampaignName] =
+    useState("Content Generator");
+  const { category } = useCategory({ level: 0, type: "project" });
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [streamingAiContent, setStreamingAiContent] = useState<string>("");
@@ -80,6 +79,18 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     blueprintValues?: any[];
     fieldValue?: any[];
     aiContent?: string;
+  }>({});
+
+  const [generatedContentByCategory, setGeneratedContentByCategory] = useState<{
+    [categoryId: string]: {
+      blueprintValues?: any[];
+      fieldValue?: any[];
+      aiContent?: string;
+    };
+  }>({});
+
+  const [allFieldValues, setAllFieldValues] = useState<{
+    [categoryId: string]: { [fieldName: string]: string };
   }>({});
 
   const handleNameEdit = () => {
@@ -102,7 +113,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>("");
   const [mainTitle, setMainTitle] = useState("");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [blueprintId, setBlueprintId] = useState<{ _id: string, title: string } | undefined>(undefined);
+  const [blueprintId, setBlueprintId] = useState<
+    { _id: string; title: string } | undefined
+  >(undefined);
   const [fieldValues, setFieldValues] = useState<{ [key: string]: string }>({});
   const [addingCategory, setAddingCategory] = useState<string[]>([]);
 
@@ -125,36 +138,43 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     }
   };
 
-
   const handleAddSelected = async () => {
     try {
       const res = await updateProjectCategoryApi(id, addingCategory);
       // toast.success("Selected categories added successfully");
-      console.log('id', id, addingCategory)
-      console.log('response', res)
+      console.log("id", id, addingCategory);
+      console.log("response", res);
 
-      setCategories(res.data.categoryId)
+      setCategories(res.data.categoryId);
       setAddingCategory([]);
       setDrawerOpen(false);
     } catch (error: any) {
       toast.error(error.message || "Failed to add selected categories");
     }
-  }
+  };
 
   useEffect(() => {
-    setFieldValues({})
+    const savedValues = allFieldValues[selectedCategory || ""] || {};
+    setFieldValues(savedValues);
     const fieldValue = getFieldValue();
 
+    if (fieldValue && Object.keys(savedValues).length === 0) {
+      const backendValues: { [key: string]: string } = {};
+      fieldValue.value.forEach((item: any) => {
+        backendValues[item.key] = item.value[0];
+      });
+      setFieldValues(backendValues);
+    }
+    const currentCategoryContent =
+      generatedContentByCategory[selectedCategory || ""];
 
-
-    const values = fieldValue?.value.forEach((item: any) => {
-      setFieldValues((prev) => ({ ...prev, [item.key]: item.value[0] }));
-    });
-
-    setGeneratedContent({
-      ...generatedContent,
-      aiContent: fieldValue ? fieldValue.isAiGeneratedContent : "",
-    });
+    if (currentCategoryContent) {
+      setGeneratedContent(currentCategoryContent);
+    } else {
+      setGeneratedContent({
+        aiContent: fieldValue ? fieldValue.isAiGeneratedContent : "",
+      });
+    }
   }, [selectedCategory, categories]);
 
   // Cleanup effect for streaming states
@@ -176,12 +196,15 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
       response.data?.categoryId[0]?.subCategories[0]?.thirdCategories[0]?._id
     );
     setSelectedCampaign(response.data?.categoryId[0]?.subCategories[0]?.title);
-    setMainTitle(response.data?.categoryId[0]?.alias || response.data?.categoryId[0]?.title);
+    setMainTitle(
+      response.data?.categoryId[0]?.alias || response.data?.categoryId[0]?.title
+    );
 
-    setCurrentCampaignName(response.data?.categoryId[0]?.alias || response.data?.categoryId[0]?.title);
+    setCurrentCampaignName(
+      response.data?.categoryId[0]?.alias || response.data?.categoryId[0]?.title
+    );
 
     setBlueprintId(response?.data?.blueprintId);
-
   };
 
   const handleCampaignSelect = (campaignTitle: string) => {
@@ -193,8 +216,6 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const handleCategoryChange = (id: string) => {
     setSelectedCategory(id);
   };
-
-
 
   const progressPercentage =
     ((stats.totalWords - stats.wordsLeft) / stats.totalWords) * 100;
@@ -226,7 +247,6 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     return [];
   };
 
-
   // Function to determine if current category is email-related
   const isEmailCategory = (): boolean => {
     if (!selectedCategory || !categories?.length) return false;
@@ -238,12 +258,14 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
           if (subCategory.thirdCategories) {
             for (const thirdCategory of subCategory.thirdCategories) {
               if (thirdCategory._id === selectedCategory) {
-                const title = thirdCategory.title?.toLowerCase() || '';
+                const title = thirdCategory.title?.toLowerCase() || "";
                 // Check if the category title contains email-related keywords
-                return title.includes('email') ||
-                  title.includes('promotional') ||
-                  title.includes('content email') ||
-                  title.includes('email generator');
+                return (
+                  title.includes("email") ||
+                  title.includes("promotional") ||
+                  title.includes("content email") ||
+                  title.includes("email generator")
+                );
               }
             }
           }
@@ -255,22 +277,32 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
   const handleCategoryClick = (catId: string) => {
     if (addingCategory.includes(catId)) {
-      setAddingCategory(addingCategory.filter(id => id !== catId));
+      setAddingCategory(addingCategory.filter((id) => id !== catId));
     } else {
-      setAddingCategory(prev => [...prev, catId]);
+      setAddingCategory((prev) => [...prev, catId]);
     }
   };
   const handleSelectAll = () => {
-    if (addingCategory.filter(cat => !categories.find(cate => cat == cate._id)).length === category.filter(cat => !categories.find(cate => cat._id == cate._id)).length) {
+    if (
+      addingCategory.filter(
+        (cat) => !categories.find((cate) => cat == cate._id)
+      ).length ===
+      category.filter((cat) => !categories.find((cate) => cat._id == cate._id))
+        .length
+    ) {
       setAddingCategory([]);
     } else {
-      setAddingCategory(category.filter(cat => !categories.find(cate => cat._id == cate._id)).map(cat => cat._id));
+      setAddingCategory(
+        category
+          .filter((cat) => !categories.find((cate) => cat._id == cate._id))
+          .map((cat) => cat._id)
+      );
     }
   };
 
   // Function to get the current category title
   const getCurrentCategoryTitle = (): string => {
-    if (!selectedCategory || !categories?.length) return '';
+    if (!selectedCategory || !categories?.length) return "";
 
     for (const category of categories) {
       if (category.subCategories) {
@@ -278,19 +310,18 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
           if (subCategory.thirdCategories) {
             for (const thirdCategory of subCategory.thirdCategories) {
               if (thirdCategory._id === selectedCategory) {
-                return thirdCategory.alias || thirdCategory.title || '';
+                return thirdCategory.alias || thirdCategory.title || "";
               }
             }
           }
         }
       }
     }
-    return '';
+    return "";
   };
 
   // Handle streaming data from backend
   const handleStreamData = (data: any) => {
-
     switch (data.type) {
       case "test":
         console.log("Streaming test successful:", data);
@@ -314,19 +345,26 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         break;
 
       case "data":
+        const newContent = { ...generatedContent };
+
         if (data.key === "blueprintValues") {
-          setGeneratedContent((prev) => ({
-            ...prev,
-            blueprintValues: data.value,
-          }));
+          newContent.blueprintValues = data.value;
         } else if (data.key === "fieldValue") {
-          setGeneratedContent((prev) => ({ ...prev, fieldValue: data.value }));
+          newContent.fieldValue = data.value;
         } else if (data.key === "aiContent") {
-          // Final AI content received
-          setGeneratedContent((prev) => ({ ...prev, aiContent: data.value }));
-          setIsAiStreaming(false); // Stop streaming mode
-          setStreamingAiContent(""); // Clear streaming content
+          newContent.aiContent = data.value;
+          setIsAiStreaming(false);
+          setStreamingAiContent("");
+
+          // FIX: Store the generated content for the current category
+          setGeneratedContentByCategory((prev) => ({
+            ...prev,
+            [selectedCategory || ""]: newContent,
+          }));
         }
+
+        setGeneratedContent(newContent);
+
         if (data.progress) {
           setStreamingProgress(data.progress);
         }
@@ -344,7 +382,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
             const emailMatches = newContent.match(/<!-- Email (\d+) -->/g);
             if (emailMatches) {
               // Extract the highest email number found
-              const emailNumbers = emailMatches.map(match => {
+              const emailNumbers = emailMatches.map((match) => {
                 const numberMatch = match.match(/<!-- Email (\d+) -->/);
                 return numberMatch ? parseInt(numberMatch[1]) : 0;
               });
@@ -358,7 +396,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               if (htmlBlocks && htmlBlocks.length > 0) {
                 const estimatedEmail = Math.min(htmlBlocks.length, 10);
                 setCurrentEmailIndex(estimatedEmail);
-                setStreamingMessage(`Generating email ${estimatedEmail} of 10...`);
+                setStreamingMessage(
+                  `Generating email ${estimatedEmail} of 10...`
+                );
               }
             }
           } else {
@@ -384,6 +424,11 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         if (data.data) {
           setGeneratedContent(data.data);
 
+          setGeneratedContentByCategory((prev) => ({
+            ...prev,
+            [selectedCategory || ""]: data.data,
+          }));
+
           // Update word count if provided
           if (data.data.wordCount) {
             setStats({
@@ -406,9 +451,6 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         console.log("Unknown stream data type:", data.type, data);
     }
   };
-
-
-
 
   // Updated streaming generate function
   const handleGenerateProject = async () => {
@@ -465,7 +507,12 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                 const data = JSON.parse(buffer);
                 handleStreamData(data);
               } catch (e) {
-                console.warn("Error parsing final buffer:", e, "Buffer:", buffer);
+                console.warn(
+                  "Error parsing final buffer:",
+                  e,
+                  "Buffer:",
+                  buffer
+                );
               }
             }
             break;
@@ -477,7 +524,8 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
           // Throttle UI updates to prevent freezing - only log every 10 chunks
           const now = Date.now();
-          if (now - lastUpdateTime > 100 && totalChunks % 10 === 0) { // Update every 100ms and every 10 chunks
+          if (now - lastUpdateTime > 100 && totalChunks % 10 === 0) {
+            // Update every 100ms and every 10 chunks
             console.log(`Chunk ${totalChunks}: ${chunk.length} chars`);
             lastUpdateTime = now;
           }
@@ -497,7 +545,12 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               } catch (e) {
                 // Only log parsing errors for non-empty lines
                 if (trimmedLine.length > 10) {
-                  console.error("Error parsing SSE data:", e, "Line:", trimmedLine);
+                  console.error(
+                    "Error parsing SSE data:",
+                    e,
+                    "Line:",
+                    trimmedLine
+                  );
                 }
               }
             } else if (trimmedLine && trimmedLine !== "") {
@@ -519,7 +572,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
           // Check for inactivity timeout (30 seconds without data)
           if (Date.now() - lastActivityTime > 30000) {
-            console.warn("No data received for 30 seconds, checking connection...");
+            console.warn(
+              "No data received for 30 seconds, checking connection..."
+            );
             setStreamingMessage("Checking connection...");
           }
         }
@@ -527,17 +582,20 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         console.error("Streaming error:", error);
 
         // Retry logic for connection issues
-        if (retryCount < maxRetries && (
-          error.message?.includes('timeout') ||
-          error.message?.includes('network') ||
-          error.message?.includes('connection')
-        )) {
+        if (
+          retryCount < maxRetries &&
+          (error.message?.includes("timeout") ||
+            error.message?.includes("network") ||
+            error.message?.includes("connection"))
+        ) {
           retryCount++;
-          setStreamingMessage(`Connection failed, retrying (${retryCount}/${maxRetries})...`);
+          setStreamingMessage(
+            `Connection failed, retrying (${retryCount}/${maxRetries})...`
+          );
           console.log(`Retrying streaming attempt ${retryCount}/${maxRetries}`);
 
           // Wait 2 seconds before retrying
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           return attemptStreaming();
         }
 
@@ -561,6 +619,11 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         });
 
         setGeneratedContent(fallbackResponse);
+
+         setGeneratedContentByCategory(prev => ({
+        ...prev,
+        [selectedCategory || ""]: fallbackResponse
+      }));
         setStreamingProgress(100);
         setStreamingMessage("Generation completed successfully!");
         toast.success("Project generated successfully!");
@@ -586,15 +649,16 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
     const isEmail = isEmailCategory();
 
-
     // Check if content is empty or just contains empty HTML tags
-    const cleanContent = contentToShow?.replace(/<[^>]*>/g, '').trim();
+    const cleanContent = contentToShow?.replace(/<[^>]*>/g, "").trim();
     if (!cleanContent && !isAiStreaming) {
       return (
         <div className="mb-8">
           <div className="bg-white/70 border border-gray-200 rounded-xl p-8 shadow-sm">
             <div className="text-center text-gray-500">
-              <p className="text-lg">No content generated yet. Please try generating again.</p>
+              <p className="text-lg">
+                No content generated yet. Please try generating again.
+              </p>
             </div>
           </div>
         </div>
@@ -621,15 +685,13 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               ) : (
                 <StreamingContentPreview content={streamingAiContent} />
               )
+            ) : // Show final parsed content
+            isEmail ? (
+              parseMultipleEmails(contentToShow || "").map((email, idx) => (
+                <EmailCard key={idx} email={email} index={idx} />
+              ))
             ) : (
-              // Show final parsed content
-              isEmail ? (
-                parseMultipleEmails(contentToShow || "").map((email, idx) => (
-                  <EmailCard key={idx} email={email} index={idx} />
-                ))
-              ) : (
-                <ContentCard content={contentToShow || ""} />
-              )
+              <ContentCard content={contentToShow || ""} />
             )}
           </div>
         </div>
@@ -752,14 +814,15 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
       {email.preheader && (
         <p className="text-base text-gray-600 mb-6 leading-relaxed">
-          <strong className="text-gray-800">Preheader:</strong> {email.preheader}
+          <strong className="text-gray-800">Preheader:</strong>{" "}
+          {email.preheader}
         </p>
       )}
 
       <InlineTextEditor
         className="p-0"
         initialContent={email.body || ""}
-        onChange={(value) => { }}
+        onChange={(value) => {}}
       />
     </div>
   );
@@ -769,27 +832,28 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     // First, clean any HTML document structure if present
     let cleanedContent = content
       // Remove markdown code blocks and backticks
-      .replace(/```html\s*/gi, '')
-      .replace(/```\s*/gi, '')
-      .replace(/`/g, '')
+      .replace(/```html\s*/gi, "")
+      .replace(/```\s*/gi, "")
+      .replace(/`/g, "")
       // Remove HTML document structure
-      .replace(/<html[^>]*>/gi, '')
-      .replace(/<\/html>/gi, '')
-      .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, '')
-      .replace(/<body[^>]*>/gi, '')
-      .replace(/<\/body>/gi, '')
+      .replace(/<html[^>]*>/gi, "")
+      .replace(/<\/html>/gi, "")
+      .replace(/<head[^>]*>[\s\S]*?<\/head>/gi, "")
+      .replace(/<body[^>]*>/gi, "")
+      .replace(/<\/body>/gi, "")
       // Remove any leading/trailing whitespace and newlines
       .trim();
 
     // Check if content looks like markdown (starts with # or contains markdown patterns)
-    const isMarkdown = /^#\s|^\*\s|^-\s|^>\s|^\d+\.\s/.test(cleanedContent) ||
+    const isMarkdown =
+      /^#\s|^\*\s|^-\s|^>\s|^\d+\.\s/.test(cleanedContent) ||
       /\*\*.*\*\*|\*.*\*|\[.*\]\(.*\)/.test(cleanedContent);
 
     if (isMarkdown) {
       try {
         // Convert markdown to HTML - handle both sync and async versions
         const result = marked(cleanedContent);
-        return typeof result === 'string' ? result : cleanedContent;
+        return typeof result === "string" ? result : cleanedContent;
       } catch (error) {
         console.error("Error converting markdown to HTML:", error);
         return cleanedContent; // Return original if conversion fails
@@ -839,32 +903,58 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   const ContentCard: React.FC<{ content: string }> = ({ content }) => {
     // Use unified cleaning function for consistency
     const cleanContent = cleanHtmlContent(content);
+    const [isDropdownOpen, setDropdownOpen] = useState(false);
+
+    const handleCopy = (type: "text" | "raw") => {
+      try {
+        const dataToCopy =
+          type === "text" ? parse(cleanContent || "").toString() : content;
+        navigator.clipboard.writeText(dataToCopy);
+        toast.success(
+          `Copied ${type === "text" ? "Text Based" : "Raw Content"}!`
+        );
+        setDropdownOpen(false);
+      } catch (error) {
+        console.error("Error copying to clipboard:", error);
+        toast.error("Failed to copy to clipboard");
+      }
+    };
 
     return (
       <div className="border relative border-gray-200 flex flex-col gap-2 rounded-xl p-8 shadow-sm bg-white/80">
         <div className="absolute top-4 right-4 z-10">
           <button
-            onClick={() => {
-              try {
-                const parsedHtml = parse(cleanContent || "");
-                navigator.clipboard.writeText(parsedHtml);
-                toast.success("Copied to clipboard");
-              } catch (error) {
-                console.error("Error copying to clipboard:", error);
-                toast.error("Failed to copy to clipboard");
-              }
-            }}
+            onClick={() => setDropdownOpen(!isDropdownOpen)}
             className="p-3 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors shadow-sm bg-white border border-gray-200"
             title="Copy content"
           >
             <Copy className="w-5 h-5" />
           </button>
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-30 bg-gray-800/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-700/50 py-2 z-50 flex justify-around">
+              <button
+                onClick={() => handleCopy("text")}
+                className="flex flex-col items-center px-4 py-2 text-white hover:bg-purple-600/20 transition-colors rounded-lg"
+              >
+                <FileText className="w-5 h-5 mb-1" />
+                <span className="text-sm">Text</span>
+              </button>
+
+              <button
+                onClick={() => handleCopy("raw")}
+                className="flex flex-col items-center px-4 py-2 text-white hover:bg-purple-600/20 transition-colors rounded-lg"
+              >
+                <Code className="w-5 h-5 mb-1" />
+                <span className="text-sm">Html</span>
+              </button>
+            </div>
+          )}{" "}
         </div>
 
         <InlineTextEditor
           className="p-0"
           initialContent={cleanContent || ""}
-          onChange={(value) => { }}
+          onChange={(value) => {}}
         />
       </div>
     );
@@ -875,25 +965,32 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     const emails: ParsedEmail[] = [];
 
     // Check if content contains HTML structure
-    const hasHtmlStructure = /<html[^>]*>/i.test(content) || /<body[^>]*>/i.test(content);
+    const hasHtmlStructure =
+      /<html[^>]*>/i.test(content) || /<body[^>]*>/i.test(content);
 
     if (!hasHtmlStructure) {
       // If no HTML structure, treat as plain text
-      return [{
-        title: "",
-        subject: "",
-        preheader: "",
-        body: content
-      }];
+      return [
+        {
+          title: "",
+          subject: "",
+          preheader: "",
+          body: content,
+        },
+      ];
     }
 
     // Split by potential email separators or HTML blocks
-    const emailBlocks = content.split(/(?=<!-- Email \d+ -->|<\/html>|<\/body>)/gi).filter(block => block.trim());
+    const emailBlocks = content
+      .split(/(?=<!-- Email \d+ -->|<\/html>|<\/body>)/gi)
+      .filter((block) => block.trim());
 
     emailBlocks.forEach((block, index) => {
       // Extract email number from separator if present
       const emailNumberMatch = block.match(/<!-- Email (\d+) -->/);
-      const emailNumber = emailNumberMatch ? parseInt(emailNumberMatch[1]) : index + 1;
+      const emailNumber = emailNumberMatch
+        ? parseInt(emailNumberMatch[1])
+        : index + 1;
 
       // Extract title
       const titleMatch = block.match(/<title[^>]*>(.*?)<\/title>/i);
@@ -918,7 +1015,8 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         body = cleanHtmlContent(block);
       }
 
-      if (body && body.length > 10) { // Only add if there's meaningful content
+      if (body && body.length > 10) {
+        // Only add if there's meaningful content
         emails.push({
           title,
           subject,
@@ -930,17 +1028,18 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
 
     // If no emails were parsed, return the content as a single item
     if (emails.length === 0 && content.trim()) {
-      return [{
-        title: "Generated Content",
-        subject: "",
-        preheader: "",
-        body: content
-      }];
+      return [
+        {
+          title: "Generated Content",
+          subject: "",
+          preheader: "",
+          body: content,
+        },
+      ];
     }
 
     return emails;
   };
-
 
   const handleSave = async () => {
     try {
@@ -970,12 +1069,16 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     }
 
     // Split by email separators or complete HTML blocks
-    const emailBlocks = rawHtml.split(/(?=<!-- Email \d+ -->|<\/html>)/gi).filter(block => block.trim());
+    const emailBlocks = rawHtml
+      .split(/(?=<!-- Email \d+ -->|<\/html>)/gi)
+      .filter((block) => block.trim());
 
     const emails: ParsedEmail[] = emailBlocks.map((block, index) => {
       // Extract email number from separator if present
       const emailNumberMatch = block.match(/<!-- Email (\d+) -->/);
-      const emailNumber = emailNumberMatch ? parseInt(emailNumberMatch[1]) : index + 1;
+      const emailNumber = emailNumberMatch
+        ? parseInt(emailNumberMatch[1])
+        : index + 1;
 
       // Extract title
       const titleMatch = block.match(/<title[^>]*>(.*?)<\/title>/i);
@@ -1009,16 +1112,20 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     });
 
     // Filter out emails without meaningful body content
-    const filteredEmails = emails.filter((email) => email.body && email.body.length > 10);
+    const filteredEmails = emails.filter(
+      (email) => email.body && email.body.length > 10
+    );
 
     // If no emails were parsed, return the content as a single item
     if (filteredEmails.length === 0 && rawHtml.trim()) {
-      return [{
-        title: "Generated Content",
-        subject: "",
-        preheader: "",
-        body: rawHtml
-      }];
+      return [
+        {
+          title: "Generated Content",
+          subject: "",
+          preheader: "",
+          body: rawHtml,
+        },
+      ];
     }
 
     return filteredEmails;
@@ -1028,6 +1135,13 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
     setFieldValues((prev) => ({
       ...prev,
       [fieldId]: value,
+    }));
+    setAllFieldValues((prev) => ({
+      ...prev,
+      [selectedCategory || ""]: {
+        ...prev[selectedCategory || ""],
+        [fieldId]: value,
+      },
     }));
   };
 
@@ -1052,7 +1166,7 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
   };
 
   const parse = (html: string) => {
-    if (!html || typeof html !== 'string') {
+    if (!html || typeof html !== "string") {
       return "";
     }
 
@@ -1079,7 +1193,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               <Target className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">Content Studio</div>
+              <div className="text-xs font-medium text-blue-600 uppercase tracking-wide">
+                Content Studio
+              </div>
               <div className="text-sm text-gray-600">Project Workspace</div>
             </div>
           </div>
@@ -1109,8 +1225,10 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-white/20 bg-gradient-to-r from-blue-50/50 to-purple-50/50">
           <div className="flex gap-2">
-        
-            <button onClick={() => setDrawerOpen(true)} className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 border-0 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg">
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 border-0 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg"
+            >
               <Plus className="w-4 h-4 inline mr-2" />
               Add New
             </button>
@@ -1118,13 +1236,20 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
         </div>
       </aside>
 
-      <Drawer title="Add Category" isOpen={drawerOpen} height="full" onClose={() => setDrawerOpen(false)}>
+      <Drawer
+        title="Add Category"
+        isOpen={drawerOpen}
+        height="full"
+        onClose={() => setDrawerOpen(false)}
+      >
         <div className="bg-white h-full flex flex-col">
           {/* Header with search and controls */}
           <div className="p-6 border-b border-gray-200 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">Add Categories</h2>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Add Categories
+                </h2>
                 <p className="text-sm text-gray-500 mt-1">
                   Select categories to add to your collection
                 </p>
@@ -1134,17 +1259,26 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               </div>
             </div>
 
-
             {/* Quick actions */}
             <div className="flex items-center justify-between">
               <button
                 onClick={handleSelectAll}
                 className="text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
               >
-                {addingCategory.length === category.filter(cat => !categories.find(cate => cat._id == cate._id)).length ? 'Deselect All' : 'Select All'}
+                {addingCategory.length ===
+                category.filter(
+                  (cat) => !categories.find((cate) => cat._id == cate._id)
+                ).length
+                  ? "Deselect All"
+                  : "Select All"}
               </button>
               <div className="text-sm text-gray-500">
-                {category.filter(cat => !categories.find(cate => cat._id == cate._id)).length} categories available
+                {
+                  category.filter(
+                    (cat) => !categories.find((cate) => cat._id == cate._id)
+                  ).length
+                }{" "}
+                categories available
               </div>
             </div>
           </div>
@@ -1155,61 +1289,90 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               <div className="text-center py-12">
                 <div className="w-16 h-16 mx-auto mb-4 text-gray-300">
                   <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-1.01-6-2.709M6.343 6.343A8 8 0 004.5 10.5M17.657 6.343A8 8 0 0019.5 10.5" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1}
+                      d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.5-1.01-6-2.709M6.343 6.343A8 8 0 004.5 10.5M17.657 6.343A8 8 0 0019.5 10.5"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No categories found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No categories found
+                </h3>
                 <p className="text-gray-500">Try adjusting your search terms</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {category.filter(cat => !categories.find(cate => cat._id == cate._id)).map((cat) => {
-                  const isSelected = addingCategory.includes(cat._id);
-                  return (
-                    <div
-                      key={cat._id}
-                      onClick={() => handleCategoryClick(cat._id)}
-                      className={`
+                {category
+                  .filter(
+                    (cat) => !categories.find((cate) => cat._id == cate._id)
+                  )
+                  .map((cat) => {
+                    const isSelected = addingCategory.includes(cat._id);
+                    return (
+                      <div
+                        key={cat._id}
+                        onClick={() => handleCategoryClick(cat._id)}
+                        className={`
                     group relative p-5 border-2 rounded-xl cursor-pointer transition-all duration-200 hover:shadow-md
-                    ${isSelected
-                          ? 'bg-blue-50 border-blue-300 shadow-sm'
-                          : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-                        }
+                    ${
+                      isSelected
+                        ? "bg-blue-50 border-blue-300 shadow-sm"
+                        : "bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                    }
                   `}
-                    >
-                      {/* Selection indicator */}
-                      <div className={`
+                      >
+                        {/* Selection indicator */}
+                        <div
+                          className={`
                     absolute top-3 right-3 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-200
-                    ${isSelected
-                          ? 'bg-blue-600 border-blue-600'
-                          : 'border-gray-300 group-hover:border-gray-400'
-                        }
-                  `}>
-                        {isSelected && (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
+                    ${
+                      isSelected
+                        ? "bg-blue-600 border-blue-600"
+                        : "border-gray-300 group-hover:border-gray-400"
+                    }
+                  `}
+                        >
+                          {isSelected && (
+                            <svg
+                              className="w-3 h-3 text-white"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={3}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                          )}
+                        </div>
 
-                      {/* Content */}
-                      <div className="pr-8">
-                        <h3 className={`
+                        {/* Content */}
+                        <div className="pr-8">
+                          <h3
+                            className={`
                       font-semibold text-lg mb-2 transition-colors
-                      ${isSelected ? 'text-blue-900' : 'text-gray-900'}
-                    `}>
-                          {cat.title}
-                        </h3>
-                        <p className={`
+                      ${isSelected ? "text-blue-900" : "text-gray-900"}
+                    `}
+                          >
+                            {cat.title}
+                          </h3>
+                          <p
+                            className={`
                       text-sm leading-relaxed transition-colors
-                      ${isSelected ? 'text-blue-700' : 'text-gray-600'}
-                    `}>
-                          {cat.description}
-                        </p>
+                      ${isSelected ? "text-blue-700" : "text-gray-600"}
+                    `}
+                          >
+                            {cat.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -1220,7 +1383,8 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
               <div className="text-sm text-gray-600">
                 {addingCategory.length > 0 && (
                   <span className="font-medium">
-                    {addingCategory.length} categor{addingCategory.length === 1 ? 'y' : 'ies'} selected
+                    {addingCategory.length} categor
+                    {addingCategory.length === 1 ? "y" : "ies"} selected
                   </span>
                 )}
               </div>
@@ -1279,7 +1443,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                     <nav className="flex items-center space-x-2 text-sm">
                       <div className="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
                         <FileText className="w-4 h-4" />
-                        <span className="font-medium">{currentCampaignName}</span>
+                        <span className="font-medium">
+                          {currentCampaignName}
+                        </span>
                       </div>
                       <ChevronDown className="w-4 h-4 rotate-[-90deg] text-gray-400" />
                     </nav>
@@ -1290,7 +1456,9 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                         <input
                           type="text"
                           value={currentCampaignName}
-                          onChange={(e) => setCurrentCampaignName(e.target.value)}
+                          onChange={(e) =>
+                            setCurrentCampaignName(e.target.value)
+                          }
                           onKeyDown={handleNameSave}
                           onBlur={handleNameBlur}
                           className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent bg-transparent border-b-2 border-blue-500 focus:outline-none"
@@ -1299,90 +1467,93 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                       ) : (
                         <h1
                           className="text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent cursor-pointer hover:from-blue-600 hover:to-purple-600 transition-all duration-200"
-                          onClick={handleNameEdit}
+                          // onClick={handleNameEdit}
                         >
                           {currentCampaignName}
                         </h1>
                       )}
-
-                   
                     </div>
                   </div>
-
                 </div>
               </div>
             </header>
 
             {/* Main Content */}
-            <main onClick={() => console.log('campaign', campaignFields)} className="flex-1 max-h-[calc(100vh-280px)] min-h-[calc(100vh-280px)] overflow-y-auto">
+            <main
+              onClick={() => console.log("campaign", campaignFields)}
+              className="flex-1 max-h-[calc(100vh-280px)] min-h-[calc(100vh-280px)] overflow-y-auto"
+            >
               {campaignFields.length > 0 ? (
                 <div className="max-w-5xl space-y-3 mx-auto p-3">
-                  {!generatedContent?.aiContent && campaignFields.map((field, index) => (
-                    <div
-                      key={field._id}
-                      className="group relative transition-all duration-300"
-                    >
-                      <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:border-blue-200 hover:shadow-lg transition-all duration-300 shadow-sm">
-                        {/* Compact Header */}
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
-                              <Lightbulb className="w-4 h-4 text-blue-600" />
-                            </div>
-                            <div>
-                              <label className="text-base font-semibold text-gray-800">
-                                {field.fieldName}
-                              </label>
-                              <div className="text-xs text-gray-500">
-                                {field.fieldType} field
+                  {!generatedContent?.aiContent &&
+                    campaignFields.map((field, index) => (
+                      <div
+                        key={field._id}
+                        className="group relative transition-all duration-300"
+                      >
+                        <div className="bg-white/80 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 hover:border-blue-200 hover:shadow-lg transition-all duration-300 shadow-sm">
+                          {/* Compact Header */}
+                          <div className="flex items-center justify-between mb-3">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-8 h-8 rounded-md bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
+                                <Lightbulb className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <label className="text-base font-semibold text-gray-800">
+                                  {field.fieldName}
+                                </label>
+                                <div className="text-xs text-gray-500">
+                                  {field.fieldType} field
+                                </div>
                               </div>
                             </div>
+                            <div className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded border border-blue-100">
+                              #{index + 1}
+                            </div>
                           </div>
-                          <div className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded border border-blue-100">
-                            #{index + 1}
-                          </div>
-                        </div>
 
-                        {/* Compact Input Field */}
-                        <div className="relative">
-                          {field.fieldType === "text" && (
-                            <div className="relative group">
-                              <input
-                                type="text"
-                                value={
-                                  fieldValues?.[field.fieldName] ||
-                                  getFieldValue()?.value[0]?.value[0] ||
-                                  ""
-                                }
-                                onChange={(e) =>
-                                  handleFieldChange(
-                                    `${field.fieldName}`,
-                                    e.target.value
-                                  )
-                                }
-                                placeholder={`Enter ${field.fieldName.toLowerCase()}...`}
-                                className="w-full px-3 py-2 border rounded-md text-gray-700 placeholder-gray-400 bg-white/50 backdrop-blur-sm
+                          {/* Compact Input Field */}
+                          <div className="relative">
+                            {field.fieldType === "text" && (
+                              <div className="relative group">
+                                <input
+                                  type="text"
+                                  value={
+                                    fieldValues?.[field.fieldName] ||
+                                    getFieldValue()?.value[0]?.value[0] ||
+                                    ""
+                                  }
+                                  onChange={(e) =>
+                                    handleFieldChange(
+                                      `${field.fieldName}`,
+                                      e.target.value
+                                    )
+                                  }
+                                  placeholder={`Enter ${field.fieldName.toLowerCase()}...`}
+                                  className="w-full px-3 py-2 border rounded-md text-gray-700 placeholder-gray-400 bg-white/50 backdrop-blur-sm
                                   transition-all duration-300 focus:outline-none focus:ring-1 focus:ring-blue-100
                                   border-gray-200 hover:border-blue-300 focus:border-blue-500 focus:bg-white
                                   text-sm font-medium shadow-sm"
-                              />
-                              <div className="absolute inset-0 rounded-md bg-gradient-to-r from-blue-400/0 via-purple-400/0 to-pink-400/0 
+                                />
+                                <div
+                                  className="absolute inset-0 rounded-md bg-gradient-to-r from-blue-400/0 via-purple-400/0 to-pink-400/0 
                                 group-focus-within:from-blue-400/5 group-focus-within:via-purple-400/5 group-focus-within:to-pink-400/5 
-                                transition-all duration-500 pointer-events-none"></div>
-                            </div>
-                          )}
-                        </div>
+                                transition-all duration-500 pointer-events-none"
+                                ></div>
+                              </div>
+                            )}
+                          </div>
 
-                        {/* Compact Field Description */}
-                        <div className="mt-2 p-2 bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-md border border-blue-100/50">
-                          <div className="flex items-center space-x-1 text-xs text-gray-600">
-                            <FileText className="w-3 h-3 text-blue-500" />
-                            <span>Used for AI content generation</span>
+                          {/* Compact Field Description */}
+                          <div className="mt-2 p-2 bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-md border border-blue-100/50">
+                            <div className="flex items-center space-x-1 text-xs text-gray-600">
+                              <FileText className="w-3 h-3 text-blue-500" />
+                              <span>Used for AI content generation</span>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
 
                   {/* Compact Generate Button Section */}
                   <div className="flex flex-col items-center mt-4 space-y-3">
@@ -1396,8 +1567,12 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                                 <Rocket className="w-4 h-4 text-white animate-bounce" />
                               </div>
                               <div>
-                                <div className="text-base font-semibold text-gray-800">{streamingMessage}</div>
-                                <div className="text-sm text-gray-500">AI Generation</div>
+                                <div className="text-base font-semibold text-gray-800">
+                                  {streamingMessage}
+                                </div>
+                                <div className="text-sm text-gray-500">
+                                  AI Generation
+                                </div>
                               </div>
                             </div>
                             <div className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -1413,112 +1588,125 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
                           </div>
 
-                          {isEmailCategory() && currentEmailIndex > 0 && totalEmails > 0 && (
-                            <div className="mt-3 flex items-center justify-center space-x-2 text-sm text-gray-600">
-                              <Users className="w-4 h-4" />
-                              <span>Email {currentEmailIndex} of {totalEmails}</span>
-                            </div>
-                          )}
+                          {isEmailCategory() &&
+                            currentEmailIndex > 0 &&
+                            totalEmails > 0 && (
+                              <div className="mt-3 flex items-center justify-center space-x-2 text-sm text-gray-600">
+                                <Users className="w-4 h-4" />
+                                <span>
+                                  Email {currentEmailIndex} of {totalEmails}
+                                </span>
+                              </div>
+                            )}
                         </div>
                       </div>
                     )}
 
                     {/* Compact Generate Button */}
-                    {!generatedContent?.aiContent && <div className="relative">
-                      <button
-                        disabled={isGenerating}
-                        onClick={handleGenerateProject}
-                        className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
+                    {!generatedContent?.aiContent && (
+                      <div className="relative">
+                        <button
+                          disabled={isGenerating}
+                          onClick={handleGenerateProject}
+                          className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
                           disabled:from-gray-400 disabled:to-gray-500 text-white px-6 py-2.5 rounded-lg 
                           flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl 
                           transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed 
                           disabled:transform-none font-semibold text-sm"
-                      >
-                        {/* Button glow effect */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                        >
+                          {/* Button glow effect */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
 
-                        <div className="flex items-center space-x-2 relative z-10">
-                          {isGenerating ? (
-                            <>
-                              <Loader className="w-4 h-4 animate-spin" />
-                              <span className="font-semibold">
-                                {isEmailCategory() ? "Generating..." : "Creating..."}
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <Wand2 className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
-                              <span className="font-semibold">Generate Content</span>
-                            </>
-                          )}
-                        </div>
-                      </button>
-                    </div>}
+                          <div className="flex items-center space-x-2 relative z-10">
+                            {isGenerating ? (
+                              <>
+                                <Loader className="w-4 h-4 animate-spin" />
+                                <span className="font-semibold">
+                                  {isEmailCategory()
+                                    ? "Generating..."
+                                    : "Creating..."}
+                                </span>
+                              </>
+                            ) : (
+                              <>
+                                <Wand2 className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+                                <span className="font-semibold">
+                                  Generate Content
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Enhanced Generated Content Display */}
                   {(generatedContent.aiContent ||
                     generatedContent.blueprintValues) && (
-                      <div className="w-full max-w-6xl mx-auto mt-8">
-                        <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-white/50 shadow-xl overflow-hidden">
-                          {/* Content Header */}
-                          <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-white/50">
-                            <div className="flex items-center space-x-4">
-                              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-100 to-emerald-100 flex items-center justify-center">
-                                <CheckCircle className="w-5 h-5 text-green-600" />
-                              </div>
-                              <div>
-                                <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                                  Generated Content
-                                </h2>
-                                <p className="text-gray-600">
-                                  AI-powered content ready for your review and customization
-                                </p>
-                              </div>
+                    <div className="w-full max-w-6xl mx-auto mt-8">
+                      <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-white/50 shadow-xl overflow-hidden">
+                        {/* Content Header */}
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-white/50">
+                          <div className="flex items-center space-x-4">
+                            <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-green-100 to-emerald-100 flex items-center justify-center">
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div>
+                              <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                                Generated Content
+                              </h2>
+                              <p className="text-gray-600">
+                                AI-powered content ready for your review and
+                                customization
+                              </p>
                             </div>
                           </div>
+                        </div>
 
-                          {/* Content Body */}
-                          <div className="p-6">
-                            {(streamingAiContent || generatedContent.aiContent) &&
-                              renderAiContent()}
-                          </div>
+                        {/* Content Body */}
+                        <div className="p-6">
+                          {(streamingAiContent || generatedContent.aiContent) &&
+                            renderAiContent()}
                         </div>
                       </div>
-                    )}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="min-h-[60vh] flex flex-col justify-center items-center p-6 bg-gradient-to-br from-blue-50/50 to-purple-50/50">
                   {/* Empty State with Generate Button */}
-                  {!generatedContent?.aiContent && campaignFields.length == 0 && (
-                    <div className="text-center mb-8">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <Palette className="w-8 h-8 text-blue-600" />
-                      </div>
-                      <h3 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
-                        Ready to Create Amazing Content?
-                      </h3>
-                      <p className="text-gray-600 mb-6 max-w-md mx-auto text-sm">
-                        Generate AI-powered content instantly with our advanced content generation system
-                      </p>
+                  {!generatedContent?.aiContent &&
+                    campaignFields.length == 0 && (
+                      <div className="text-center mb-8">
+                        <div className="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Palette className="w-8 h-8 text-blue-600" />
+                        </div>
+                        <h3 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2">
+                          Ready to Create Amazing Content?
+                        </h3>
+                        <p className="text-gray-600 mb-6 max-w-md mx-auto text-sm">
+                          Generate AI-powered content instantly with our
+                          advanced content generation system
+                        </p>
 
-                      <button
-                        disabled={isGenerating}
-                        onClick={handleGenerateProject}
-                        className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
+                        <button
+                          disabled={isGenerating}
+                          onClick={handleGenerateProject}
+                          className="group relative bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 
                           disabled:from-gray-400 disabled:to-gray-500 text-white px-8 py-3 rounded-lg 
                           flex items-center space-x-2 transition-all duration-300 shadow-lg hover:shadow-xl 
                           transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed 
                           disabled:transform-none font-semibold text-sm mx-auto"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
-                        <div className="flex items-center space-x-2 relative z-10">
-                          <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
-                          <span>Generate Content</span>
-                        </div>
-                      </button>
-                    </div>
-                  )}
+                        >
+                          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur opacity-30 group-hover:opacity-50 transition-opacity"></div>
+                          <div className="flex items-center space-x-2 relative z-10">
+                            <Sparkles className="w-5 h-5 group-hover:rotate-12 transition-transform duration-300" />
+                            <span>Generate Content</span>
+                          </div>
+                        </button>
+                      </div>
+                    )}
 
                   {/* Enhanced Progress Section */}
                   {generatedContent.aiContent?.length == 0 && isGenerating && (
@@ -1530,8 +1718,12 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                               <Rocket className="w-4 h-4 text-white animate-bounce" />
                             </div>
                             <div>
-                              <div className="font-semibold text-gray-800">{streamingMessage}</div>
-                              <div className="text-sm text-gray-500">AI Content Generation in Progress</div>
+                              <div className="font-semibold text-gray-800">
+                                {streamingMessage}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                AI Content Generation in Progress
+                              </div>
                             </div>
                           </div>
                           <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -1551,7 +1743,8 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                   )}
 
                   {/* Enhanced Generated Content */}
-                  {(generatedContent.aiContent || generatedContent.blueprintValues) && (
+                  {(generatedContent.aiContent ||
+                    generatedContent.blueprintValues) && (
                     <div className="w-full max-w-6xl mx-auto">
                       <div className="bg-white/90 backdrop-blur-sm rounded-xl border border-white/50 shadow-xl overflow-hidden">
                         <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b border-white/50">
@@ -1570,12 +1763,12 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
                           </div>
                         </div>
                         <div className="p-6">
-                          {(streamingAiContent || generatedContent.aiContent) && renderAiContent()}
+                          {(streamingAiContent || generatedContent.aiContent) &&
+                            renderAiContent()}
                         </div>
                       </div>
                     </div>
                   )}
-
                 </div>
               )}
             </main>
@@ -1584,13 +1777,15 @@ const ContentGeneratorUI: React.FC<ContentGeneratorUIProps> = ({ params }) => {
             <footer className="bg-white/80 backdrop-blur-sm sticky bottom-0 border-t border-white/30 px-4 py-3 shadow-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  {generatedContent.aiContent && <button
-                    onClick={handleGenerateProject}
-                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg text-sm font-semibold text-green-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 transition-all duration-200 shadow-sm"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>Re Generate</span>
-                  </button>}
+                  {generatedContent.aiContent && (
+                    <button
+                      onClick={handleGenerateProject}
+                      className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg text-sm font-semibold text-green-700 hover:from-green-100 hover:to-emerald-100 hover:border-green-300 transition-all duration-200 shadow-sm"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>Re Generate</span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center space-x-3 text-xs text-gray-600">

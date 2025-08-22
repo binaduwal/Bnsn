@@ -22,6 +22,8 @@ interface Activity {
 
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [allActivities, setAllActivities] = useState<Activity[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [actionFilter, setActionFilter] = useState<string>('all');
@@ -32,9 +34,14 @@ export default function ActivitiesPage() {
     itemsPerPage: 25
   });
 
+  console.log("This is activities",activities)
   useEffect(() => {
     loadActivities();
   }, [pagination.currentPage, pagination.itemsPerPage, searchTerm, actionFilter]);
+
+  useEffect(() => {
+  loadAllActivities();
+}, []);
 
   const loadActivities = async () => {
     try {
@@ -53,6 +60,15 @@ export default function ActivitiesPage() {
       setLoading(false);
     }
   };
+
+const loadAllActivities = async () => {
+  try {
+    const response = await adminApi.getActivities(1, 10000); 
+    setAllActivities(response.data);
+  } catch (error) {
+    console.error('Error loading all activities:', error);
+  }
+};
 
   const handlePageChange = (page: number) => {
     setPagination(prev => ({ ...prev, currentPage: page }));
@@ -132,7 +148,7 @@ export default function ActivitiesPage() {
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{activities.length}</div>
+            <div className="text-2xl font-bold">{allActivities.length}</div>
             <p className="text-xs text-muted-foreground">
               All time activities
             </p>
@@ -158,7 +174,7 @@ export default function ActivitiesPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
@@ -171,7 +187,7 @@ export default function ActivitiesPage() {
               Unique users
             </p>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

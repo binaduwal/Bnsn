@@ -63,6 +63,8 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
     return selectedCampaign === campaignTitle;
   };
 
+  console.log("hi",campaigns)
+
   return (
     <div className="space-y-4">
       {campaigns?.map(camp => {
@@ -79,7 +81,7 @@ const CampaignAccordion: React.FC<CampaignAccordionProps> = ({
               {/* Gradient accent line */}
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-              <div className="flex items-center justify-between">
+              <div  className="flex items-center justify-between">
                 <div className="flex-1 flex items-center gap-2">
                   {/* Compact Campaign Icon */}
                   <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
