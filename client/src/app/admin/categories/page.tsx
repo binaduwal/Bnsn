@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { adminApi } from "@/services/adminApi";
-import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Search, Edit, Plus, ChevronRight, ChevronDown, X } from "lucide-react";
+import useCategory from "@/hooks/useCategory"; // import the hook
 
 interface Category {
   _id: string;
@@ -18,7 +18,7 @@ interface Category {
     focus: string;
     tone: string;
     quantity: string;
-    contentLenght: number;
+    contentLength: number;
   };
   createdAt: string;
   updatedAt: string;
@@ -38,7 +38,6 @@ export default function CategoriesPage() {
     new Set()
   );
 
-  // Load categories
   const loadCategories = async (search: string = "") => {
     try {
       setLoading(true);
@@ -59,7 +58,6 @@ export default function CategoriesPage() {
     setSearchTerm(value);
   };
 
-  // Expand / collapse
   const expandAllCategories = (categories: Category[]) => {
     const allIds = new Set<string>();
     const collectIds = (cats: Category[]) => {
@@ -163,7 +161,6 @@ export default function CategoriesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -196,26 +193,20 @@ export default function CategoriesPage() {
         </div>
       </div>
 
-      {/* Search + Categories */}
-      <Card>
-        <CardHeader>
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Search categories..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-0">{renderCategoryTree(categories)}</div>
-        </CardContent>
-      </Card>
+      <div className="border rounded-lg shadow-sm overflow-hidden">
+        <div className="p-3 border-b relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <input
+            type="text"
+            placeholder="Search categories..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div className="p-3">{renderCategoryTree(categories)}</div>
+      </div>
 
-      {/* Edit Modal */}
       {showEditModal && selectedCategory && (
         <CategoryModal
           category={selectedCategory}
@@ -240,7 +231,6 @@ export default function CategoriesPage() {
         />
       )}
 
-      {/* Create Modal */}
       {showCreateModal && (
         <CategoryModal
           categories={categories}
@@ -286,7 +276,7 @@ function CategoryModal({
       focus: "",
       tone: "",
       quantity: "",
-      contentLenght: 0,
+      contentLength: 0,
     },
   });
 
@@ -295,6 +285,11 @@ function CategoryModal({
     fieldType: "text",
   });
   const [fieldError, setFieldError] = useState<string | null>(null);
+
+  const { category: parentCategories } = useCategory({
+    type: formData.type,
+    level: formData.level - 1,
+  });
 
   const addField = () => {
     if (!newField.fieldName.trim()) {
@@ -318,7 +313,9 @@ function CategoryModal({
     if (category) {
       const { title, ...updateData } = cleanedData;
       onSave(updateData);
-    } else onSave(cleanedData);
+    } else {
+      onSave(cleanedData);
+    }
   };
 
   return (
@@ -345,7 +342,6 @@ function CategoryModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title & Alias */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">
@@ -381,7 +377,6 @@ function CategoryModal({
             </div>
           </div>
 
-          {/* Description */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Description
@@ -396,7 +391,6 @@ function CategoryModal({
             />
           </div>
 
-          {/* Type, Level, Parent */}
           <div className="grid grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Type</label>
@@ -414,66 +408,111 @@ function CategoryModal({
                 <option value="blueprint">Blueprint</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Level</label>
-              <input
-                type="number"
-                value={formData.level}
-                onChange={(e) =>
-                  setFormData({ ...formData, level: parseInt(e.target.value) })
-                }
-                className="w-full p-2 border rounded-lg"
-                min={0}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Parent Category
-              </label>
-              <select
-                value={formData.parentId || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    parentId: e.target.value === "" ? null : e.target.value,
-                  })
-                }
-                className="w-full p-2 border rounded-lg"
-              >
-                <option value="">None</option>
-                {categories.map((c) => (
-                  <option key={c._id} value={c._id}>
-                    {c.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+
+            {formData.type === "project" && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Level</label>
+                <select
+                  value={formData.level}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      level: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="w-full p-2 border rounded-lg"
+                >
+                  {[0, 1, 2].map((lvl) => (
+                    <option key={lvl} value={lvl}>
+                      {lvl}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {(formData.level === 1 || formData.level === 2) &&
+              formData.type === "project" && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Parent Category
+                  </label>
+                  <select
+                    value={formData.parentId || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        parentId: e.target.value === "" ? null : e.target.value,
+                      })
+                    }
+                    className="w-full p-2 border rounded-lg"
+                  >
+                    <option value="">Select a parent category</option>
+                    {parentCategories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
           </div>
 
-          {/* Fields */}
-          <div>
-            <label className="block text-sm font-medium mb-2">Fields</label>
-            <div className="space-y-2">
-              {formData.fields.map((field, index) => (
-                <div key={index} className="flex items-center space-x-2">
+          {formData.level === 2 && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Fields</label>
+              <div className="space-y-2">
+                {formData.fields?.map((field, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={field.fieldName}
+                      onChange={(e) => {
+                        const newFields = [...formData.fields];
+                        newFields[index].fieldName = e.target.value;
+                        setFormData({ ...formData, fields: newFields });
+                      }}
+                      className="flex-1 p-2 border rounded-lg"
+                      placeholder="Field name"
+                    />
+                    <select
+                      value={field.fieldType}
+                      onChange={(e) => {
+                        const newFields = [...formData.fields];
+                        newFields[index].fieldType = e.target.value;
+                        setFormData({ ...formData, fields: newFields });
+                      }}
+                      className="p-2 border rounded-lg"
+                    >
+                      <option value="text">Text</option>
+                      <option value="number">Number</option>
+                      <option value="date">Date</option>
+                      <option value="boolean">Boolean</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => removeField(index)}
+                      className="p-2 text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <div className="flex items-center space-x-2">
                   <input
                     type="text"
-                    value={field.fieldName}
-                    onChange={(e) => {
-                      const newFields = [...formData.fields];
-                      newFields[index].fieldName = e.target.value;
-                      setFormData({ ...formData, fields: newFields });
-                    }}
+                    value={newField.fieldName}
+                    onChange={(e) =>
+                      setNewField({ ...newField, fieldName: e.target.value })
+                    }
                     className="flex-1 p-2 border rounded-lg"
-                    placeholder="Field name"
+                    placeholder="New field name"
                   />
                   <select
-                    value={field.fieldType}
-                    onChange={(e) => {
-                      const newFields = [...formData.fields];
-                      newFields[index].fieldType = e.target.value;
-                      setFormData({ ...formData, fields: newFields });
-                    }}
+                    value={newField.fieldType}
+                    onChange={(e) =>
+                      setNewField({ ...newField, fieldType: e.target.value })
+                    }
                     className="p-2 border rounded-lg"
                   >
                     <option value="text">Text</option>
@@ -483,50 +522,19 @@ function CategoryModal({
                   </select>
                   <button
                     type="button"
-                    onClick={() => removeField(index)}
-                    className="p-2 text-red-600 hover:text-red-800"
+                    onClick={addField}
+                    className="p-2 text-blue-600 hover:text-blue-800"
                   >
-                    <X className="h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                   </button>
                 </div>
-              ))}
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={newField.fieldName}
-                  onChange={(e) =>
-                    setNewField({ ...newField, fieldName: e.target.value })
-                  }
-                  className="flex-1 p-2 border rounded-lg"
-                  placeholder="New field name"
-                />
-                <select
-                  value={newField.fieldType}
-                  onChange={(e) =>
-                    setNewField({ ...newField, fieldType: e.target.value })
-                  }
-                  className="p-2 border rounded-lg"
-                >
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="date">Date</option>
-                  <option value="boolean">Boolean</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={addField}
-                  className="p-2 text-blue-600 hover:text-blue-800"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+                {fieldError && (
+                  <p className="text-red-500 text-sm mt-1">{fieldError}</p>
+                )}
               </div>
-              {fieldError && (
-                <p className="text-red-500 text-sm mt-1">{fieldError}</p>
-              )}
             </div>
-          </div>
+          )}
 
-          {/* Settings */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Focus</label>
@@ -557,6 +565,7 @@ function CategoryModal({
               />
             </div>
           </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-1">Quantity</label>
@@ -581,13 +590,13 @@ function CategoryModal({
               </label>
               <input
                 type="number"
-                value={formData.settings.contentLenght}
+                value={formData.settings.contentLength}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
                     settings: {
                       ...formData.settings,
-                      contentLenght: parseInt(e.target.value),
+                      contentLength: parseInt(e.target.value) || 0,
                     },
                   })
                 }
@@ -596,7 +605,6 @@ function CategoryModal({
             </div>
           </div>
 
-          {/* Buttons */}
           <div className="flex space-x-3 pt-4">
             <button
               type="button"

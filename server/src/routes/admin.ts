@@ -463,32 +463,33 @@ router.get('/activities', adminAuth, async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 25;
-    const type = req.query.type as string || '';
-    
+    const type = (req.query.type as string) || "";
+    const search = (req.query.search as string) || "";
     const skip = (page - 1) * limit;
-    
+
+    //code change here
     let query = {};
-    if (type && type !== 'all') {
+    if (type && type !== "all") {
       query = { type };
     }
-    
+
     const totalActivities = await Activity.countDocuments(query);
     const activities = await Activity.find(query)
-      .populate('userId', 'email firstName lastName')
+      .populate("userId", "email firstName lastName")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
-    
+
     const totalPages = Math.ceil(totalActivities / limit);
-    
+
     res.json({
       data: activities,
       pagination: {
         currentPage: page,
         totalPages,
         totalItems: totalActivities,
-        itemsPerPage: limit
-      }
+        itemsPerPage: limit,
+      },
     });
   } catch (error: any) {
     res.status(500).json({ message: 'Error fetching activities', error: error.message });

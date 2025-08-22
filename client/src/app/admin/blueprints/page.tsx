@@ -6,32 +6,29 @@ import { Card, CardContent, CardHeader } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { Search, User, Star, Calendar } from "lucide-react";
 
+interface UserType {
+  _id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+}
+
 interface Blueprint {
   _id: string;
   title: string;
   description: string;
   offerType: string;
   categories: string[];
-  userId:
-    | string
-    | {
-        _id: string;
-        email: string;
-        firstName?: string;
-        lastName?: string;
-        createdAt: string;
-      };
+  userId: string | UserType;
   isStarred: boolean;
   createdAt: string;
 }
 
 export default function BlueprintsPage() {
-  // Filters and search
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [userFilter, setUserFilter] = useState("");
 
-  // Table state
   const [blueprints, setBlueprints] = useState<Blueprint[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
@@ -41,13 +38,16 @@ export default function BlueprintsPage() {
     itemsPerPage: 10,
   });
 
-  // Debounce search input (300ms)
+  // Separate list of all users
+  const [allUsers, setAllUsers] = useState<UserType[]>([]);
+
+  // Debounce search
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearchTerm(searchTerm), 300);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Fetch blueprints whenever filters/pagination/debouncedSearchTerm changes
+  // Fetch blueprints
   useEffect(() => {
     loadBlueprints();
   }, [
@@ -56,6 +56,19 @@ export default function BlueprintsPage() {
     debouncedSearchTerm,
     userFilter,
   ]);
+
+  // Fetch all users once
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await adminApi.getUsers(); // Make sure this API exists
+        setAllUsers(response.data);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+      }
+    };
+    fetchUsers();
+  }, []);
 
   const loadBlueprints = async () => {
     try {
@@ -68,8 +81,8 @@ export default function BlueprintsPage() {
       );
       setBlueprints(response.data);
       setPagination(response.pagination);
-    } catch (error) {
-      console.error("Error loading blueprints:", error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -79,12 +92,12 @@ export default function BlueprintsPage() {
     setPagination((prev) => ({ ...prev, currentPage: page }));
   const handleItemsPerPageChange = (itemsPerPage: number) =>
     setPagination((prev) => ({ ...prev, itemsPerPage, currentPage: 1 }));
+
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString();
 
   return (
     <div className="space-y-6">
-      {/* Header and Filters */}
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -100,6 +113,7 @@ export default function BlueprintsPage() {
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-4">
+            {/* Search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <input
@@ -111,6 +125,7 @@ export default function BlueprintsPage() {
               />
             </div>
 
+            {/* User Filter */}
             <div className="flex items-center space-x-2">
               <User className="h-4 w-4 text-gray-400" />
               <select
@@ -122,30 +137,18 @@ export default function BlueprintsPage() {
                 className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">All Users</option>
-                {Array.from(
-                  new Set(
-                    blueprints.map((b) =>
-                      typeof b.userId === "object" ? b.userId._id : b.userId
-                    )
-                  )
-                ).map((userId) => {
-                  const user = blueprints.find((b) =>
-                    typeof b.userId === "object"
-                      ? b.userId._id === userId
-                      : b.userId === userId
-                  )?.userId;
-                  return typeof user === "object" && user ? (
-                    <option key={userId} value={userId}>
-                      {user.firstName} {user.lastName} ({user.email})
-                    </option>
-                  ) : null;
-                })}
+                {allUsers.map((user) => (
+                  <option key={user._id} value={user._id}>
+                    {user.firstName
+                      ? `${user.firstName} ${user.lastName} (${user.email})`
+                      : user.email}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
         </CardHeader>
 
-        {/* Only Results Table Refresh */}
         <BlueprintsResult
           blueprints={blueprints}
           loading={loading}
@@ -159,7 +162,7 @@ export default function BlueprintsPage() {
   );
 }
 
-// Separate Component for Results (refresh only this)
+// Table component remains the same as before
 const BlueprintsResult = ({
   blueprints,
   loading,
@@ -214,7 +217,7 @@ const BlueprintsResult = ({
                         </div>
                         <div className="text-gray-500 flex items-center">
                           <Calendar className="h-3 w-3 mr-1" />
-                          Member since {formatDate(b.userId.createdAt)}
+                          Member since {formatDate(b.createdAt)}
                         </div>
                       </div>
                     ) : (

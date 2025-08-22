@@ -2,9 +2,17 @@
 
 import React, { useState, useEffect } from "react";
 import { adminApi } from "@/services/adminApi";
-import { Card, CardHeader, CardContent } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Pagination } from "@/components/ui/Pagination";
 import { Search, Filter, User, Star, Calendar } from "lucide-react";
+
+interface UserType {
+  _id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  createdAt: string;
+}
 
 interface Project {
   _id: string;
@@ -12,27 +20,20 @@ interface Project {
   description: string;
   status: "Active" | "Draft" | "Archived";
   isStarred: boolean;
-  userId:
-    | string
-    | {
-        _id: string;
-        email: string;
-        firstName?: string;
-        lastName?: string;
-        createdAt: string;
-      };
+  userId: string | UserType;
   createdAt: string;
 }
 
 export default function ProjectsPage() {
-  // Filters and search
+  // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [userFilter, setUserFilter] = useState("");
 
-  // Table state
+  // Data
   const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]); // keep full user list
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -41,13 +42,13 @@ export default function ProjectsPage() {
     itemsPerPage: 10,
   });
 
-  // Debounce search input (200ms)
+  // Debounce search input
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedSearchTerm(searchTerm), 200);
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
-  // Fetch projects whenever filters/pagination/debouncedSearchTerm changes
+  // Fetch projects when filters/pagination change
   useEffect(() => {
     loadProjects();
   }, [
@@ -57,6 +58,11 @@ export default function ProjectsPage() {
     statusFilter,
     userFilter,
   ]);
+
+  // Fetch users only once
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const loadProjects = async () => {
     try {
@@ -74,6 +80,15 @@ export default function ProjectsPage() {
       console.error("Error loading projects:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadUsers = async () => {
+    try {
+      const response = await adminApi.getUsers(); // 👈 create an endpoint that returns all users
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Error loading users:", error);
     }
   };
 
@@ -105,6 +120,7 @@ export default function ProjectsPage() {
     <div className="space-y-6">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
+        {/* Search */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <input
@@ -116,6 +132,7 @@ export default function ProjectsPage() {
           />
         </div>
 
+        {/* Status filter */}
         <div className="flex items-center space-x-2">
           <Filter className="h-4 w-4 text-gray-400" />
           <select
@@ -133,6 +150,7 @@ export default function ProjectsPage() {
           </select>
         </div>
 
+        {/* User filter */}
         <div className="flex items-center space-x-2">
           <User className="h-4 w-4 text-gray-400" />
           <select
@@ -144,24 +162,11 @@ export default function ProjectsPage() {
             className="p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="">All Users</option>
-            {Array.from(
-              new Set(
-                projects.map((p) =>
-                  typeof p.userId === "object" ? p.userId._id : p.userId
-                )
-              )
-            ).map((userId) => {
-              const user = projects.find((p) =>
-                typeof p.userId === "object"
-                  ? p.userId._id === userId
-                  : p.userId === userId
-              )?.userId;
-              return typeof user === "object" && user ? (
-                <option key={userId} value={userId}>
-                  {user.firstName} {user.lastName} ({user.email})
-                </option>
-              ) : null;
-            })}
+            {users.map((user) => (
+              <option key={user._id} value={user._id}>
+                {user.firstName} {user.lastName} ({user.email})
+              </option>
+            ))}
           </select>
         </div>
       </div>

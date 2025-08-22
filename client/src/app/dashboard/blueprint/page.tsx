@@ -29,7 +29,11 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { BlueprintProps, deleteBlueprintApi, starBlueprintApi } from "@/services/blueprintApi";
+import {
+  BlueprintProps,
+  deleteBlueprintApi,
+  starBlueprintApi,
+} from "@/services/blueprintApi";
 import ConfirmationModal from "@/components/ui/ConfirmationModal";
 import { formatTableDate } from "@/utils/dateUtils";
 import useBlueprint from "@/hooks/useBlueprint";
@@ -46,7 +50,6 @@ const formatTime = (dateString: string) => {
   return format(new Date(dateString), "hh:mm a");
 };
 
-
 const BlueprintPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(9);
@@ -58,7 +61,8 @@ const BlueprintPage: React.FC = () => {
   const [blueprintToDelete, setBlueprintToDelete] =
     useState<BlueprintProps | null>(null);
 
-  const { blueprints, isLoading, fetchBlueprint, setBlueprints } = useBlueprint();
+  const { blueprints, isLoading, fetchBlueprint, setBlueprints } =
+    useBlueprint();
 
   const totalPages = Math.ceil(blueprints.length / itemsPerPage);
 
@@ -84,7 +88,9 @@ const BlueprintPage: React.FC = () => {
     if (!blueprintToDelete) return;
 
     try {
-      setBlueprints(prev => prev.filter(b => b._id !== blueprintToDelete._id));
+      setBlueprints((prev) =>
+        prev.filter((b) => b._id !== blueprintToDelete._id)
+      );
       setShowDeleteModal(false);
       setBlueprintToDelete(null);
       await deleteBlueprintApi(blueprintToDelete._id);
@@ -96,8 +102,14 @@ const BlueprintPage: React.FC = () => {
 
   const handleStarToggle = async (blueprint: BlueprintProps) => {
     try {
-      setBlueprints(prev => prev.map(b => b._id === blueprint._id ? { ...b, isStarred: !b.isStarred } : b));
-      toast.success(blueprint.isStarred ? "Blueprint unstarred" : "Blueprint starred");
+      setBlueprints((prev) =>
+        prev.map((b) =>
+          b._id === blueprint._id ? { ...b, isStarred: !b.isStarred } : b
+        )
+      );
+      toast.success(
+        blueprint.isStarred ? "Blueprint unstarred" : "Blueprint starred"
+      );
       await starBlueprintApi(blueprint._id);
     } catch (error: any) {
       toast.error(error.message);
@@ -123,12 +135,13 @@ const BlueprintPage: React.FC = () => {
               <div>
                 <div className="flex items-center space-x-2">
                   <h3
-                    onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
+                    onClick={() =>
+                      router.push(`/dashboard/blueprint/${blueprint._id}`)
+                    }
                     className="font-semibold text-gray-900 hover:text-indigo-600 cursor-pointer capitalize text-lg group-hover:text-indigo-600 transition-colors"
                   >
                     {blueprint.title}
                   </h3>
-
                 </div>
                 <span
                   className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium ${getStatusColor(
@@ -142,7 +155,6 @@ const BlueprintPage: React.FC = () => {
             </div>
 
             {/* Actions dropdown */}
-
           </div>
 
           {/* Blueprint description */}
@@ -159,8 +171,21 @@ const BlueprintPage: React.FC = () => {
           </div>
 
           {/* Stats row */}
-          <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-            <div className="flex items-center space-x-4">
+          <div className="flex  px-2  items-center justify-between text-sm text-gray-500 mb-4">
+            <div className="flex flex-col gap-x-4">
+              <h2 className="mb-1">Created At</h2>
+              <div className="flex items-center space-x-1">
+                <Calendar className="w-4 h-4" />
+                <span>{formatDate(blueprint.createdAt)}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Clock className="w-4 h-4" />
+                <span>{formatTime(blueprint.createdAt)}</span>
+              </div>
+            </div>
+
+            <div className="  px-2 flex flex-col gap-x-4">
+              <h2 className="mb-1">Updated At</h2>
               <div className="flex items-center space-x-1">
                 <Calendar className="w-4 h-4" />
                 <span>{formatDate(blueprint.updatedAt)}</span>
@@ -170,13 +195,14 @@ const BlueprintPage: React.FC = () => {
                 <span>{formatTime(blueprint.updatedAt)}</span>
               </div>
             </div>
-
           </div>
 
           {/* Action buttons */}
           <div className="flex items-center space-x-2 pt-4 border-t border-gray-100">
             <button
-              onClick={() => router.push(`/dashboard/blueprint/${blueprint._id}`)}
+              onClick={() =>
+                router.push(`/dashboard/blueprint/${blueprint._id}`)
+              }
               className="flex-1 flex items-center justify-center space-x-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl transition-colors font-medium"
             >
               <Edit size={16} />
@@ -184,12 +210,16 @@ const BlueprintPage: React.FC = () => {
             </button>
             <button
               onClick={() => handleStarToggle(blueprint)}
-              className={`p-2.5 rounded-xl transition-colors ${blueprint.isStarred
-                ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
-                : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
-                }`}
+              className={`p-2.5 rounded-xl transition-colors ${
+                blueprint.isStarred
+                  ? "text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
+                  : "text-gray-400 hover:text-yellow-500 hover:bg-yellow-50"
+              }`}
             >
-              <Star size={16} fill={blueprint.isStarred ? "currentColor" : "none"} />
+              <Star
+                size={16}
+                fill={blueprint.isStarred ? "currentColor" : "none"}
+              />
             </button>
             <button
               onClick={() => handleDeleteClick(blueprint)}
@@ -204,7 +234,9 @@ const BlueprintPage: React.FC = () => {
   };
 
   const filteredBlueprints = blueprints.filter((blueprint) => {
-    const matchesSearch = blueprint.title.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = blueprint.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     const matchesStarred = !showStarredOnly || blueprint.isStarred;
     return matchesSearch && matchesStarred;
   });
@@ -228,7 +260,8 @@ const BlueprintPage: React.FC = () => {
               Blueprint Templates
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Create, manage, and deploy powerful blueprint templates for streamlined project development
+              Create, manage, and deploy powerful blueprint templates for
+              streamlined project development
             </p>
           </div>
 
@@ -258,35 +291,44 @@ const BlueprintPage: React.FC = () => {
                   className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
                   size={20}
                 />
-                {searchQuery.trim() && <div onClick={() => setSearchQuery("")} className="absolute right-4 top-1/2 flex justify-center items-center cursor-pointer p-1 size-6 hover:bg-gray-200 duration-200  rounded-full  transform -translate-y-1/2">
-                  <X
-                    className="   text-gray-700"
-                    size={20}
-                  />
-                </div>}
+                {searchQuery.trim() && (
+                  <div
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-4 top-1/2 flex justify-center items-center cursor-pointer p-1 size-6 hover:bg-gray-200 duration-200  rounded-full  transform -translate-y-1/2"
+                  >
+                    <X className="   text-gray-700" size={20} />
+                  </div>
+                )}
               </div>
 
               {/* Starred Filter Toggle */}
               <button
                 onClick={() => setShowStarredOnly(false)}
-                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 cursor-pointer transition-colors ${!showStarredOnly ? "bg-blue-100 border-blue-200 text-blue-700" : "bg-white border-gray-200 text-gray-700"} `}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 cursor-pointer transition-colors ${
+                  !showStarredOnly
+                    ? "bg-blue-100 border-blue-200 text-blue-700"
+                    : "bg-white border-gray-200 text-gray-700"
+                } `}
               >
                 <Star size={18} className={"text-gray-500"} fill={"none"} />
-                <span className="text-sm font-medium">
-                  All Blueprints
-                </span>
+                <span className="text-sm font-medium">All Blueprints</span>
               </button>
 
               <button
                 onClick={() => setShowStarredOnly(true)}
-                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 transition-colors cursor-pointer  ${showStarredOnly ? "bg-blue-100 border-blue-200 text-yellow-600" : "bg-white border-gray-200 text-gray-700"} `}
+                className={`flex items-center space-x-2 px-6 py-3.5 rounded-xl border-2 transition-colors cursor-pointer  ${
+                  showStarredOnly
+                    ? "bg-blue-100 border-blue-200 text-yellow-600"
+                    : "bg-white border-gray-200 text-gray-700"
+                } `}
               >
-                <Star size={18} className={"text-yellow-600"} fill={"currentColor"} />
-                <span className="text-sm font-medium">
-                  Starred Only
-                </span>
+                <Star
+                  size={18}
+                  className={"text-yellow-600"}
+                  fill={"currentColor"}
+                />
+                <span className="text-sm font-medium">Starred Only</span>
               </button>
-
             </div>
           </div>
 
@@ -298,7 +340,9 @@ const BlueprintPage: React.FC = () => {
                   <Layers className="w-5 h-5 text-indigo-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{filteredBlueprints.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {filteredBlueprints.length}
+                  </p>
                   <p className="text-sm text-gray-600">Total Templates</p>
                 </div>
               </div>
@@ -310,7 +354,9 @@ const BlueprintPage: React.FC = () => {
                   <Zap className="w-5 h-5 text-green-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{filteredBlueprints.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {filteredBlueprints.length}
+                  </p>
                   <p className="text-sm text-gray-600">Active</p>
                 </div>
               </div>
@@ -322,7 +368,9 @@ const BlueprintPage: React.FC = () => {
                   <Sparkles className="w-5 h-5 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold text-gray-900">{Math.floor(filteredBlueprints.length * 0.8)}</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {Math.floor(filteredBlueprints.length * 0.8)}
+                  </p>
                   <p className="text-sm text-gray-600">Premium</p>
                 </div>
               </div>
@@ -348,7 +396,10 @@ const BlueprintPage: React.FC = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm overflow-hidden">
+              <div
+                key={i}
+                className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/20 shadow-sm overflow-hidden"
+              >
                 <div className="h-1.5 bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse"></div>
                 <div className="p-6">
                   <div className="flex items-center space-x-3 mb-4">
@@ -380,9 +431,12 @@ const BlueprintPage: React.FC = () => {
                 <div className="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Layers className="w-12 h-12 text-indigo-600" />
                 </div>
-                <h3 className="text-2xl font-semibold text-gray-900 mb-2">No blueprint templates found</h3>
+                <h3 className="text-2xl font-semibold text-gray-900 mb-2">
+                  No blueprint templates found
+                </h3>
                 <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                  Try adjusting your search criteria or create your first blueprint template to get started
+                  Try adjusting your search criteria or create your first
+                  blueprint template to get started
                 </p>
                 <button
                   onClick={() => router.push("/dashboard/blueprint/new")}
@@ -404,11 +458,22 @@ const BlueprintPage: React.FC = () => {
             {filteredBlueprints.length > 0 && (
               <div className="flex flex-col sm:flex-row items-center justify-between mt-12 bg-white/70 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-white/20">
                 <div className="text-sm text-gray-600 mb-4 sm:mb-0">
-                  Showing <span className="font-medium text-gray-900">{(currentPage - 1) * itemsPerPage + 1}</span> to{" "}
+                  Showing{" "}
                   <span className="font-medium text-gray-900">
-                    {Math.min(currentPage * itemsPerPage, filteredBlueprints.length)}
+                    {(currentPage - 1) * itemsPerPage + 1}
                   </span>{" "}
-                  of <span className="font-medium text-gray-900">{filteredBlueprints.length}</span> blueprints
+                  to{" "}
+                  <span className="font-medium text-gray-900">
+                    {Math.min(
+                      currentPage * itemsPerPage,
+                      filteredBlueprints.length
+                    )}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-medium text-gray-900">
+                    {filteredBlueprints.length}
+                  </span>{" "}
+                  blueprints
                 </div>
 
                 <div className="flex items-center space-x-3">
