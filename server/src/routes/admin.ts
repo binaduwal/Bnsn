@@ -467,10 +467,21 @@ router.get('/activities', adminAuth, async (req: Request, res: Response) => {
     const search = (req.query.search as string) || "";
     const skip = (page - 1) * limit;
 
-    //code change here
-    let query = {};
+
+    let query: any = {};
+
     if (type && type !== "all") {
-      query = { type };
+      query.type = type;
+    }
+
+    // code change here
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+   
+      ];
     }
 
     const totalActivities = await Activity.countDocuments(query);
