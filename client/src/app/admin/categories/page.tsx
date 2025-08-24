@@ -1,10 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { adminApi, PaginatedResponse } from "@/services/adminApi";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Pagination } from "@/components/ui/Pagination";
+import { adminApi } from "@/services/adminApi";
 import { Search, Edit, Plus, ChevronRight, ChevronDown, X } from "lucide-react";
+import useCategory from "@/hooks/useCategory"; // import the hook
+
 interface Category {
   _id: string;
   title: string;
@@ -12,16 +12,13 @@ interface Category {
   description: string;
   type: "blueprint" | "project";
   level: number;
-  parentId?: string;
-  fields: Array<{
-    fieldName: string;
-    fieldType: string;
-  }>;
+  parentId?: string | null;
+  fields: Array<{ fieldName: string; fieldType: string }>;
   settings: {
     focus: string;
     tone: string;
     quantity: string;
-    contentLenght: number;
+    contentLength: number;
   };
   createdAt: string;
   updatedAt: string;
@@ -41,7 +38,26 @@ export default function CategoriesPage() {
     new Set()
   );
 
-  // Function to expand all categories
+  const loadCategories = async (search: string = "") => {
+    try {
+      setLoading(true);
+      const response = await adminApi.getCategories(1, 25, search);
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Error loading categories:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCategories(searchTerm);
+  }, [searchTerm]);
+
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
+
   const expandAllCategories = (categories: Category[]) => {
     const allIds = new Set<string>();
     const collectIds = (cats: Category[]) => {
@@ -56,40 +72,18 @@ export default function CategoriesPage() {
     setExpandedCategories(allIds);
   };
 
-  // Function to collapse all categories
-  const collapseAllCategories = () => {
-    setExpandedCategories(new Set());
-  };
-
-useEffect(() => {
-  loadCategories(searchTerm);
-}, [searchTerm]);
-
-
-const loadCategories = async (search: string = "") => {
-  try {
-    setLoading(true);
-    const response = await adminApi.getCategories(1, 25, search);
-    setCategories(response.data);
-  } catch (error) {
-    console.error("Error loading categories:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-  };
+  const collapseAllCategories = () => setExpandedCategories(new Set());
 
   const toggleExpanded = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(categoryId)) {
-      newExpanded.delete(categoryId);
-    } else {
-      newExpanded.add(categoryId);
-    }
+    if (newExpanded.has(categoryId)) newExpanded.delete(categoryId);
+    else newExpanded.add(categoryId);
     setExpandedCategories(newExpanded);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setSelectedCategory(category);
+    setShowEditModal(true);
   };
 
   const renderCategoryTree = (categories: Category[], level = 0) => {
@@ -101,7 +95,7 @@ const loadCategories = async (search: string = "") => {
           }`}
         >
           <div className="flex items-center flex-1">
-            {category.children && category.children.length > 0 && (
+            {category.children && category.children.length > 0 ? (
               <button
                 onClick={() => toggleExpanded(category._id)}
                 className="p-1 mr-2"
@@ -112,8 +106,7 @@ const loadCategories = async (search: string = "") => {
                   <ChevronRight className="h-4 w-4" />
                 )}
               </button>
-            )}
-            {category.children && category.children.length === 0 && (
+            ) : (
               <div className="w-6 mr-2"></div>
             )}
             <div className="flex-1">
@@ -159,18 +152,12 @@ const loadCategories = async (search: string = "") => {
     ));
   };
 
-  const handleEditCategory = (category: Category) => {
-    setSelectedCategory(category);
-    setShowEditModal(true);
-  };
-
-  if (loading) {
+  if (loading)
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading categories...</div>
+      <div className="flex items-center justify-center h-64 text-lg">
+        Loading categories...
       </div>
     );
-  }
 
   return (
     <div className="space-y-6">
@@ -206,25 +193,19 @@ const loadCategories = async (search: string = "") => {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <input
-                type="text"
-                placeholder="Search categories..."
-                value={searchTerm}
-                onChange={(e) => handleSearch(e.target.value)}
-                className="w-full pl-10   pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-0">{renderCategoryTree(categories)}</div>
-        </CardContent>
-      </Card>
+      <div className="border rounded-lg shadow-sm overflow-hidden">
+        <div className="p-3 border-b relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <input
+            type="text"
+            placeholder="Search categories..."
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div className="p-3">{renderCategoryTree(categories)}</div>
+      </div>
 
       {showEditModal && selectedCategory && (
         <CategoryModal
@@ -252,8 +233,8 @@ const loadCategories = async (search: string = "") => {
 
       {showCreateModal && (
         <CategoryModal
-          onClose={() => setShowCreateModal(false)}
           categories={categories}
+          onClose={() => setShowCreateModal(false)}
           onSave={async (newCategory) => {
             try {
               await adminApi.createCategory(newCategory);
@@ -269,6 +250,7 @@ const loadCategories = async (search: string = "") => {
   );
 }
 
+// --------------------- CATEGORY MODAL ---------------------
 interface CategoryModalProps {
   category?: Category;
   categories: Category[];
@@ -294,53 +276,46 @@ function CategoryModal({
       focus: "",
       tone: "",
       quantity: "",
-      contentLenght: 0,
+      contentLength: 0,
     },
   });
 
-  // console.log("this is formdata fields",formData.fields)
   const [newField, setNewField] = useState({
     fieldName: "",
     fieldType: "text",
   });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const cleanedData = {
-      ...formData,
-      parentId: formData.parentId || null,
-    };
-
-    if (category) {
-      const { title, ...updateData } = cleanedData;
-      onSave(updateData);
-    } else {
-      onSave(cleanedData);
-    }
-  };
-
   const [fieldError, setFieldError] = useState<string | null>(null);
+
+  const { category: parentCategories } = useCategory({
+    type: formData.type,
+    level: formData.level - 1,
+  });
 
   const addField = () => {
     if (!newField.fieldName.trim()) {
       setFieldError("Field name is required.");
       return;
     }
-    setFormData({
-      ...formData,
-      fields: [...formData.fields, { ...newField }],
-    });
+    setFormData({ ...formData, fields: [...formData.fields, { ...newField }] });
     setNewField({ fieldName: "", fieldType: "text" });
     setFieldError(null);
   };
 
-  const removeField = (index: number) => {
+  const removeField = (index: number) =>
     setFormData({
       ...formData,
       fields: formData.fields.filter((_, i) => i !== index),
     });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanedData = { ...formData, parentId: formData.parentId || null };
+    if (category) {
+      const { title, ...updateData } = cleanedData;
+      onSave(updateData);
+    } else {
+      onSave(cleanedData);
+    }
   };
 
   return (
@@ -357,7 +332,6 @@ function CategoryModal({
               </p>
             )}
           </div>
-
           <button
             type="button"
             onClick={onClose}
@@ -384,13 +358,8 @@ function CategoryModal({
                 className={`w-full p-2 border rounded-lg ${
                   category ? "bg-gray-100 cursor-not-allowed" : ""
                 }`}
-                required
                 disabled={!!category}
-                title={
-                  category
-                    ? "Title cannot be changed for existing categories"
-                    : ""
-                }
+                required
               />
             </div>
             <div>
@@ -438,65 +407,111 @@ function CategoryModal({
                 <option value="blueprint">Blueprint</option>
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">Level</label>
-              <input
-                type="number"
-                value={formData.level}
-                onChange={(e) =>
-                  setFormData({ ...formData, level: parseInt(e.target.value) })
-                }
-                className="w-full p-2 border rounded-lg"
-                min="0"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Parent Category
-              </label>
-              <select
-                value={formData.parentId || ""}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    parentId: e.target.value === "" ? null : e.target.value,
-                  })
-                }
-                className="w-full p-2 border rounded-lg"
-              >
-                <option value="">None</option>
-                {categories.map((cat) => (
-                  <option key={cat._id} value={cat._id}>
-                    {cat.title}
-                  </option>
-                ))}
-              </select>
-            </div>
+
+            {formData.type === "project" && (
+              <div>
+                <label className="block text-sm font-medium mb-1">Level</label>
+                <select
+                  value={formData.level}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      level: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className="w-full p-2 border rounded-lg"
+                >
+                  {[0, 1, 2].map((lvl) => (
+                    <option key={lvl} value={lvl}>
+                      {lvl}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {(formData.level === 1 || formData.level === 2) &&
+              formData.type === "project" && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Parent Category
+                  </label>
+                  <select
+                    value={formData.parentId || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        parentId: e.target.value === "" ? null : e.target.value,
+                      })
+                    }
+                    className="w-full p-2 border rounded-lg"
+                  >
+                    <option value="">Select a parent category</option>
+                    {parentCategories.map((cat) => (
+                      <option key={cat._id} value={cat._id}>
+                        {cat.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2">Fields</label>
-            <div className="space-y-2">
-              {formData.fields.map((field, index) => (
-                <div key={index} className="flex items-center space-x-2">
+          {formData.level === 2 && (
+            <div>
+              <label className="block text-sm font-medium mb-2">Fields</label>
+              <div className="space-y-2">
+                {formData.fields?.map((field, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <input
+                      type="text"
+                      value={field.fieldName}
+                      onChange={(e) => {
+                        const newFields = [...formData.fields];
+                        newFields[index].fieldName = e.target.value;
+                        setFormData({ ...formData, fields: newFields });
+                      }}
+                      className="flex-1 p-2 border rounded-lg"
+                      placeholder="Field name"
+                    />
+                    <select
+                      value={field.fieldType}
+                      onChange={(e) => {
+                        const newFields = [...formData.fields];
+                        newFields[index].fieldType = e.target.value;
+                        setFormData({ ...formData, fields: newFields });
+                      }}
+                      className="p-2 border rounded-lg"
+                    >
+                      <option value="text">Text</option>
+                      <option value="number">Number</option>
+                      <option value="date">Date</option>
+                      <option value="boolean">Boolean</option>
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => removeField(index)}
+                      className="p-2 text-red-600 hover:text-red-800"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <div className="flex items-center space-x-2">
                   <input
                     type="text"
-                    value={field.fieldName}
-                    onChange={(e) => {
-                      const newFields = [...formData.fields];
-                      newFields[index].fieldName = e.target.value;
-                      setFormData({ ...formData, fields: newFields });
-                    }}
+                    value={newField.fieldName}
+                    onChange={(e) =>
+                      setNewField({ ...newField, fieldName: e.target.value })
+                    }
                     className="flex-1 p-2 border rounded-lg"
-                    placeholder="Field name"
+                    placeholder="New field name"
                   />
                   <select
-                    value={field.fieldType}
-                    onChange={(e) => {
-                      const newFields = [...formData.fields];
-                      newFields[index].fieldType = e.target.value;
-                      setFormData({ ...formData, fields: newFields });
-                    }}
+                    value={newField.fieldType}
+                    onChange={(e) =>
+                      setNewField({ ...newField, fieldType: e.target.value })
+                    }
                     className="p-2 border rounded-lg"
                   >
                     <option value="text">Text</option>
@@ -506,49 +521,18 @@ function CategoryModal({
                   </select>
                   <button
                     type="button"
-                    onClick={() => removeField(index)}
-                    className="p-2 text-red-600 hover:text-red-800"
+                    onClick={addField}
+                    className="p-2 text-blue-600 hover:text-blue-800"
                   >
-                    <X className="h-4 w-4" />
+                    <Plus className="h-4 w-4" />
                   </button>
                 </div>
-              ))}
-              <div className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={newField.fieldName}
-                  onChange={(e) =>
-                    setNewField({ ...newField, fieldName: e.target.value })
-                  }
-                  className="flex-1 p-2 border rounded-lg"
-                  placeholder="New field name"
-                />
-                <select
-                  value={newField.fieldType}
-                  onChange={(e) =>
-                    setNewField({ ...newField, fieldType: e.target.value })
-                  }
-                  className="p-2 border rounded-lg"
-                >
-                  <option value="text">Text</option>
-                  <option value="number">Number</option>
-                  <option value="date">Date</option>
-                  <option value="boolean">Boolean</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={addField}
-                  className="p-2 text-blue-600 hover:text-blue-800"
-                >
-                  <Plus className="h-4 w-4" />
-                </button>
+                {fieldError && (
+                  <p className="text-red-500 text-sm mt-1">{fieldError}</p>
+                )}
               </div>
-
-              {fieldError && (
-                <p className="text-red-500 text-sm mt-1">{fieldError}</p>
-              )}
             </div>
-          </div>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -605,13 +589,13 @@ function CategoryModal({
               </label>
               <input
                 type="number"
-                value={formData.settings.contentLenght}
+                value={formData.settings.contentLength}
                 onChange={(e) =>
                   setFormData({
                     ...formData,
                     settings: {
                       ...formData.settings,
-                      contentLenght: parseInt(e.target.value),
+                      contentLength: parseInt(e.target.value) || 0,
                     },
                   })
                 }
